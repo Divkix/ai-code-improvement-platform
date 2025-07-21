@@ -59,11 +59,13 @@ func main() {
 	userService := services.NewUserService(mongoDB.Database())
 	authService := auth.NewAuthService(cfg.JWT.Secret)
 	dashboardService := services.NewDashboardService()
+	repositoryService := services.NewRepositoryService(mongoDB.Database())
 
 	// Initialize handlers
 	healthHandler := handlers.NewHealthHandler(mongoDB, qdrant)
 	authHandler := handlers.NewAuthHandler(userService, authService)
 	dashboardHandler := handlers.NewDashboardHandler(dashboardService)
+	repositoryHandler := handlers.NewRepositoryHandler(repositoryService)
 
 	// Create Gin router
 	router := gin.New()
@@ -103,7 +105,18 @@ func main() {
 				dashboard.GET("/trends", dashboardHandler.GetDashboardTrends)
 			}
 			
-			// Future protected routes will be added here
+			// Repository routes
+			repositories := protected.Group("/repositories")
+			{
+				repositories.GET("", repositoryHandler.GetRepositories)
+				repositories.POST("", repositoryHandler.CreateRepository)
+				repositories.GET("/:id", repositoryHandler.GetRepository)
+				repositories.PUT("/:id", repositoryHandler.UpdateRepository)
+				repositories.DELETE("/:id", repositoryHandler.DeleteRepository)
+				repositories.GET("/:id/stats", repositoryHandler.GetRepositoryStats)
+			}
+			
+			// Utility ping endpoint
 			protected.GET("/ping", func(c *gin.Context) {
 				c.JSON(http.StatusOK, gin.H{
 					"message": "pong",

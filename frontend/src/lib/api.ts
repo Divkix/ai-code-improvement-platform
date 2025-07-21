@@ -59,6 +59,61 @@ export interface TrendDataPoint {
 	performanceScore: number;
 }
 
+export interface Repository {
+	id: string;
+	userId: string;
+	githubRepoId?: number;
+	owner: string;
+	name: string;
+	fullName: string;
+	description?: string;
+	primaryLanguage?: string;
+	isPrivate: boolean;
+	indexedAt?: string;
+	lastSyncedAt?: string;
+	status: 'pending' | 'importing' | 'ready' | 'error';
+	importProgress: number;
+	stats?: {
+		totalFiles: number;
+		totalLines: number;
+		languages?: Record<string, number>;
+		lastCommitDate?: string;
+	};
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface CreateRepositoryRequest {
+	name: string;
+	owner: string;
+	fullName: string;
+	description?: string;
+	githubRepoId?: number;
+	primaryLanguage?: string;
+	isPrivate: boolean;
+}
+
+export interface UpdateRepositoryRequest {
+	name?: string;
+	description?: string;
+	primaryLanguage?: string;
+}
+
+export interface RepositoryListResponse {
+	repositories: Repository[];
+	total: number;
+}
+
+export interface RepositoryStats {
+	repositoryId: string;
+	totalFiles: number;
+	totalLines: number;
+	languages: Record<string, number>;
+	lastCommitDate?: string;
+	codeChunks: number;
+	avgComplexity: number;
+}
+
 class ApiClient {
 	private baseUrl: string;
 
@@ -138,6 +193,45 @@ class ApiClient {
 	async getDashboardTrends(days?: number): Promise<TrendDataPoint[]> {
 		const query = days ? `?days=${days}` : '';
 		return this.request<TrendDataPoint[]>(`/api/dashboard/trends${query}`);
+	}
+
+	// Repositories
+	async getRepositories(limit?: number, offset?: number, status?: string): Promise<RepositoryListResponse> {
+		const params = new URLSearchParams();
+		if (limit) params.append('limit', limit.toString());
+		if (offset) params.append('offset', offset.toString());
+		if (status) params.append('status', status);
+		
+		const query = params.toString() ? `?${params.toString()}` : '';
+		return this.request<RepositoryListResponse>(`/api/repositories${query}`);
+	}
+
+	async createRepository(data: CreateRepositoryRequest): Promise<Repository> {
+		return this.request<Repository>('/api/repositories', {
+			method: 'POST',
+			body: JSON.stringify(data)
+		});
+	}
+
+	async getRepository(id: string): Promise<Repository> {
+		return this.request<Repository>(`/api/repositories/${id}`);
+	}
+
+	async updateRepository(id: string, data: UpdateRepositoryRequest): Promise<Repository> {
+		return this.request<Repository>(`/api/repositories/${id}`, {
+			method: 'PUT',
+			body: JSON.stringify(data)
+		});
+	}
+
+	async deleteRepository(id: string): Promise<void> {
+		await this.request<void>(`/api/repositories/${id}`, {
+			method: 'DELETE'
+		});
+	}
+
+	async getRepositoryStats(id: string): Promise<RepositoryStats> {
+		return this.request<RepositoryStats>(`/api/repositories/${id}/stats`);
 	}
 
 	// Generic ping

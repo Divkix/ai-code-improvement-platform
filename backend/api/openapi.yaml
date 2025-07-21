@@ -177,6 +177,121 @@ components:
           minimum: 0
           maximum: 100
 
+    Repository:
+      type: object
+      required:
+        - id
+        - userId
+        - owner
+        - name
+        - fullName
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        githubRepoId:
+          type: integer
+          format: int64
+        owner:
+          type: string
+        name:
+          type: string
+        fullName:
+          type: string
+          description: "Repository full name in format owner/name"
+        description:
+          type: string
+        primaryLanguage:
+          type: string
+        isPrivate:
+          type: boolean
+        indexedAt:
+          type: string
+          format: date-time
+        lastSyncedAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [pending, importing, ready, error]
+        importProgress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        stats:
+          type: object
+          properties:
+            totalFiles:
+              type: integer
+              minimum: 0
+            totalLines:
+              type: integer
+              minimum: 0
+            languages:
+              type: object
+              additionalProperties:
+                type: integer
+            lastCommitDate:
+              type: string
+              format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateRepositoryRequest:
+      type: object
+      required:
+        - name
+        - owner
+        - fullName
+      properties:
+        name:
+          type: string
+        owner:
+          type: string
+        fullName:
+          type: string
+        description:
+          type: string
+        githubRepoId:
+          type: integer
+          format: int64
+        primaryLanguage:
+          type: string
+        isPrivate:
+          type: boolean
+
+    UpdateRepositoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        primaryLanguage:
+          type: string
+
+    RepositoryListResponse:
+      type: object
+      required:
+        - repositories
+        - total
+      properties:
+        repositories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Repository'
+        total:
+          type: integer
+          minimum: 0
+
 paths:
   /health:
     get:
@@ -366,6 +481,284 @@ paths:
                   $ref: '#/components/schemas/TrendDataPoint'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/repositories:
+    get:
+      summary: Get user's repositories
+      description: Retrieve a list of repositories owned by the current user
+      operationId: getRepositories
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of repositories to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Number of repositories to skip
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: status
+          in: query
+          description: Filter by repository status
+          schema:
+            type: string
+            enum: [pending, importing, ready, error]
+      responses:
+        '200':
+          description: List of user repositories
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositoryListResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create new repository
+      description: Add a new repository for analysis
+      operationId: createRepository
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRepositoryRequest'
+      responses:
+        '201':
+          description: Repository created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Repository'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Repository already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/repositories/{id}:
+    get:
+      summary: Get repository by ID
+      description: Retrieve detailed information about a specific repository
+      operationId: getRepository
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Repository ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Repository details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Repository'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Repository not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update repository
+      description: Update repository information
+      operationId: updateRepository
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Repository ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRepositoryRequest'
+      responses:
+        '200':
+          description: Repository updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Repository'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Repository not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete repository
+      description: Remove repository from analysis
+      operationId: deleteRepository
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Repository ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Repository deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Repository not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/repositories/{id}/stats:
+    get:
+      summary: Get repository statistics
+      description: Retrieve detailed statistics for a repository
+      operationId: getRepositoryStats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Repository ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Repository statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  repositoryId:
+                    type: string
+                  totalFiles:
+                    type: integer
+                  totalLines:
+                    type: integer
+                  languages:
+                    type: object
+                    additionalProperties:
+                      type: integer
+                  lastCommitDate:
+                    type: string
+                    format: date-time
+                  codeChunks:
+                    type: integer
+                  avgComplexity:
+                    type: number
+                    format: float
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Repository not found
           content:
             application/json:
               schema:
