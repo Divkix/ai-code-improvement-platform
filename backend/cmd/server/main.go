@@ -33,7 +33,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to MongoDB: %v", err)
 	}
-	defer mongoDB.Close()
+	defer func() {
+		if err := mongoDB.Close(); err != nil {
+			log.Printf("Error closing MongoDB connection: %v", err)
+		}
+	}()
 
 	// Initialize Qdrant
 	qdrant := database.NewQdrant(cfg.Database.QdrantURL)

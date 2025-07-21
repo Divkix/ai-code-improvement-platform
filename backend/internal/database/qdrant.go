@@ -36,7 +36,12 @@ func (q *Qdrant) Ping() error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			// Log the error but don't return it as it's in a defer
+			fmt.Printf("Error closing response body: %v\n", err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("qdrant health check failed with status: %d", resp.StatusCode)

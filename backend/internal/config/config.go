@@ -45,7 +45,7 @@ type AIConfig struct {
 
 func Load() (*Config, error) {
 	// Load .env file if it exists
-	godotenv.Load()
+	_ = godotenv.Load() // Ignore error as .env file is optional
 
 	config := &Config{
 		Server: ServerConfig{
