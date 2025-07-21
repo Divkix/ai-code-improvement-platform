@@ -58,10 +58,12 @@ func main() {
 	// Initialize services
 	userService := services.NewUserService(mongoDB.Database())
 	authService := auth.NewAuthService(cfg.JWT.Secret)
+	dashboardService := services.NewDashboardService()
 
 	// Initialize handlers
 	healthHandler := handlers.NewHealthHandler(mongoDB, qdrant)
 	authHandler := handlers.NewAuthHandler(userService, authService)
+	dashboardHandler := handlers.NewDashboardHandler(dashboardService)
 
 	// Create Gin router
 	router := gin.New()
@@ -93,6 +95,14 @@ func main() {
 		protected := api.Group("")
 		protected.Use(middleware.AuthMiddleware(authService))
 		{
+			// Dashboard routes
+			dashboard := protected.Group("/dashboard")
+			{
+				dashboard.GET("/stats", dashboardHandler.GetDashboardStats)
+				dashboard.GET("/activity", dashboardHandler.GetDashboardActivity)
+				dashboard.GET("/trends", dashboardHandler.GetDashboardTrends)
+			}
+			
 			// Future protected routes will be added here
 			protected.GET("/ping", func(c *gin.Context) {
 				c.JSON(http.StatusOK, gin.H{

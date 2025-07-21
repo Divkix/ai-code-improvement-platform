@@ -95,6 +95,88 @@ components:
           type: string
           format: date-time
 
+    DashboardStats:
+      type: object
+      required:
+        - totalRepositories
+        - codeChunksProcessed
+        - avgResponseTime
+        - costSavingsMonthly
+        - issuesPreventedMonthly
+        - developerHoursReclaimed
+      properties:
+        totalRepositories:
+          type: integer
+          minimum: 0
+        codeChunksProcessed:
+          type: integer
+          minimum: 0
+        avgResponseTime:
+          type: number
+          format: float
+          minimum: 0
+        costSavingsMonthly:
+          type: number
+          format: float
+          minimum: 0
+        issuesPreventedMonthly:
+          type: integer
+          minimum: 0
+        developerHoursReclaimed:
+          type: number
+          format: float
+          minimum: 0
+
+    ActivityItem:
+      type: object
+      required:
+        - id
+        - type
+        - message
+        - timestamp
+        - severity
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [repository_imported, analysis_completed, issue_detected, optimization_found]
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        severity:
+          type: string
+          enum: [info, warning, error, success]
+        repositoryName:
+          type: string
+
+    TrendDataPoint:
+      type: object
+      required:
+        - date
+        - codeQuality
+        - issuesResolved
+        - performanceScore
+      properties:
+        date:
+          type: string
+          format: date
+        codeQuality:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+        issuesResolved:
+          type: integer
+          minimum: 0
+        performanceScore:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+
 paths:
   /health:
     get:
@@ -179,6 +261,109 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/dashboard/stats:
+    get:
+      summary: Get dashboard statistics
+      description: Retrieve key metrics and statistics for the dashboard
+      operationId: getDashboardStats
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStats'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/dashboard/activity:
+    get:
+      summary: Get recent activity
+      description: Retrieve recent activity items for the dashboard
+      operationId: getDashboardActivity
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of activity items to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        '200':
+          description: Recent activity items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ActivityItem'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/dashboard/trends:
+    get:
+      summary: Get trend data
+      description: Retrieve trend data for charts and analytics
+      operationId: getDashboardTrends
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: days
+          in: query
+          description: Number of days of trend data to return
+          schema:
+            type: integer
+            minimum: 7
+            maximum: 90
+            default: 30
+      responses:
+        '200':
+          description: Trend data points
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrendDataPoint'
         '401':
           description: Unauthorized
           content:
