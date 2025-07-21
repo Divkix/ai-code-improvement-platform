@@ -34,6 +34,31 @@ export interface AuthResponse {
 	user: User;
 }
 
+export interface DashboardStats {
+	totalRepositories: number;
+	codeChunksProcessed: number;
+	avgResponseTime: number;
+	costSavingsMonthly: number;
+	issuesPreventedMonthly: number;
+	developerHoursReclaimed: number;
+}
+
+export interface ActivityItem {
+	id: string;
+	type: 'repository_imported' | 'analysis_completed' | 'issue_detected' | 'optimization_found';
+	message: string;
+	timestamp: string;
+	severity: 'info' | 'warning' | 'error' | 'success';
+	repositoryName?: string;
+}
+
+export interface TrendDataPoint {
+	date: string;
+	codeQuality: number;
+	issuesResolved: number;
+	performanceScore: number;
+}
+
 class ApiClient {
 	private baseUrl: string;
 
@@ -98,6 +123,21 @@ class ApiClient {
 
 	async getCurrentUser(): Promise<User> {
 		return this.request<User>('/api/auth/me');
+	}
+
+	// Dashboard
+	async getDashboardStats(): Promise<DashboardStats> {
+		return this.request<DashboardStats>('/api/dashboard/stats');
+	}
+
+	async getDashboardActivity(limit?: number): Promise<ActivityItem[]> {
+		const query = limit ? `?limit=${limit}` : '';
+		return this.request<ActivityItem[]>(`/api/dashboard/activity${query}`);
+	}
+
+	async getDashboardTrends(days?: number): Promise<TrendDataPoint[]> {
+		const query = days ? `?days=${days}` : '';
+		return this.request<TrendDataPoint[]>(`/api/dashboard/trends${query}`);
 	}
 
 	// Generic ping
