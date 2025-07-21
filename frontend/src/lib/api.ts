@@ -93,6 +93,10 @@ export interface CreateRepositoryRequest {
 	isPrivate: boolean;
 }
 
+export interface CreateRepositoryFromUrlRequest {
+	githubUrl: string;
+}
+
 export interface UpdateRepositoryRequest {
 	name?: string;
 	description?: string;
@@ -147,6 +151,11 @@ class ApiClient {
 			if (!response.ok) {
 				const error: ApiError = await response.json();
 				throw new Error(error.message || `HTTP ${response.status}`);
+			}
+
+			// Handle 204 No Content responses (like DELETE operations)
+			if (response.status === 204) {
+				return null as T;
 			}
 
 			return await response.json();

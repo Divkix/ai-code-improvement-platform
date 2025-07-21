@@ -13,21 +13,14 @@
 	let loading = true;
 	let error = '';
 	let showAddModal = false;
-	let addForm = {
-		name: '',
-		owner: '',
-		fullName: '',
-		description: '',
-		primaryLanguage: '',
-		isPrivate: false
-	};
+	let githubUrl = '';
 
 	async function loadRepositories() {
 		try {
 			loading = true;
 			error = '';
 			const response = await apiClient.getRepositories();
-			repositories = response.repositories;
+			repositories = response.repositories || [];
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load repositories';
 			console.error('Error loading repositories:', err);
@@ -37,34 +30,60 @@
 	}
 
 	async function handleAddRepository() {
-		if (!addForm.name || !addForm.owner || !addForm.fullName) {
+		if (!githubUrl.trim()) {
+			error = 'Please enter a GitHub repository URL';
 			return;
 		}
 
 		try {
+			// Parse GitHub URL to extract owner and repo name
+			const parsed = parseGitHubUrl(githubUrl);
+			if (!parsed) {
+				error = 'Invalid GitHub repository URL. Please use format: https://github.com/owner/repo';
+				return;
+			}
+
 			const newRepo = await apiClient.createRepository({
-				name: addForm.name,
-				owner: addForm.owner,
-				fullName: addForm.fullName,
-				description: addForm.description || undefined,
-				primaryLanguage: addForm.primaryLanguage || undefined,
-				isPrivate: addForm.isPrivate
+				name: parsed.name,
+				owner: parsed.owner,
+				fullName: parsed.fullName,
+				isPrivate: false // We'll assume public for now since we can't detect this from URL
 			});
 
 			repositories = [newRepo, ...repositories];
 			showAddModal = false;
-			
-			// Reset form
-			addForm = {
-				name: '',
-				owner: '',
-				fullName: '',
-				description: '',
-				primaryLanguage: '',
-				isPrivate: false
-			};
+			githubUrl = '';
+			error = '';
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to create repository';
+		}
+	}
+
+	function parseGitHubUrl(url: string): { owner: string; name: string; fullName: string } | null {
+		try {
+			// Handle different GitHub URL formats
+			const cleanUrl = url.trim().replace(/\.git$/, '');
+			let match;
+			
+			// Match https://github.com/owner/repo
+			match = cleanUrl.match(/https?:\/\/github\.com\/([^\/]+)\/([^\/]+)/);
+			if (match) {
+				const owner = match[1];
+				const name = match[2];
+				return { owner, name, fullName: `${owner}/${name}` };
+			}
+			
+			// Match owner/repo format
+			match = cleanUrl.match(/^([^\/]+)\/([^\/]+)$/);
+			if (match) {
+				const owner = match[1];
+				const name = match[2];
+				return { owner, name, fullName: `${owner}/${name}` };
+			}
+			
+			return null;
+		} catch {
+			return null;
 		}
 	}
 
@@ -131,19 +150,8 @@
 
 	function closeAddModal() {
 		showAddModal = false;
-		addForm = {
-			name: '',
-			owner: '',
-			fullName: '',
-			description: '',
-			primaryLanguage: '',
-			isPrivate: false
-		};
-	}
-
-	// Auto-fill fullName when owner and name are entered
-	$: if (addForm.owner && addForm.name) {
-		addForm.fullName = `${addForm.owner}/${addForm.name}`;
+		githubUrl = '';
+		error = '';
 	}
 </script>
 
@@ -192,7 +200,7 @@
 			<div class="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
 			<p class="mt-2 text-gray-600">Loading repositories...</p>
 		</div>
-	{:else if repositories.length === 0}
+	{:else if !repositories || repositories.length === 0}
 		<div class="py-12 text-center">
 			<div class="mx-auto h-12 w-12 text-gray-400">
 				<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -306,72 +314,18 @@
 				
 				<form on:submit|preventDefault={handleAddRepository}>
 					<div class="mb-4">
-						<label for="owner" class="block text-sm font-medium text-gray-700">Owner</label>
+						<label for="githubUrl" class="block text-sm font-medium text-gray-700">GitHub Repository URL</label>
 						<input
-							type="text"
-							id="owner"
-							bind:value={addForm.owner}
+							type="url"
+							id="githubUrl"
+							bind:value={githubUrl}
 							class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-							placeholder="e.g., microsoft"
+							placeholder="https://github.com/owner/repository or owner/repository"
 							required
 						/>
-					</div>
-
-					<div class="mb-4">
-						<label for="name" class="block text-sm font-medium text-gray-700">Repository Name</label>
-						<input
-							type="text"
-							id="name"
-							bind:value={addForm.name}
-							class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-							placeholder="e.g., vscode"
-							required
-						/>
-					</div>
-
-					<div class="mb-4">
-						<label for="fullName" class="block text-sm font-medium text-gray-700">Full Name</label>
-						<input
-							type="text"
-							id="fullName"
-							bind:value={addForm.fullName}
-							class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-gray-50"
-							placeholder="owner/repository"
-							readonly
-						/>
-					</div>
-
-					<div class="mb-4">
-						<label for="description" class="block text-sm font-medium text-gray-700">Description (Optional)</label>
-						<textarea
-							id="description"
-							bind:value={addForm.description}
-							rows="2"
-							class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-							placeholder="Brief description of the repository"
-						></textarea>
-					</div>
-
-					<div class="mb-4">
-						<label for="primaryLanguage" class="block text-sm font-medium text-gray-700">Primary Language (Optional)</label>
-						<input
-							type="text"
-							id="primaryLanguage"
-							bind:value={addForm.primaryLanguage}
-							class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-							placeholder="e.g., TypeScript"
-						/>
-					</div>
-
-					<div class="mb-6">
-						<label class="flex items-center">
-							<input
-								type="checkbox"
-								bind:checked={addForm.isPrivate}
-								class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-							/>
-							<span class="ml-2 text-sm text-gray-700">Private repository</span>
-						</label>
+						<p class="mt-1 text-xs text-gray-500">
+							Enter a GitHub repository URL or owner/repository format
+						</p>
 					</div>
 
 					<div class="flex space-x-3">
