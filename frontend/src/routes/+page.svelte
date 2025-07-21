@@ -52,11 +52,11 @@
 		chart = new Chart(ctx, {
 			type: 'line',
 			data: {
-				labels: trends.map(t => new Date(t.date).toLocaleDateString()),
+				labels: trends.map((t) => new Date(t.date).toLocaleDateString()),
 				datasets: [
 					{
 						label: 'Code Quality',
-						data: trends.map(t => t.codeQuality),
+						data: trends.map((t) => t.codeQuality),
 						borderColor: '#10b981',
 						backgroundColor: '#10b981',
 						borderWidth: 2,
@@ -65,7 +65,7 @@
 					},
 					{
 						label: 'Performance Score',
-						data: trends.map(t => t.performanceScore),
+						data: trends.map((t) => t.performanceScore),
 						borderColor: '#3b82f6',
 						backgroundColor: '#3b82f6',
 						borderWidth: 2,
@@ -147,7 +147,9 @@
 {#if loading}
 	<div class="flex h-96 items-center justify-center">
 		<div class="text-center">
-			<div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+			<div
+				class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"
+			></div>
 			<p class="mt-4 text-gray-600">Loading dashboard data...</p>
 		</div>
 	</div>
@@ -157,7 +159,7 @@
 			<div class="ml-3">
 				<h3 class="text-sm font-medium text-red-800">Error loading dashboard</h3>
 				<p class="mt-2 text-sm text-red-700">{error}</p>
-				<button 
+				<button
 					on:click={loadDashboardData}
 					class="mt-3 inline-flex items-center rounded-md bg-red-100 px-3 py-2 text-sm font-medium text-red-800 hover:bg-red-200"
 				>
@@ -213,24 +215,40 @@
 		</div>
 
 		<!-- ROI Highlight -->
-		<div class="rounded-lg bg-green-50 border border-green-200 p-6">
+		<div class="rounded-lg border border-green-200 bg-green-50 p-6">
 			<div class="flex items-center justify-between">
 				<div class="flex items-center space-x-3">
 					<div class="rounded-full bg-green-100 p-3">
-						<svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+						<svg
+							class="h-6 w-6 text-green-600"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+							></path>
 						</svg>
 					</div>
 					<div>
 						<h3 class="text-lg font-semibold text-green-900">Impressive Cost Savings</h3>
 						<p class="text-sm text-green-700">
-							Your team is saving an average of <strong>${Math.round(stats.costSavingsMonthly).toLocaleString()}</strong> per month by using AI-powered code analysis.
-							That's <strong>{Math.round(stats.developerHoursReclaimed)} developer hours</strong> reclaimed for building features instead of understanding code.
+							Your team is saving an average of <strong
+								>${Math.round(stats.costSavingsMonthly).toLocaleString()}</strong
+							>
+							per month by using AI-powered code analysis. That's
+							<strong>{Math.round(stats.developerHoursReclaimed)} developer hours</strong> reclaimed
+							for building features instead of understanding code.
 						</p>
 					</div>
 				</div>
 				<div class="text-right">
-					<div class="text-3xl font-bold text-green-600">${Math.round(stats.costSavingsMonthly * 12 / 1000)}K</div>
+					<div class="text-3xl font-bold text-green-600">
+						${Math.round((stats.costSavingsMonthly * 12) / 1000)}K
+					</div>
 					<div class="text-sm text-green-600">Annual Savings</div>
 				</div>
 			</div>
@@ -257,16 +275,20 @@
 			<!-- Recent Activity -->
 			<div class="overflow-hidden rounded-lg bg-white shadow">
 				<div class="p-6">
-					<div class="flex items-center justify-between mb-4">
+					<div class="mb-4 flex items-center justify-between">
 						<h3 class="text-lg font-medium text-gray-900">Recent Activity</h3>
 						<span class="text-sm text-gray-500">{activities.length} items</span>
 					</div>
 					<div class="space-y-4">
-						{#each activities as activity}
+						{#each activities as activity (activity.id)}
 							<div class="flex items-start space-x-4">
 								<div class="flex-shrink-0">
-									<div class="flex items-center justify-center w-8 h-8 rounded-full {getSeverityColor(activity.severity)}">
-										<span class="text-white text-sm">{getTypeIcon(activity.type)}</span>
+									<div
+										class="flex h-8 w-8 items-center justify-center rounded-full {getSeverityColor(
+											activity.severity
+										)}"
+									>
+										<span class="text-sm text-white">{getTypeIcon(activity.type)}</span>
 									</div>
 								</div>
 								<div class="min-w-0 flex-1">
@@ -282,7 +304,7 @@
 							</div>
 						{/each}
 						{#if activities.length === 0}
-							<div class="text-center py-8 text-gray-500">
+							<div class="py-8 text-center text-gray-500">
 								<p>No recent activity</p>
 							</div>
 						{/if}
@@ -292,34 +314,52 @@
 		</div>
 
 		<!-- Call to Action -->
-		<div class="rounded-lg bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 p-8">
+		<div class="rounded-lg border border-indigo-200 bg-gradient-to-r from-indigo-50 to-blue-50 p-8">
 			<div class="flex items-center justify-between">
 				<div class="flex items-center space-x-4">
 					<div class="rounded-full bg-indigo-100 p-3">
-						<svg class="h-8 w-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+						<svg
+							class="h-8 w-8 text-indigo-600"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+							></path>
 						</svg>
 					</div>
 					<div>
-						<h3 class="text-xl font-semibold text-indigo-900">Ready to analyze a new repository?</h3>
+						<h3 class="text-xl font-semibold text-indigo-900">
+							Ready to analyze a new repository?
+						</h3>
 						<p class="mt-1 text-sm text-indigo-700">
-							Connect your GitHub repositories and unlock AI-powered insights to accelerate your team's productivity.
+							Connect your GitHub repositories and unlock AI-powered insights to accelerate your
+							team's productivity.
 						</p>
 					</div>
 				</div>
 				<div class="flex space-x-3">
 					<a
 						href="/repositories"
-						class="inline-flex items-center rounded-lg border border-indigo-300 bg-white px-6 py-3 text-sm font-medium text-indigo-700 shadow-sm hover:bg-indigo-50 transition-colors"
+						class="inline-flex items-center rounded-lg border border-indigo-300 bg-white px-6 py-3 text-sm font-medium text-indigo-700 shadow-sm transition-colors hover:bg-indigo-50"
 					>
 						View Repositories
 					</a>
 					<a
 						href="/repositories"
-						class="inline-flex items-center rounded-lg bg-indigo-600 px-6 py-3 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 transition-colors"
+						class="inline-flex items-center rounded-lg bg-indigo-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700"
 					>
-						<svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+						<svg class="mr-2 -ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M12 4v16m8-8H4"
+							></path>
 						</svg>
 						Import Repository
 					</a>
