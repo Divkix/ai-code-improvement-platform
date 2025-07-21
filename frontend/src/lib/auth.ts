@@ -15,17 +15,17 @@ export function isAuthenticated(): boolean {
 // Redirect to login if not authenticated
 export function requireAuth(): void {
 	if (!browser) return;
-	
+
 	const auth = get(authStore);
 	if (!auth.isAuthenticated && !auth.isLoading) {
 		goto('/auth/login');
 	}
 }
 
-// Redirect to dashboard if already authenticated  
+// Redirect to dashboard if already authenticated
 export function requireGuest(): void {
 	if (!browser) return;
-	
+
 	const auth = get(authStore);
 	if (auth.isAuthenticated) {
 		goto('/');

@@ -102,9 +102,7 @@
 			</button>
 
 			<div class="text-center">
-				<span class="text-sm text-gray-500">
-					For demo access, contact your administrator
-				</span>
+				<span class="text-sm text-gray-500"> For demo access, contact your administrator </span>
 			</div>
 		</form>
 	</div>

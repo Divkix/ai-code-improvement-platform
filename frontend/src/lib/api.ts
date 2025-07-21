@@ -24,7 +24,6 @@ export interface User {
 	createdAt: string;
 }
 
-
 export interface LoginRequest {
 	email: string;
 	password: string;
@@ -96,7 +95,6 @@ class ApiClient {
 			body: JSON.stringify(requestBody)
 		});
 	}
-
 
 	async getCurrentUser(): Promise<User> {
 		return this.request<User>('/api/auth/me');

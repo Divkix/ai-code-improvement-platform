@@ -32,27 +32,27 @@ function createAuthStore() {
 
 	return {
 		subscribe,
-		
+
 		// Initialize auth state from localStorage
 		init: () => {
 			if (!browser) return;
-			
-			update(state => ({ ...state, isLoading: true }));
-			
+
+			update((state) => ({ ...state, isLoading: true }));
+
 			const token = localStorage.getItem('auth_token');
 			const userStr = localStorage.getItem('auth_user');
-			
+
 			if (token && userStr) {
 				try {
 					const user = JSON.parse(userStr);
-					update(state => ({
+					update((state) => ({
 						...state,
 						user,
 						token,
 						isAuthenticated: true,
 						isLoading: false
 					}));
-					
+
 					// Validate token by fetching current user
 					authStore.validateToken();
 				} catch (error) {
@@ -60,67 +60,66 @@ function createAuthStore() {
 					authStore.logout();
 				}
 			} else {
-				update(state => ({ ...state, isLoading: false }));
+				update((state) => ({ ...state, isLoading: false }));
 			}
 		},
-		
+
 		// Login user
 		login: async (email: string, password: string) => {
-			update(state => ({ ...state, isLoading: true }));
-			
+			update((state) => ({ ...state, isLoading: true }));
+
 			try {
 				const response = await apiClient.login(email, password);
-				
+
 				// Store token and user data
 				if (browser) {
 					localStorage.setItem('auth_token', response.token);
 					localStorage.setItem('auth_user', JSON.stringify(response.user));
 				}
-				
-				update(state => ({
+
+				update((state) => ({
 					...state,
 					user: response.user,
 					token: response.token,
 					isAuthenticated: true,
 					isLoading: false
 				}));
-				
+
 				return response;
 			} catch (error) {
-				update(state => ({ ...state, isLoading: false }));
+				update((state) => ({ ...state, isLoading: false }));
 				throw error;
 			}
 		},
-		
-		
+
 		// Logout user
 		logout: () => {
 			if (browser) {
 				localStorage.removeItem('auth_token');
 				localStorage.removeItem('auth_user');
 			}
-			
+
 			set(initialState);
 		},
-		
+
 		// Validate current token
 		validateToken: async () => {
 			try {
 				const user = await apiClient.getCurrentUser();
-				update(state => ({ ...state, user, isLoading: false }));
+				update((state) => ({ ...state, user, isLoading: false }));
 			} catch (error) {
 				console.error('Token validation failed:', error);
 				authStore.logout();
 			}
 		},
-		
+
 		// Update user information
 		updateUser: (user: User) => {
 			if (browser) {
 				localStorage.setItem('auth_user', JSON.stringify(user));
 			}
-			
-			update(state => ({ ...state, user }));
+
+			update((state) => ({ ...state, user }));
 		}
 	};
 }

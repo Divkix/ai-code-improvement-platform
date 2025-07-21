@@ -24,7 +24,12 @@ if (existingUser) {
 } else {
     // Insert demo user
     const result = db.users.insertOne(demoUser);
-    print('🌱 Created demo user: ' + demoUser.name + ' (' + demoUser.email + ')');
+    if (result.acknowledged) {
+        print('🌱 Created demo user: ' + demoUser.name + ' (' + demoUser.email + ')');
+    } else {
+        print('❌ Failed to create demo user');
+        throw new Error('Failed to insert demo user into the database');
+    }
     print('📧 Login with: demo@github-analyzer.com / demo123456');
 }
 
