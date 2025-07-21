@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { Chart, registerables } from 'chart.js';
 	import { apiClient } from '$lib/api';
+	import { authStore } from '$lib/stores/auth';
 	import type { DashboardStats, ActivityItem, TrendDataPoint } from '$lib/api';
 
 	Chart.register(...registerables);
@@ -18,6 +20,12 @@
 		try {
 			loading = true;
 			error = null;
+
+			// Check authentication first
+			if (!$authStore.isAuthenticated) {
+				goto('/auth/login');
+				return;
+			}
 
 			const [statsData, activitiesData, trendsData] = await Promise.all([
 				apiClient.getDashboardStats(),
@@ -36,6 +44,12 @@
 		} catch (err) {
 			console.error('Failed to load dashboard data:', err);
 			error = err instanceof Error ? err.message : 'Failed to load dashboard data';
+			
+			// If it's an auth error, redirect to login
+			if (err instanceof Error && (err.message.includes('authorization') || err.message.includes('Unauthorized'))) {
+				authStore.logout();
+				goto('/auth/login');
+			}
 		} finally {
 			loading = false;
 		}
@@ -136,7 +150,17 @@
 	}
 
 	onMount(() => {
-		loadDashboardData();
+		// Wait for auth initialization before loading data
+		const unsubscribe = authStore.subscribe((auth) => {
+			if (!auth.isLoading) {
+				if (auth.isAuthenticated) {
+					loadDashboardData();
+				} else {
+					goto('/auth/login');
+				}
+				unsubscribe(); // Only run once
+			}
+		});
 	});
 </script>
 
@@ -144,7 +168,34 @@
 	<title>Dashboard - GitHub Analyzer</title>
 </svelte:head>
 
-{#if loading}
+{#if $authStore.isLoading}
+	<div class="flex h-96 items-center justify-center">
+		<div class="text-center">
+			<div
+				class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"
+			></div>
+			<p class="mt-4 text-gray-600">Initializing...</p>
+		</div>
+	</div>
+{:else if !$authStore.isAuthenticated}
+	<div class="flex h-96 items-center justify-center">
+		<div class="text-center">
+			<div class="mx-auto mb-4 h-12 w-12 rounded-full bg-blue-100 p-3">
+				<svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+				</svg>
+			</div>
+			<h3 class="text-lg font-medium text-gray-900 mb-2">Authentication Required</h3>
+			<p class="text-gray-600 mb-4">Please log in to access your dashboard.</p>
+			<a
+				href="/auth/login"
+				class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+			>
+				Go to Login
+			</a>
+		</div>
+	</div>
+{:else if loading}
 	<div class="flex h-96 items-center justify-center">
 		<div class="text-center">
 			<div
