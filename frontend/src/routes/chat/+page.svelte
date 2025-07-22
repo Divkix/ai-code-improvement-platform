@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	// Ensure user is authenticated
+	// The layout now handles the auth check.
 	onMount(() => {
+		// You can add other initialization logic here if needed
 	});
 
 	let selectedRepo = 'backend-api';
@@ -23,7 +24,6 @@
 		{ id: 'frontend-web', name: 'frontend-web' },
 		{ id: 'mobile-app', name: 'mobile-app' }
 	];
-
 	// Suggested questions
 	const suggestedQuestions = [
 		'Explain the authentication flow',
@@ -46,10 +46,10 @@
 		const query = inputText;
 		inputText = '';
 		loading = true;
-
 		try {
 			// TODO: Replace with actual API call
-			await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API call
+			await new Promise((resolve) => setTimeout(resolve, 2000));
+			// Simulate API call
 
 			// Mock response
 			const assistantMessage = {
@@ -70,7 +70,7 @@ func HandleAuthentication(c *gin.Context) {
 
 The authentication flow follows a JWT-based approach where:
 1. Users provide credentials via POST /auth/login
-2. Server validates credentials against the database  
+2. Server validates credentials against the database
 3. A JWT token is generated and returned
 4. Subsequent requests include the token in the Authorization header
 5. Middleware validates the token on protected routes
@@ -79,9 +79,8 @@ This implementation is secure but could be enhanced with refresh tokens for bett
 				timestamp: new Date(),
 				analyzingFiles: ['src/auth/middleware.go', 'src/handlers/auth.go', 'src/models/user.go']
 			};
-
 			messages = [...messages, assistantMessage];
-		} catch (error) {
+		} catch { // FIX: Removed unused '_err' variable
 			const errorMessage = {
 				role: 'assistant',
 				content: 'Sorry, I encountered an error processing your request. Please try again.',
@@ -104,9 +103,7 @@ This implementation is secure but could be enhanced with refresh tokens for bett
 </svelte:head>
 
 <div class="flex h-[calc(100vh-12rem)]">
-	<!-- Chat Interface -->
 	<div class="flex flex-1 flex-col rounded-lg bg-white shadow">
-		<!-- Header -->
 		<div class="flex items-center justify-between border-b border-gray-200 p-4">
 			<div class="flex items-center space-x-3">
 				<div class="h-3 w-3 rounded-full bg-green-500"></div>
@@ -119,16 +116,15 @@ This implementation is secure but could be enhanced with refresh tokens for bett
 					bind:value={selectedRepo}
 					class="rounded-md border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
 				>
-					{#each repositories as repo}
+					{#each repositories as repo (repo.id)}
 						<option value={repo.id}>{repo.name}</option>
 					{/each}
 				</select>
 			</div>
 		</div>
 
-		<!-- Messages -->
 		<div class="flex-1 space-y-4 overflow-y-auto p-4">
-			{#each messages as message}
+			{#each messages as message, i (i)}
 				<div class="flex {message.role === 'user' ? 'justify-end' : 'justify-start'}">
 					<div
 						class="max-w-3xl {message.role === 'user'
@@ -137,6 +133,7 @@ This implementation is secure but could be enhanced with refresh tokens for bett
 					>
 						{#if message.role === 'assistant'}
 							<div class="prose prose-sm max-w-none">
+								// @eslint-disable-next-line svelte/no-at-html-tags
 								{@html message.content.replace(
 									/```(\w+)?\n([\s\S]*?)```/g,
 									'<pre class="bg-gray-800 text-green-400 p-3 rounded mt-2 mb-2 overflow-x-auto"><code>$2</code></pre>'
@@ -164,12 +161,11 @@ This implementation is secure but could be enhanced with refresh tokens for bett
 			{/if}
 		</div>
 
-		<!-- Suggested Questions (show only if no user messages) -->
 		{#if messages.length === 1}
 			<div class="border-t border-gray-200 p-4">
 				<p class="mb-2 text-sm font-medium text-gray-700">Try asking:</p>
 				<div class="flex flex-wrap gap-2">
-					{#each suggestedQuestions as question}
+					{#each suggestedQuestions as question (question)}
 						<button
 							on:click={() => askSuggested(question)}
 							class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 hover:bg-gray-200"
@@ -181,7 +177,6 @@ This implementation is secure but could be enhanced with refresh tokens for bett
 			</div>
 		{/if}
 
-		<!-- Input -->
 		<div class="border-t border-gray-200 p-4">
 			<form on:submit|preventDefault={sendMessage} class="flex space-x-2">
 				<input

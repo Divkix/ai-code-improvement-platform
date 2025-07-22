@@ -6,11 +6,11 @@
 		loadRepositories();
 	});
 
-	let repositories: Repository[] = [];
-	let loading = true;
-	let error = '';
-	let showAddModal = false;
-	let githubUrl = '';
+	let repositories = $state<Repository[]>([]);
+	let loading = $state(true);
+	let error = $state('');
+	let showAddModal = $state(false);
+	let githubUrl = $state('');
 
 	async function loadRepositories() {
 		try {
@@ -62,7 +62,7 @@
 			let match;
 
 			// Match https://github.com/owner/repo
-			match = cleanUrl.match(/https?:\/\/github\.com\/([^\/]+)\/([^\/]+)/);
+			match = cleanUrl.match(/https?:\/\/github\.com\/([^/]+)\/([^/]+)/);
 			if (match) {
 				const owner = match[1];
 				const name = match[2];
@@ -70,7 +70,7 @@
 			}
 
 			// Match owner/repo format
-			match = cleanUrl.match(/^([^\/]+)\/([^\/]+)$/);
+			match = cleanUrl.match(/^([^/]+)\/([^/]+)$/);
 			if (match) {
 				const owner = match[1];
 				const name = match[2];
@@ -161,7 +161,7 @@
 			<p class="text-gray-600">Manage and analyze your GitHub repositories</p>
 		</div>
 		<button
-			on:click={openAddModal}
+			onclick={openAddModal}
 			class="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
 		>
 			Add Repository
@@ -176,7 +176,7 @@
 					<p class="mt-2 text-sm text-red-700">{error}</p>
 					<div class="mt-4">
 						<button
-							on:click={loadRepositories}
+							onclick={loadRepositories}
 							class="rounded-md bg-red-100 px-2 py-1 text-sm font-medium text-red-800 hover:bg-red-200"
 						>
 							Try Again
@@ -210,7 +210,7 @@
 			<p class="mt-1 text-sm text-gray-500">Get started by importing your first repository.</p>
 			<div class="mt-6">
 				<button
-					on:click={openAddModal}
+					onclick={openAddModal}
 					class="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
 				>
 					Add Repository
@@ -219,7 +219,7 @@
 		</div>
 	{:else}
 		<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-			{#each repositories as repo}
+			{#each repositories as repo (repo.id)}
 				<div class="overflow-hidden rounded-lg bg-white shadow">
 					<div class="p-6">
 						<div class="mb-4 flex items-center justify-between">
@@ -285,7 +285,7 @@
 							</a>
 							<button
 								type="button"
-								on:click={() => handleDeleteRepository(repo)}
+								onclick={() => handleDeleteRepository(repo)}
 								class="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
 							>
 								Delete
@@ -303,8 +303,8 @@
 		<div class="flex min-h-screen items-center justify-center p-4">
 			<div
 				class="fixed inset-0 bg-black bg-opacity-50"
-				on:click={closeAddModal}
-				on:keydown={closeAddModal}
+				onclick={closeAddModal}
+				onkeydown={closeAddModal}
 				role="button"
 				tabindex="0"
 			></div>
