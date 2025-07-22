@@ -1297,7 +1297,14 @@ func (r GithubDisconnectResponse) StatusCode() int {
 type GithubLoginResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON401      *Error
+	JSON200      *struct {
+		// AuthUrl GitHub OAuth authorization URL
+		AuthUrl string `json:"auth_url"`
+
+		// State OAuth state parameter for CSRF protection
+		State string `json:"state"`
+	}
+	JSON401 *Error
 }
 
 // Status returns HTTPResponse.Status
@@ -1986,6 +1993,19 @@ func ParseGithubLoginResponse(rsp *http.Response) (*GithubLoginResponse, error) 
 	}
 
 	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			// AuthUrl GitHub OAuth authorization URL
+			AuthUrl string `json:"auth_url"`
+
+			// State OAuth state parameter for CSRF protection
+			State string `json:"state"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
 		var dest Error
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
