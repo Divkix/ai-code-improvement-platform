@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
 	import { Chart, registerables } from 'chart.js';
 	import { apiClient } from '$lib/api';
 	import { authStore } from '$lib/stores/auth';
@@ -8,12 +7,13 @@
 
 	Chart.register(...registerables);
 
-	let stats: DashboardStats | null = null;
-	let activities: ActivityItem[] = [];
-	let trends: TrendDataPoint[] = [];
-	let loading = true;
-	let error: string | null = null;
-	let chartCanvas: HTMLCanvasElement;
+	// FIX: Use $state for all variables that will be reassigned to trigger UI updates
+	let stats = $state<DashboardStats | null>(null);
+	let activities = $state<ActivityItem[]>([]);
+	let trends = $state<TrendDataPoint[]>([]);
+	let loading = $state(true);
+	let error = $state<string | null>(null);
+	let chartCanvas = $state<HTMLCanvasElement | undefined>(undefined);
 	let chart: Chart | null = null;
 
 	async function loadDashboardData() {
@@ -21,34 +21,23 @@
 			loading = true;
 			error = null;
 
-			// Check authentication first
-			if (!$authStore.isAuthenticated) {
-				goto('/auth/login');
-				return;
-			}
-
 			const [statsData, activitiesData, trendsData] = await Promise.all([
 				apiClient.getDashboardStats(),
-				apiClient.getDashboardActivity(6), // Get 6 recent activities
-				apiClient.getDashboardTrends(14) // Get 2 weeks of trend data
+				apiClient.getDashboardActivity(6),
+				apiClient.getDashboardTrends(14)
 			]);
+
+			console.log('Received stats data from API:', statsData);
 
 			stats = statsData;
 			activities = activitiesData;
 			trends = trendsData;
-
-			// Create chart after data is loaded
-			if (chartCanvas && trends.length > 0) {
-				createChart();
-			}
 		} catch (err) {
 			console.error('Failed to load dashboard data:', err);
 			error = err instanceof Error ? err.message : 'Failed to load dashboard data';
-			
-			// If it's an auth error, redirect to login
+
 			if (err instanceof Error && (err.message.includes('authorization') || err.message.includes('Unauthorized'))) {
 				authStore.logout();
-				goto('/auth/login');
 			}
 		} finally {
 			loading = false;
@@ -59,10 +48,10 @@
 		if (chart) {
 			chart.destroy();
 		}
+		if (!chartCanvas) return;
 
 		const ctx = chartCanvas.getContext('2d');
 		if (!ctx) return;
-
 		chart = new Chart(ctx, {
 			type: 'line',
 			data: {
@@ -109,29 +98,20 @@
 
 	function getSeverityColor(severity: string): string {
 		switch (severity) {
-			case 'error':
-				return 'bg-red-400';
-			case 'warning':
-				return 'bg-yellow-400';
-			case 'success':
-				return 'bg-green-400';
-			default:
-				return 'bg-blue-400';
+			case 'error': return 'bg-red-400';
+			case 'warning': return 'bg-yellow-400';
+			case 'success': return 'bg-green-400';
+			default: return 'bg-blue-400';
 		}
 	}
 
 	function getTypeIcon(type: string): string {
 		switch (type) {
-			case 'repository_imported':
-				return '📁';
-			case 'analysis_completed':
-				return '✅';
-			case 'issue_detected':
-				return '⚠️';
-			case 'optimization_found':
-				return '⚡';
-			default:
-				return '📊';
+			case 'repository_imported': return '📁';
+			case 'analysis_completed': return '✅';
+			case 'issue_detected': return '⚠️';
+			case 'optimization_found': return '⚡';
+			default: return '📊';
 		}
 	}
 
@@ -150,17 +130,13 @@
 	}
 
 	onMount(() => {
-		// Wait for auth initialization before loading data
-		const unsubscribe = authStore.subscribe((auth) => {
-			if (!auth.isLoading) {
-				if (auth.isAuthenticated) {
-					loadDashboardData();
-				} else {
-					goto('/auth/login');
-				}
-				unsubscribe(); // Only run once
-			}
-		});
+		loadDashboardData();
+	});
+
+	$effect(() => {
+		if (chartCanvas && trends.length > 0) {
+			createChart();
+		}
 	});
 </script>
 
@@ -168,34 +144,7 @@
 	<title>Dashboard - GitHub Analyzer</title>
 </svelte:head>
 
-{#if $authStore.isLoading}
-	<div class="flex h-96 items-center justify-center">
-		<div class="text-center">
-			<div
-				class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"
-			></div>
-			<p class="mt-4 text-gray-600">Initializing...</p>
-		</div>
-	</div>
-{:else if !$authStore.isAuthenticated}
-	<div class="flex h-96 items-center justify-center">
-		<div class="text-center">
-			<div class="mx-auto mb-4 h-12 w-12 rounded-full bg-blue-100 p-3">
-				<svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-				</svg>
-			</div>
-			<h3 class="text-lg font-medium text-gray-900 mb-2">Authentication Required</h3>
-			<p class="text-gray-600 mb-4">Please log in to access your dashboard.</p>
-			<a
-				href="/auth/login"
-				class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-			>
-				Go to Login
-			</a>
-		</div>
-	</div>
-{:else if loading}
+{#if loading}
 	<div class="flex h-96 items-center justify-center">
 		<div class="text-center">
 			<div
@@ -211,7 +160,7 @@
 				<h3 class="text-sm font-medium text-red-800">Error loading dashboard</h3>
 				<p class="mt-2 text-sm text-red-700">{error}</p>
 				<button
-					on:click={loadDashboardData}
+					onclick={loadDashboardData}
 					class="mt-3 inline-flex items-center rounded-md bg-red-100 px-3 py-2 text-sm font-medium text-red-800 hover:bg-red-200"
 				>
 					Try again
@@ -221,7 +170,6 @@
 	</div>
 {:else if stats}
 	<div class="space-y-6">
-		<!-- Hero Metrics -->
 		<div class="overflow-hidden rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 shadow-xl">
 			<div class="p-8">
 				<div class="grid grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-6">
@@ -265,7 +213,6 @@
 			</div>
 		</div>
 
-		<!-- ROI Highlight -->
 		<div class="rounded-lg border border-green-200 bg-green-50 p-6">
 			<div class="flex items-center justify-between">
 				<div class="flex items-center space-x-3">
@@ -305,9 +252,7 @@
 			</div>
 		</div>
 
-		<!-- Content Grid -->
 		<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-			<!-- Code Quality Trend Chart -->
 			<div class="overflow-hidden rounded-lg bg-white shadow">
 				<div class="p-6">
 					<h3 class="mb-4 text-lg font-medium text-gray-900">Performance Trends (14 days)</h3>
@@ -323,7 +268,6 @@
 				</div>
 			</div>
 
-			<!-- Recent Activity -->
 			<div class="overflow-hidden rounded-lg bg-white shadow">
 				<div class="p-6">
 					<div class="mb-4 flex items-center justify-between">
@@ -364,7 +308,6 @@
 			</div>
 		</div>
 
-		<!-- Call to Action -->
 		<div class="rounded-lg border border-indigo-200 bg-gradient-to-r from-indigo-50 to-blue-50 p-8">
 			<div class="flex items-center justify-between">
 				<div class="flex items-center space-x-4">
@@ -417,5 +360,22 @@
 				</div>
 			</div>
 		</div>
+	</div>
+{:else}
+	<div class="py-16 text-center">
+		<div class="mx-auto h-12 w-12 text-gray-400">
+			<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+				></path>
+			</svg>
+		</div>
+		<h3 class="mt-2 text-sm font-medium text-gray-900">No Dashboard Data</h3>
+		<p class="mt-1 text-sm text-gray-500">
+			Could not retrieve dashboard statistics. Please check the browser console for errors.
+		</p>
 	</div>
 {/if}

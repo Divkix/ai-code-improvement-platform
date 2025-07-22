@@ -1,11 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { requireAuth } from '$lib/auth';
 	import apiClient, { type Repository } from '$lib/api';
 
-	// Ensure user is authenticated
 	onMount(() => {
-		requireAuth();
 		loadRepositories();
 	});
 
@@ -49,7 +46,6 @@
 				fullName: parsed.fullName,
 				isPrivate: false // We'll assume public for now since we can't detect this from URL
 			});
-
 			repositories = [newRepo, ...repositories];
 			showAddModal = false;
 			githubUrl = '';
@@ -64,7 +60,7 @@
 			// Handle different GitHub URL formats
 			const cleanUrl = url.trim().replace(/\.git$/, '');
 			let match;
-			
+
 			// Match https://github.com/owner/repo
 			match = cleanUrl.match(/https?:\/\/github\.com\/([^\/]+)\/([^\/]+)/);
 			if (match) {
@@ -72,7 +68,7 @@
 				const name = match[2];
 				return { owner, name, fullName: `${owner}/${name}` };
 			}
-			
+
 			// Match owner/repo format
 			match = cleanUrl.match(/^([^\/]+)\/([^\/]+)$/);
 			if (match) {
@@ -80,7 +76,7 @@
 				const name = match[2];
 				return { owner, name, fullName: `${owner}/${name}` };
 			}
-			
+
 			return null;
 		} catch {
 			return null;
@@ -94,7 +90,7 @@
 
 		try {
 			await apiClient.deleteRepository(repo.id);
-			repositories = repositories.filter(r => r.id !== repo.id);
+			repositories = repositories.filter((r) => r.id !== repo.id);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to delete repository';
 		}
@@ -119,7 +115,6 @@
 		const date = new Date(dateString);
 		const now = new Date();
 		const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-		
 		if (diffInHours < 1) {
 			return 'Just now';
 		} else if (diffInHours < 24) {
@@ -160,7 +155,6 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<!-- Header -->
 	<div class="flex items-center justify-between">
 		<div>
 			<h1 class="text-2xl font-bold text-gray-900">Repositories</h1>
@@ -174,7 +168,6 @@
 		</button>
 	</div>
 
-	<!-- Error Message -->
 	{#if error}
 		<div class="rounded-md bg-red-50 p-4">
 			<div class="flex">
@@ -194,10 +187,11 @@
 		</div>
 	{/if}
 
-	<!-- Loading State -->
 	{#if loading}
 		<div class="py-12 text-center">
-			<div class="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+			<div
+				class="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"
+			></div>
 			<p class="mt-2 text-gray-600">Loading repositories...</p>
 		</div>
 	{:else if !repositories || repositories.length === 0}
@@ -234,9 +228,9 @@
 									<div class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200">
 										<svg class="h-4 w-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
 											<path
-												fillRule="evenodd"
+												fill-rule="evenodd"
 												d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
-												clipRule="evenodd"
+												clip-rule="evenodd"
 											/>
 										</svg>
 									</div>
@@ -304,17 +298,24 @@
 	{/if}
 </div>
 
-<!-- Add Repository Modal -->
 {#if showAddModal}
 	<div class="fixed inset-0 z-50 overflow-y-auto">
 		<div class="flex min-h-screen items-center justify-center p-4">
-			<div class="fixed inset-0 bg-black bg-opacity-50" on:click={closeAddModal} on:keydown={closeAddModal}></div>
+			<div
+				class="fixed inset-0 bg-black bg-opacity-50"
+				on:click={closeAddModal}
+				on:keydown={closeAddModal}
+				role="button"
+				tabindex="0"
+			></div>
 			<div class="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
 				<h3 class="mb-4 text-lg font-medium text-gray-900">Add Repository</h3>
-				
+
 				<form on:submit|preventDefault={handleAddRepository}>
 					<div class="mb-4">
-						<label for="githubUrl" class="block text-sm font-medium text-gray-700">GitHub Repository URL</label>
+						<label for="githubUrl" class="block text-sm font-medium text-gray-700"
+							>GitHub Repository URL</label
+						>
 						<input
 							type="url"
 							id="githubUrl"

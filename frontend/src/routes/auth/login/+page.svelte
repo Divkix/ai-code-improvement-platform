@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { authStore } from '$lib/stores/auth';
-	import { requireGuest } from '$lib/auth';
 
 	let email = '';
 	let password = '';
@@ -15,7 +14,6 @@
 
 	// Redirect if already logged in
 	onMount(() => {
-		requireGuest();
 	});
 
 	async function handleLogin() {

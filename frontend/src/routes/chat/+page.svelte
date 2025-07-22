@@ -1,10 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { requireAuth } from '$lib/auth';
 
 	// Ensure user is authenticated
 	onMount(() => {
-		requireAuth();
 	});
 
 	let selectedRepo = 'backend-api';
