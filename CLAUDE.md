@@ -13,7 +13,7 @@ This is an AI-powered code analysis platform that helps development teams onboar
 - Database: MongoDB 8.0
 - Vector Database: Qdrant 1.7+
 - Embedding Model: Voyage AI (voyage-code-3)
-- LLM: Claude 3.5 Sonnet
+- LLM: Claude 4 sonnet
 - Containerization: Docker Compose
 
 ## Development Commands

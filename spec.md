@@ -27,7 +27,7 @@ Enterprise development teams looking to reduce costs while integrating AI capabi
 - **Database**: MongoDB 7.0
 - **Vector Database**: Qdrant 1.7+
 - **Embedding Model**: Voyage AI (voyage-code-3)
-- **LLM**: Claude 3.5 Sonnet via Anthropic API
+- **LLM**: Claude 4 sonnet via Anthropic API
 - **Containerization**: Docker Compose
 - **Version Control Integration**: GitHub API v3/GraphQL
 

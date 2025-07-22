@@ -11,7 +11,7 @@ Building an AI-powered code analysis platform that helps development teams onboa
 - Database: MongoDB 8.0
 - Vector Database: Qdrant 1.7+
 - Embedding Model: Voyage AI (voyage-code-3)
-- LLM: Claude 3.5 Sonnet
+- LLM: Claude 4 Sonnet
 - Containerization: Docker Compose
 
 ## Vertical Slicing Strategy
@@ -575,7 +575,7 @@ Build semantic search with OpenAPI specification:
 Implement Claude API integration with OpenAPI specification:
 - Define chat and analysis endpoints in OpenAPI spec
 - Generated handlers for Claude API interactions
-- API client for Claude 3.5 Sonnet with type safety
+- API client for Claude 4 Sonnet with type safety
 - Prompt engineering with structured template models
 - Context-aware prompt construction using defined schemas
 - Response streaming with proper WebSocket/SSE definitions
