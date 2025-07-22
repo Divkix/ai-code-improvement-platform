@@ -13,14 +13,12 @@
 
 	// This effect is the single source of truth for auth-based navigation.
 	$effect(() => {
-		if (!browser) return;
+		if (!browser || $authStore.isLoading) return; // Wait for the auth check to complete
 
-		const { isLoading, isAuthenticated } = $authStore;
+		const { isAuthenticated } = $authStore;
 		const path = $page.url.pathname;
 		const isAuthRoute = path.startsWith('/auth');
 
-		// Don't do anything while the store is initializing
-		if (isLoading) return;
 
 		// If not authenticated and not on an auth page, redirect to login
 		if (!isAuthenticated && !isAuthRoute) {
@@ -91,12 +89,8 @@
 					<p class="mt-4 text-gray-600">Authenticating...</p>
 				</div>
 			</div>
-		{:else if $authStore.isAuthenticated || $page.url.pathname.startsWith('/auth')}
-			{@render children()}
 		{:else}
-			<div class="flex h-96 items-center justify-center">
-				<p class="mt-4 text-gray-600">Redirecting...</p>
-			</div>
+			{@render children()}
 		{/if}
 	</main>
 </div>

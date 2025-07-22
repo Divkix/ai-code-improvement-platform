@@ -19,7 +19,16 @@ export interface AuthState {
 	isLoading: boolean;
 }
 
+// Set isLoading to true initially to prevent premature redirects on page load.
 const initialState: AuthState = {
+	user: null,
+	token: null,
+	isAuthenticated: false,
+	isLoading: true
+};
+
+// Define a clear state for when the user is logged out and loading is complete.
+const loggedOutState: AuthState = {
 	user: null,
 	token: null,
 	isAuthenticated: false,
@@ -35,9 +44,10 @@ function createAuthStore() {
 
 		// Initialize auth state from localStorage
 		init: () => {
-			if (!browser) return;
-
-			update((state) => ({ ...state, isLoading: true }));
+			if (!browser) {
+				set(loggedOutState);
+				return;
+			}
 
 			const token = localStorage.getItem('auth_token');
 			const userStr = localStorage.getItem('auth_user');
@@ -49,18 +59,18 @@ function createAuthStore() {
 						...state,
 						user,
 						token,
-						isAuthenticated: true,
-						isLoading: false
+						isAuthenticated: true
 					}));
 
-					// Validate token by fetching current user
+					// Validate the token against the backend. This will set isLoading to false.
 					authStore.validateToken();
 				} catch (error) {
 					console.error('Failed to parse stored user data:', error);
 					authStore.logout();
 				}
 			} else {
-				update((state) => ({ ...state, isLoading: false }));
+				// No token found, so the user is not authenticated.
+				set(loggedOutState);
 			}
 		},
 
@@ -98,17 +108,18 @@ function createAuthStore() {
 				localStorage.removeItem('auth_token');
 				localStorage.removeItem('auth_user');
 			}
-
-			set(initialState);
+			set(loggedOutState);
 		},
 
 		// Validate current token
 		validateToken: async () => {
 			try {
 				const user = await apiClient.getCurrentUser();
+				// Token is valid, update user info and set loading to false.
 				update((state) => ({ ...state, user, isLoading: false }));
 			} catch (error) {
 				console.error('Token validation failed:', error);
+				// Token is invalid, log the user out.
 				authStore.logout();
 			}
 		},
