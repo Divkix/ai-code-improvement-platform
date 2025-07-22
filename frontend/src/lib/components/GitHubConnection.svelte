@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { handleGitHubCallback, disconnectGitHub as disconnectGitHubAPI } from '$lib/api/hooks';
+	import { handleGitHubCallback, disconnectGitHub as disconnectGitHubAPI, getGitHubLoginUrl } from '$lib/api/hooks';
 	import { type User } from '$lib/api';
 	import { authStore } from '$lib/stores/auth';
 
@@ -54,12 +54,12 @@
 			error = '';
 			success = '';
 
-			// Build the GitHub login URL using the API base URL from environment
-			const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-			const redirectUri = encodeURIComponent(`${window.location.origin}/repositories`);
+			// Get the GitHub OAuth URL from the backend API
+			const redirectUri = `${window.location.origin}/repositories`;
+			const { auth_url } = await getGitHubLoginUrl(redirectUri);
 
-			// Navigate directly to the GitHub OAuth endpoint since it returns a 302 redirect
-			window.location.href = `${apiBaseUrl}/api/auth/github/login?redirect_uri=${redirectUri}`;
+			// Redirect to the GitHub OAuth URL
+			window.location.href = auth_url;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to initiate GitHub connection';
 			connecting = false;

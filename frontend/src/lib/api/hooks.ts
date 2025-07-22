@@ -132,8 +132,15 @@ export async function validateGitHubRepository(owner: string, repo: string) {
 }
 
 // GitHub OAuth
-// Note: GitHub OAuth login URL is handled directly via window.location.href
-// since the backend returns a 302 redirect rather than JSON data
+export async function getGitHubLoginUrl(redirectUri?: string): Promise<{ auth_url: string; state: string }> {
+	const { data, error } = await apiClient.GET('/api/auth/github/login', {
+		params: {
+			query: redirectUri ? { redirect_uri: redirectUri } : undefined
+		}
+	});
+	if (error) throw new Error(error.message || 'Failed to get GitHub login URL');
+	return data;
+}
 
 export async function handleGitHubCallback(request: GitHubOAuthRequest) {
 	const { data, error } = await apiClient.POST('/api/auth/github/callback', {
