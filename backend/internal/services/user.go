@@ -76,6 +76,63 @@ func (s *UserService) UpdateUser(ctx context.Context, userID string, updates bso
 	return err
 }
 
+// GetByID retrieves a user by ObjectID
+func (s *UserService) GetByID(ctx context.Context, userID primitive.ObjectID) (*models.User, error) {
+	var user models.User
+	err := s.collection.FindOne(ctx, bson.M{"_id": userID}).Decode(&user)
+	if err == mongo.ErrNoDocuments {
+		return nil, ErrUserNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// UpdateGitHubConnection updates user with GitHub token and username
+func (s *UserService) UpdateGitHubConnection(ctx context.Context, userID primitive.ObjectID, encryptedToken, githubUsername string) (*models.User, error) {
+	updates := bson.M{
+		"githubToken":     encryptedToken,
+		"githubUsername":  githubUsername,
+		"githubConnected": true,
+		"updatedAt":       time.Now(),
+	}
+
+	_, err := s.collection.UpdateOne(ctx, bson.M{"_id": userID}, bson.M{"$set": updates})
+	if err != nil {
+		return nil, err
+	}
+
+	// Return updated user
+	return s.GetByID(ctx, userID)
+}
+
+// RemoveGitHubConnection removes GitHub connection from user
+func (s *UserService) RemoveGitHubConnection(ctx context.Context, userID primitive.ObjectID) (*models.User, error) {
+	updates := bson.M{
+		"githubConnected": false,
+		"updatedAt":       time.Now(),
+	}
+
+	unset := bson.M{
+		"githubToken":    "",
+		"githubUsername": "",
+	}
+
+	_, err := s.collection.UpdateOne(ctx, 
+		bson.M{"_id": userID}, 
+		bson.M{
+			"$set":   updates,
+			"$unset": unset,
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	// Return updated user
+	return s.GetByID(ctx, userID)
+}
+
 // DeleteUser deletes a user
 func (s *UserService) DeleteUser(ctx context.Context, userID string) error {
 	objectID, err := primitive.ObjectIDFromHex(userID)

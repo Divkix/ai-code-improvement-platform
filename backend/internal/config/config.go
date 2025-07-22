@@ -34,8 +34,9 @@ type JWTConfig struct {
 }
 
 type GitHubConfig struct {
-	ClientID     string
-	ClientSecret string
+	ClientID      string
+	ClientSecret  string
+	EncryptionKey string
 }
 
 type AIConfig struct {
@@ -62,8 +63,9 @@ func Load() (*Config, error) {
 			Secret: getEnv("JWT_SECRET", ""),
 		},
 		GitHub: GitHubConfig{
-			ClientID:     getEnv("GITHUB_CLIENT_ID", ""),
-			ClientSecret: getEnv("GITHUB_CLIENT_SECRET", ""),
+			ClientID:      getEnv("GITHUB_CLIENT_ID", ""),
+			ClientSecret:  getEnv("GITHUB_CLIENT_SECRET", ""),
+			EncryptionKey: getEnv("GITHUB_ENCRYPTION_KEY", ""),
 		},
 		AI: AIConfig{
 			VoyageAPIKey:   getEnv("VOYAGE_API_KEY", ""),

@@ -11,30 +11,30 @@ import (
 
 // Repository represents a GitHub repository in our database
 type Repository struct {
-	ID             primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	UserID         primitive.ObjectID `bson:"userId" json:"userId"`
-	GitHubRepoID   *int64             `bson:"githubRepoId,omitempty" json:"githubRepoId,omitempty"`
-	Owner          string             `bson:"owner" json:"owner"`
-	Name           string             `bson:"name" json:"name"`
-	FullName       string             `bson:"fullName" json:"fullName"`
-	Description    *string            `bson:"description,omitempty" json:"description,omitempty"`
-	PrimaryLanguage *string           `bson:"primaryLanguage,omitempty" json:"primaryLanguage,omitempty"`
-	IsPrivate      bool               `bson:"isPrivate" json:"isPrivate"`
-	IndexedAt      *time.Time         `bson:"indexedAt,omitempty" json:"indexedAt,omitempty"`
-	LastSyncedAt   *time.Time         `bson:"lastSyncedAt,omitempty" json:"lastSyncedAt,omitempty"`
-	Status         string             `bson:"status" json:"status"`
-	ImportProgress int                `bson:"importProgress" json:"importProgress"`
-	Stats          *RepositoryStats   `bson:"stats,omitempty" json:"stats,omitempty"`
-	CreatedAt      time.Time          `bson:"createdAt" json:"createdAt"`
-	UpdatedAt      time.Time          `bson:"updatedAt" json:"updatedAt"`
+	ID              primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	UserID          primitive.ObjectID `bson:"userId" json:"userId"`
+	GitHubRepoID    *int64             `bson:"githubRepoId,omitempty" json:"githubRepoId,omitempty"`
+	Owner           string             `bson:"owner" json:"owner"`
+	Name            string             `bson:"name" json:"name"`
+	FullName        string             `bson:"fullName" json:"fullName"`
+	Description     *string            `bson:"description,omitempty" json:"description,omitempty"`
+	PrimaryLanguage *string            `bson:"primaryLanguage,omitempty" json:"primaryLanguage,omitempty"`
+	IsPrivate       bool               `bson:"isPrivate" json:"isPrivate"`
+	IndexedAt       *time.Time         `bson:"indexedAt,omitempty" json:"indexedAt,omitempty"`
+	LastSyncedAt    *time.Time         `bson:"lastSyncedAt,omitempty" json:"lastSyncedAt,omitempty"`
+	Status          string             `bson:"status" json:"status"`
+	ImportProgress  int                `bson:"importProgress" json:"importProgress"`
+	Stats           *RepositoryStats   `bson:"stats,omitempty" json:"stats,omitempty"`
+	CreatedAt       time.Time          `bson:"createdAt" json:"createdAt"`
+	UpdatedAt       time.Time          `bson:"updatedAt" json:"updatedAt"`
 }
 
 // RepositoryStats contains detailed statistics about a repository
 type RepositoryStats struct {
-	TotalFiles     int                `bson:"totalFiles" json:"totalFiles"`
-	TotalLines     int                `bson:"totalLines" json:"totalLines"`
-	Languages      map[string]int     `bson:"languages,omitempty" json:"languages,omitempty"`
-	LastCommitDate *time.Time         `bson:"lastCommitDate,omitempty" json:"lastCommitDate,omitempty"`
+	TotalFiles     int            `bson:"totalFiles" json:"totalFiles"`
+	TotalLines     int            `bson:"totalLines" json:"totalLines"`
+	Languages      map[string]int `bson:"languages,omitempty" json:"languages,omitempty"`
+	LastCommitDate *time.Time     `bson:"lastCommitDate,omitempty" json:"lastCommitDate,omitempty"`
 }
 
 // CreateRepositoryRequest represents the request payload for creating a repository
@@ -128,13 +128,14 @@ func (r *Repository) SetImportProgress(progress int) {
 	}
 	r.ImportProgress = progress
 	r.UpdatedAt = time.Now()
-	
+
 	// Automatically update status based on progress
-	if progress == 0 {
+	switch progress {
+	case 0:
 		r.Status = StatusPending
-	} else if progress == 100 {
+	case 100:
 		r.Status = StatusReady
-	} else {
+	default:
 		r.Status = StatusImporting
 	}
 }

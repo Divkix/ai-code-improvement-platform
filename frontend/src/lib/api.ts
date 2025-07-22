@@ -21,6 +21,8 @@ export interface User {
 	id: string;
 	email: string;
 	name: string;
+	githubConnected: boolean;
+	githubUsername?: string;
 	createdAt: string;
 }
 
@@ -118,6 +120,33 @@ export interface RepositoryStats {
 	avgComplexity: number;
 }
 
+export interface GitHubOAuthRequest {
+	code: string;
+	state: string;
+}
+
+export interface GitHubRepository {
+	id: number;
+	name: string;
+	fullName: string;
+	owner: string;
+	description?: string;
+	private: boolean;
+	language?: string;
+	stargazersCount: number;
+	forksCount: number;
+	size: number;
+	createdAt: string;
+	updatedAt: string;
+	pushedAt?: string;
+}
+
+export interface GitHubRepositoriesResponse {
+	repositories: GitHubRepository[];
+	hasMore: boolean;
+	currentPage: number;
+}
+
 class ApiClient {
 	private baseUrl: string;
 
@@ -187,6 +216,35 @@ class ApiClient {
 
 	async getCurrentUser(): Promise<User> {
 		return this.request<User>('/api/auth/me');
+	}
+
+	// GitHub OAuth
+	async getGitHubLoginUrl(redirectUri?: string): Promise<{ auth_url: string; state: string }> {
+		const params = redirectUri ? `?redirect_uri=${encodeURIComponent(redirectUri)}` : '';
+		return this.request<{ auth_url: string; state: string }>(`/api/auth/github/login${params}`);
+	}
+
+	async handleGitHubCallback(code: string, state: string): Promise<User> {
+		const requestBody: GitHubOAuthRequest = { code, state };
+		return this.request<User>('/api/auth/github/callback', {
+			method: 'POST',
+			body: JSON.stringify(requestBody)
+		});
+	}
+
+	async disconnectGitHub(): Promise<User> {
+		return this.request<User>('/api/auth/github/disconnect', {
+			method: 'POST'
+		});
+	}
+
+	// GitHub Repositories
+	async getGitHubRepositories(page: number = 1): Promise<GitHubRepositoriesResponse> {
+		return this.request<GitHubRepositoriesResponse>(`/api/github/repositories?page=${page}`);
+	}
+
+	async validateGitHubRepository(owner: string, repo: string): Promise<GitHubRepository> {
+		return this.request<GitHubRepository>(`/api/github/repositories/${owner}/${repo}/validate`);
 	}
 
 	// Dashboard

@@ -59,13 +59,15 @@ func main() {
 	userService := services.NewUserService(mongoDB.Database())
 	authService := auth.NewAuthService(cfg.JWT.Secret)
 	dashboardService := services.NewDashboardService()
-	repositoryService := services.NewRepositoryService(mongoDB.Database())
+	githubService := services.NewGitHubService(mongoDB.Database(), cfg.GitHub.ClientID, cfg.GitHub.ClientSecret, cfg.GitHub.EncryptionKey)
+	repositoryService := services.NewRepositoryService(mongoDB.Database(), githubService, userService)
 
 	// Initialize handlers
 	healthHandler := handlers.NewHealthHandler(mongoDB, qdrant)
 	authHandler := handlers.NewAuthHandler(userService, authService)
 	dashboardHandler := handlers.NewDashboardHandler(dashboardService)
 	repositoryHandler := handlers.NewRepositoryHandler(repositoryService)
+	githubHandler := handlers.NewGitHubHandler(githubService, userService)
 
 	// Create Gin router
 	router := gin.New()
@@ -91,6 +93,15 @@ func main() {
 		{
 			auth.POST("/login", authHandler.LoginUser)
 			auth.GET("/me", middleware.AuthMiddleware(authService), authHandler.GetCurrentUser)
+
+			// GitHub OAuth routes
+			github := auth.Group("/github")
+			github.Use(middleware.AuthMiddleware(authService))
+			{
+				github.GET("/login", githubHandler.GitHubLogin)
+				github.POST("/callback", githubHandler.GitHubCallback)
+				github.POST("/disconnect", githubHandler.GitHubDisconnect)
+			}
 		}
 
 		// Protected API routes
@@ -114,6 +125,13 @@ func main() {
 				repositories.PUT("/:id", repositoryHandler.UpdateRepository)
 				repositories.DELETE("/:id", repositoryHandler.DeleteRepository)
 				repositories.GET("/:id/stats", repositoryHandler.GetRepositoryStats)
+			}
+
+			// GitHub routes
+			githubAPI := protected.Group("/github")
+			{
+				githubAPI.GET("/repositories", githubHandler.GetGitHubRepositories)
+				githubAPI.GET("/repositories/:owner/:repo/validate", githubHandler.ValidateGitHubRepository)
 			}
 			
 			// Utility ping endpoint

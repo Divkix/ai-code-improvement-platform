@@ -45,9 +45,92 @@ components:
           format: email
         name:
           type: string
+        githubConnected:
+          type: boolean
+          description: Whether the user has connected their GitHub account
+        githubUsername:
+          type: string
+          description: GitHub username if connected
         createdAt:
           type: string
           format: date-time
+
+    GitHubOAuthRequest:
+      type: object
+      required:
+        - code
+        - state
+      properties:
+        code:
+          type: string
+          description: OAuth authorization code from GitHub
+        state:
+          type: string
+          description: OAuth state parameter for security
+
+    GitHubRepository:
+      type: object
+      required:
+        - id
+        - name
+        - fullName
+        - owner
+        - private
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: GitHub repository ID
+        name:
+          type: string
+          description: Repository name
+        fullName:
+          type: string
+          description: Full repository name (owner/repo)
+        owner:
+          type: string
+          description: Repository owner
+        description:
+          type: string
+          description: Repository description
+        private:
+          type: boolean
+          description: Whether the repository is private
+        language:
+          type: string
+          description: Primary programming language
+        stargazersCount:
+          type: integer
+          description: Number of stars
+        forksCount:
+          type: integer
+          description: Number of forks
+        size:
+          type: integer
+          description: Repository size in KB
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        pushedAt:
+          type: string
+          format: date-time
+
+    GitHubRepositoriesResponse:
+      type: object
+      required:
+        - repositories
+        - hasMore
+      properties:
+        repositories:
+          type: array
+          items:
+            $ref: '#/components/schemas/GitHubRepository'
+        hasMore:
+          type: boolean
+          description: Whether there are more repositories to load
 
 
     LoginRequest:
@@ -378,6 +461,189 @@ paths:
                 $ref: '#/components/schemas/User'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/github/login:
+    get:
+      summary: Get GitHub OAuth login URL
+      description: Redirect to GitHub OAuth authorization
+      operationId: githubLogin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: redirect_uri
+          in: query
+          description: Redirect URI after OAuth completion
+          schema:
+            type: string
+            default: "http://localhost:3000/auth/github/callback"
+      responses:
+        '302':
+          description: Redirect to GitHub OAuth
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/github/callback:
+    post:
+      summary: Handle GitHub OAuth callback
+      description: Process GitHub OAuth callback and exchange code for token
+      operationId: githubCallback
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GitHubOAuthRequest'
+      responses:
+        '200':
+          description: OAuth successful, user GitHub account connected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid OAuth request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/github/disconnect:
+    post:
+      summary: Disconnect GitHub account
+      description: Remove GitHub OAuth connection from user account
+      operationId: githubDisconnect
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: GitHub account disconnected successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/github/repositories:
+    get:
+      summary: Get user's GitHub repositories
+      description: Fetch repositories from the authenticated user's GitHub account
+      operationId: getGitHubRepositories
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+      responses:
+        '200':
+          description: List of GitHub repositories
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GitHubRepositoriesResponse'
+        '401':
+          description: Unauthorized or GitHub not connected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: GitHub rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/github/repositories/{owner}/{repo}/validate:
+    get:
+      summary: Validate GitHub repository
+      description: Validate that a GitHub repository exists and is accessible
+      operationId: validateGitHubRepository
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          description: Repository owner
+          schema:
+            type: string
+        - name: repo
+          in: path
+          required: true
+          description: Repository name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Repository is valid and accessible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GitHubRepository'
+        '401':
+          description: Unauthorized or GitHub not connected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Repository not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: GitHub rate limit exceeded
           content:
             application/json:
               schema:

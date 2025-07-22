@@ -9,6 +9,8 @@ export interface User {
 	id: string;
 	email: string;
 	name: string;
+	githubConnected: boolean;
+	githubUsername?: string;
 	createdAt: string;
 }
 
@@ -126,6 +128,15 @@ function createAuthStore() {
 
 		// Update user information
 		updateUser: (user: User) => {
+			if (browser) {
+				localStorage.setItem('auth_user', JSON.stringify(user));
+			}
+
+			update((state) => ({ ...state, user }));
+		},
+
+		// Set user information (used by GitHub OAuth callbacks)
+		setUser: (user: User) => {
 			if (browser) {
 				localStorage.setItem('auth_user', JSON.stringify(user));
 			}

@@ -6,9 +6,11 @@ package services
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github-analyzer/internal/models"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -16,22 +18,26 @@ import (
 )
 
 var (
-	ErrRepositoryNotFound    = errors.New("repository not found")
-	ErrRepositoryExists      = errors.New("repository already exists")
-	ErrUnauthorized         = errors.New("unauthorized access to repository")
+	ErrRepositoryNotFound = errors.New("repository not found")
+	ErrRepositoryExists   = errors.New("repository already exists")
+	ErrUnauthorized       = errors.New("unauthorized access to repository")
 )
 
 const RepositoryCollection = "repositories"
 
 // RepositoryService provides repository-related operations
 type RepositoryService struct {
-	collection *mongo.Collection
+	collection    *mongo.Collection
+	githubService *GitHubService
+	userService   *UserService
 }
 
 // NewRepositoryService creates a new repository service
-func NewRepositoryService(db *mongo.Database) *RepositoryService {
+func NewRepositoryService(db *mongo.Database, githubService *GitHubService, userService *UserService) *RepositoryService {
 	return &RepositoryService{
-		collection: db.Collection(RepositoryCollection),
+		collection:    db.Collection(RepositoryCollection),
+		githubService: githubService,
+		userService:   userService,
 	}
 }
 
@@ -74,13 +80,18 @@ func (s *RepositoryService) GetRepositories(ctx context.Context, userID primitiv
 	opts := options.Find().
 		SetSkip(int64(offset)).
 		SetLimit(int64(limit)).
-		SetSort(bson.D{{"updatedAt", -1}}) // Sort by most recently updated
+		SetSort(bson.D{{Key: "updatedAt", Value: -1}}) // Sort by most recently updated
 
 	cursor, err := s.collection.Find(ctx, filter, opts)
 	if err != nil {
 		return nil, err
 	}
-	defer cursor.Close(ctx)
+	defer func() {
+		if closeErr := cursor.Close(ctx); closeErr != nil {
+			// Log the error but don't override the main error
+			// In production, you'd want proper logging here
+		}
+	}()
 
 	var repositories []models.Repository
 	if err := cursor.All(ctx, &repositories); err != nil {
@@ -222,17 +233,18 @@ func (s *RepositoryService) UpdateRepositoryProgress(ctx context.Context, userID
 
 	// Determine status based on progress
 	status := models.StatusImporting
-	if progress == 0 {
+	switch progress {
+	case 0:
 		status = models.StatusPending
-	} else if progress == 100 {
+	case 100:
 		status = models.StatusReady
 	}
 
 	filter := bson.M{"_id": objectID, "userId": userID}
 	update := bson.M{"$set": bson.M{
 		"importProgress": progress,
-		"status":        status,
-		"updatedAt":     time.Now(),
+		"status":         status,
+		"updatedAt":      time.Now(),
 	}}
 
 	result, err := s.collection.UpdateOne(ctx, filter, update)
@@ -280,11 +292,11 @@ func (s *RepositoryService) GetRepositoryStats(ctx context.Context, userID primi
 	}
 
 	stats := map[string]interface{}{
-		"repositoryId": repo.ID.Hex(),
-		"totalFiles":   0,
-		"totalLines":   0,
-		"languages":    make(map[string]int),
-		"codeChunks":   0,
+		"repositoryId":  repo.ID.Hex(),
+		"totalFiles":    0,
+		"totalLines":    0,
+		"languages":     make(map[string]int),
+		"codeChunks":    0,
 		"avgComplexity": 0.0,
 	}
 
@@ -327,4 +339,147 @@ func (s *RepositoryService) MarkRepositoryIndexed(ctx context.Context, userID pr
 	}
 
 	return nil
+}
+
+// ImportRepositoryFromGitHub creates a repository by importing from GitHub
+func (s *RepositoryService) ImportRepositoryFromGitHub(ctx context.Context, userID primitive.ObjectID, owner, repoName string) (*models.Repository, error) {
+	// Get user and check GitHub connection
+	user, err := s.userService.GetByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if user.GitHubToken == "" {
+		return nil, errors.New("github account is not connected")
+	}
+
+	// Decrypt GitHub token
+	accessToken, err := s.githubService.DecryptToken(user.GitHubToken)
+	if err != nil {
+		return nil, errors.New("failed to decrypt GitHub token")
+	}
+
+	// Validate repository exists and user has access
+	githubRepo, err := s.githubService.ValidateRepository(ctx, accessToken, owner, repoName)
+	if err != nil {
+		return nil, err
+	}
+
+	fullName := owner + "/" + repoName
+
+	// Check if repository already exists for this user
+	existing, err := s.GetRepositoryByFullName(ctx, userID, fullName)
+	if err != nil && err != ErrRepositoryNotFound {
+		return nil, err
+	}
+	if existing != nil {
+		return nil, ErrRepositoryExists
+	}
+
+	// Create repository request from GitHub data
+	req := models.CreateRepositoryRequest{
+		Name:            githubRepo.Name,
+		Owner:           githubRepo.Owner,
+		FullName:        githubRepo.FullName,
+		Description:     githubRepo.Description,
+		GitHubRepoID:    &githubRepo.ID,
+		PrimaryLanguage: githubRepo.Language,
+		IsPrivate:       githubRepo.Private,
+	}
+
+	// Create repository with pending status
+	repo := models.NewRepository(userID, req)
+	repo.Status = models.StatusPending
+	repo.ImportProgress = 0
+
+	// Insert into database
+	result, err := s.collection.InsertOne(ctx, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	repo.ID = result.InsertedID.(primitive.ObjectID)
+
+	// Start async import process
+	go s.processRepositoryImport(context.Background(), repo.ID, userID, accessToken, githubRepo)
+
+	return repo, nil
+}
+
+// processRepositoryImport handles the async import process
+func (s *RepositoryService) processRepositoryImport(ctx context.Context, repoID primitive.ObjectID, userID primitive.ObjectID, accessToken string, githubRepo *GitHubRepository) {
+	repoIDStr := repoID.Hex()
+
+	// Update status to importing
+	s.UpdateRepositoryStatus(ctx, userID, repoIDStr, models.StatusImporting)
+	s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 10)
+
+	// Fetch repository statistics from GitHub
+	stats, err := s.githubService.GetRepositoryStatistics(ctx, accessToken, githubRepo.Owner, githubRepo.Name)
+	if err != nil {
+		// Mark as error but don't fail completely
+		s.UpdateRepositoryStatus(ctx, userID, repoIDStr, models.StatusError)
+		return
+	}
+
+	s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 50)
+
+	// Convert GitHub stats to our repository stats format
+	repoStats := &models.RepositoryStats{
+		TotalFiles:     stats["total_files"].(int),
+		TotalLines:     stats["total_lines"].(int),
+		Languages:      stats["languages"].(map[string]int),
+		LastCommitDate: stats["last_commit_date"].(*time.Time),
+	}
+
+	// Update repository with statistics
+	err = s.UpdateRepositoryStats(ctx, userID, repoIDStr, repoStats)
+	if err != nil {
+		s.UpdateRepositoryStatus(ctx, userID, repoIDStr, models.StatusError)
+		return
+	}
+
+	s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 80)
+
+	// Mark repository as indexed and ready
+	s.MarkRepositoryIndexed(ctx, userID, repoIDStr)
+	s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 100)
+}
+
+// CreateRepositoryFromGitHub creates a repository with GitHub integration
+func (s *RepositoryService) CreateRepositoryFromGitHub(ctx context.Context, userID primitive.ObjectID, githubURL string) (*models.Repository, error) {
+	// Parse GitHub URL to extract owner and repo name
+	owner, repoName, err := s.parseGitHubURL(githubURL)
+	if err != nil {
+		return nil, errors.New("invalid GitHub repository URL")
+	}
+
+	return s.ImportRepositoryFromGitHub(ctx, userID, owner, repoName)
+}
+
+// parseGitHubURL parses a GitHub URL and returns owner and repository name
+func (s *RepositoryService) parseGitHubURL(url string) (string, string, error) {
+	// Handle different GitHub URL formats
+	// https://github.com/owner/repo
+	// owner/repo
+
+	// Remove .git suffix if present
+	url = strings.TrimSuffix(url, ".git")
+
+	// Handle https://github.com/owner/repo format
+	if strings.Contains(url, "github.com/") {
+		parts := strings.Split(url, "github.com/")
+		if len(parts) != 2 {
+			return "", "", errors.New("invalid GitHub URL format")
+		}
+		url = parts[1]
+	}
+
+	// Now we should have owner/repo format
+	parts := strings.Split(url, "/")
+	if len(parts) != 2 {
+		return "", "", errors.New("invalid GitHub URL format")
+	}
+
+	return parts[0], parts[1], nil
 }

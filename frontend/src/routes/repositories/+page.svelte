@@ -1,26 +1,104 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import apiClient, { type Repository } from '$lib/api';
+	import apiClient, { type Repository, type GitHubRepository, type User } from '$lib/api';
+	import { authStore } from '$lib/stores/auth';
+	import GitHubConnection from '$lib/components/GitHubConnection.svelte';
+	import GitHubRepositoryBrowser from '$lib/components/GitHubRepositoryBrowser.svelte';
 
-	onMount(() => {
-		loadRepositories();
-	});
+	let user = $state<User | null>(null);
 	let repositories = $state<Repository[]>([]);
 	let loading = $state(true);
 	let error = $state('');
 	let showAddModal = $state(false);
+	let showGitHubBrowser = $state(false);
 	let githubUrl = $state('');
+	let importMethod = $state<'url' | 'github'>('github');
+	let pollingInterval: ReturnType<typeof setInterval> | null = null;
+
+	// Subscribe to auth store to get current user
+	authStore.subscribe((auth) => {
+		if (auth.user && (!user || user.id !== auth.user.id)) {
+			user = auth.user;
+		}
+	});
+
+	onMount(() => {
+		loadRepositories();
+
+		// Cleanup polling on component destroy
+		return () => {
+			if (pollingInterval) {
+				clearInterval(pollingInterval);
+				pollingInterval = null;
+			}
+		};
+	});
 	async function loadRepositories() {
 		try {
 			loading = true;
 			error = '';
 			const response = await apiClient.getRepositories();
 			repositories = response.repositories || [];
+
+			// Start or stop progress polling based on repository statuses
+			manageProgressPolling();
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load repositories';
 			console.error('Error loading repositories:', err);
 		} finally {
 			loading = false;
+		}
+	}
+
+	function manageProgressPolling() {
+		const hasImportingRepos = repositories.some(
+			(repo) => repo.status === 'importing' || repo.status === 'pending'
+		);
+
+		if (hasImportingRepos && !pollingInterval) {
+			// Start polling every 3 seconds
+			pollingInterval = setInterval(updateRepositoryProgress, 3000);
+		} else if (!hasImportingRepos && pollingInterval) {
+			// Stop polling when no repositories are importing
+			clearInterval(pollingInterval);
+			pollingInterval = null;
+		}
+	}
+
+	async function updateRepositoryProgress() {
+		try {
+			const importingRepos = repositories.filter(
+				(repo) => repo.status === 'importing' || repo.status === 'pending'
+			);
+
+			if (importingRepos.length === 0) {
+				// No repos to poll, stop polling
+				if (pollingInterval) {
+					clearInterval(pollingInterval);
+					pollingInterval = null;
+				}
+				return;
+			}
+
+			// Poll each importing repository for updates
+			const updatePromises = importingRepos.map(async (repo) => {
+				try {
+					const updatedRepo = await apiClient.getRepository(repo.id);
+					// Update the repository in our local state
+					repositories = repositories.map((r) => (r.id === repo.id ? updatedRepo : r));
+					return updatedRepo;
+				} catch (err) {
+					console.error(`Failed to update repository ${repo.id}:`, err);
+					return null;
+				}
+			});
+
+			await Promise.all(updatePromises);
+
+			// Check if we should continue polling
+			manageProgressPolling();
+		} catch (err) {
+			console.error('Error updating repository progress:', err);
 		}
 	}
 
@@ -49,6 +127,9 @@
 			showAddModal = false;
 			githubUrl = '';
 			error = '';
+
+			// Start polling if the new repository is importing
+			manageProgressPolling();
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to create repository';
 		}
@@ -140,12 +221,49 @@
 
 	function openAddModal() {
 		showAddModal = true;
+		// Default to GitHub import if user is connected, otherwise URL
+		importMethod = user?.githubConnected ? 'github' : 'url';
 	}
 
 	function closeAddModal() {
 		showAddModal = false;
+		showGitHubBrowser = false;
 		githubUrl = '';
 		error = '';
+		importMethod = 'github';
+	}
+
+	function openGitHubBrowser() {
+		showGitHubBrowser = true;
+	}
+
+	function closeGitHubBrowser() {
+		showGitHubBrowser = false;
+	}
+
+	async function handleGitHubRepositoryImport(githubRepo: GitHubRepository) {
+		try {
+			// Use the new GitHub import API endpoint
+			const githubUrl = `https://github.com/${githubRepo.owner}/${githubRepo.name}`;
+			const newRepo = await apiClient.createRepository({
+				name: githubRepo.name,
+				owner: githubRepo.owner,
+				fullName: githubRepo.fullName,
+				description: githubRepo.description,
+				githubRepoId: githubRepo.id,
+				primaryLanguage: githubRepo.language,
+				isPrivate: githubRepo.private
+			});
+
+			repositories = [newRepo, ...repositories];
+			closeGitHubBrowser();
+			error = '';
+
+			// Start polling if the new repository is importing
+			manageProgressPolling();
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Failed to import repository';
+		}
 	}
 </script>
 
@@ -159,14 +277,37 @@
 			<h1 class="text-2xl font-bold text-gray-900">Repositories</h1>
 			<p class="text-gray-600">Manage and analyze your GitHub repositories</p>
 		</div>
-		<button
-			onclick={openAddModal}
-			class="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-		>
-			Add Repository
-		</button>
+		<div class="flex space-x-3">
+			{#if user?.githubConnected}
+				<button
+					onclick={openGitHubBrowser}
+					class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+				>
+					<svg class="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+						<path
+							fill-rule="evenodd"
+							d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+					Browse GitHub
+				</button>
+			{/if}
+			<button
+				onclick={openAddModal}
+				class="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+			>
+				Add Repository
+			</button>
+		</div>
 	</div>
 
+	<!-- GitHub Connection Status -->
+	{#if user}
+		<GitHubConnection {user} />
+	{/if}
+
+	<!-- Error Display -->
 	{#if error}
 		<div class="rounded-md bg-red-50 p-4">
 			<div class="flex">
@@ -175,10 +316,13 @@
 					<p class="mt-2 text-sm text-red-700">{error}</p>
 					<div class="mt-4">
 						<button
-							onclick={loadRepositories}
+							onclick={() => {
+								error = '';
+								loadRepositories();
+							}}
 							class="rounded-md bg-red-100 px-2 py-1 text-sm font-medium text-red-800 hover:bg-red-200"
 						>
-							Try Again
+							Dismiss
 						</button>
 					</div>
 				</div>
@@ -250,25 +394,61 @@
 
 						<p class="mb-4 text-sm text-gray-700">{repo.description || 'No description'}</p>
 
+						<!-- Import Progress Bar for importing repositories -->
+						{#if repo.status === 'importing' || repo.status === 'pending'}
+							<div class="mb-4">
+								<div class="mb-2 flex items-center justify-between">
+									<span class="text-xs font-medium text-gray-700">
+										{repo.status === 'pending' ? 'Preparing import...' : 'Importing repository...'}
+									</span>
+									<span class="text-xs text-gray-500">{repo.importProgress}%</span>
+								</div>
+								<div class="h-2 w-full rounded-full bg-gray-200">
+									<div
+										class="h-2 rounded-full bg-blue-600 transition-all duration-300 ease-out"
+										style="width: {repo.importProgress}%"
+									></div>
+								</div>
+								{#if repo.status === 'importing'}
+									<div class="mt-2 flex items-center text-xs text-blue-600">
+										<svg class="-ml-1 mr-2 h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
+											<circle
+												class="opacity-25"
+												cx="12"
+												cy="12"
+												r="10"
+												stroke="currentColor"
+												stroke-width="4"
+											></circle>
+											<path
+												class="opacity-75"
+												fill="currentColor"
+												d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+											></path>
+										</svg>
+										Processing repository files...
+									</div>
+								{/if}
+							</div>
+						{/if}
+
 						<div class="mb-4 grid grid-cols-2 gap-4">
 							<div>
-								<dt class="text-xs font-medium tracking-wide text-gray-500 uppercase">Language</dt>
+								<dt class="text-xs font-medium uppercase tracking-wide text-gray-500">Language</dt>
 								<dd class="text-sm text-gray-900">{repo.primaryLanguage || 'Unknown'}</dd>
 							</div>
 							<div>
-								<dt class="text-xs font-medium tracking-wide text-gray-500 uppercase">
+								<dt class="text-xs font-medium uppercase tracking-wide text-gray-500">
 									Lines of Code
 								</dt>
 								<dd class="text-sm text-gray-900">{getLinesOfCode(repo).toLocaleString()}</dd>
 							</div>
 							<div>
-								<dt class="text-xs font-medium tracking-wide text-gray-500 uppercase">
-									Progress
-								</dt>
+								<dt class="text-xs font-medium uppercase tracking-wide text-gray-500">Progress</dt>
 								<dd class="text-sm text-gray-900">{repo.importProgress}%</dd>
 							</div>
 							<div>
-								<dt class="text-xs font-medium tracking-wide text-gray-500 uppercase">
+								<dt class="text-xs font-medium uppercase tracking-wide text-gray-500">
 									Last Updated
 								</dt>
 								<dd class="text-sm text-gray-900">{getLastAnalyzed(repo)}</dd>
@@ -310,40 +490,127 @@
 			<div class="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
 				<h3 class="mb-4 text-lg font-medium text-gray-900">Add Repository</h3>
 
-				<form onsubmit={handleAddRepository}>
+				<!-- Import Method Selection -->
+				{#if user?.githubConnected}
+					<div class="mb-6">
+						<fieldset>
+							<legend class="text-base font-medium text-gray-900">Import Method</legend>
+							<div class="mt-2 space-y-2">
+								<label class="flex items-center">
+									<input
+										type="radio"
+										bind:group={importMethod}
+										value="github"
+										class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+									/>
+									<span class="ml-3 block text-sm font-medium text-gray-700">
+										Browse your GitHub repositories
+									</span>
+								</label>
+								<label class="flex items-center">
+									<input
+										type="radio"
+										bind:group={importMethod}
+										value="url"
+										class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+									/>
+									<span class="ml-3 block text-sm font-medium text-gray-700">
+										Enter repository URL manually
+									</span>
+								</label>
+							</div>
+						</fieldset>
+					</div>
+				{/if}
+
+				{#if importMethod === 'github' && user?.githubConnected}
+					<!-- GitHub Repository Browser -->
 					<div class="mb-4">
-						<label for="githubUrl" class="block text-sm font-medium text-gray-700"
-							>GitHub Repository URL</label
-						>
-						<input
-							type="url"
-							id="githubUrl"
-							bind:value={githubUrl}
-							class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-							placeholder="https://github.com/owner/repository or owner/repository"
-							required
-						/>
-						<p class="mt-1 text-xs text-gray-500">
-							Enter a GitHub repository URL or owner/repository format
-						</p>
+						<GitHubRepositoryBrowser {user} onRepositoryImport={handleGitHubRepositoryImport} />
 					</div>
 
-					<div class="flex space-x-3">
+					<div class="flex justify-end">
 						<button
 							type="button"
 							onclick={closeAddModal}
-							class="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+							class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
 						>
 							Cancel
 						</button>
-						<button
-							type="submit"
-							class="flex-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-						>
-							Add Repository
-						</button>
 					</div>
-				</form>
+				{:else}
+					<!-- Manual URL Entry Form -->
+					<form onsubmit={handleAddRepository}>
+						<div class="mb-4">
+							<label for="githubUrl" class="block text-sm font-medium text-gray-700"
+								>GitHub Repository URL</label
+							>
+							<input
+								type="url"
+								id="githubUrl"
+								bind:value={githubUrl}
+								class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+								placeholder="https://github.com/owner/repository or owner/repository"
+								required
+							/>
+							<p class="mt-1 text-xs text-gray-500">
+								Enter a GitHub repository URL or owner/repository format
+							</p>
+						</div>
+
+						<div class="flex space-x-3">
+							<button
+								type="button"
+								onclick={closeAddModal}
+								class="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+							>
+								Cancel
+							</button>
+							<button
+								type="submit"
+								class="flex-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+							>
+								Add Repository
+							</button>
+						</div>
+					</form>
+				{/if}
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- GitHub Repository Browser Modal -->
+{#if showGitHubBrowser && user?.githubConnected}
+	<div class="fixed inset-0 z-50 overflow-y-auto">
+		<div class="flex min-h-screen items-center justify-center p-4">
+			<div
+				class="fixed inset-0 bg-black bg-opacity-50"
+				onclick={closeGitHubBrowser}
+				onkeydown={closeGitHubBrowser}
+				role="button"
+				tabindex="0"
+			></div>
+			<div class="relative w-full max-w-4xl rounded-lg bg-white p-6 shadow-lg">
+				<div class="mb-4 flex items-center justify-between">
+					<h3 class="text-lg font-medium text-gray-900">Browse GitHub Repositories</h3>
+					<button
+						onclick={closeGitHubBrowser}
+						class="rounded-md p-1 text-gray-400 hover:text-gray-500"
+						aria-label="Close GitHub repository browser"
+					>
+						<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M6 18L18 6M6 6l12 12"
+							/>
+						</svg>
+					</button>
+				</div>
+
+				<GitHubRepositoryBrowser {user} onRepositoryImport={handleGitHubRepositoryImport} />
 			</div>
 		</div>
 	</div>
