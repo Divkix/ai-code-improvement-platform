@@ -1,4 +1,4 @@
-openapi: 3.1.0
+openapi: 3.0.0
 info:
   title: GitHub Repository Analyzer API
   description: AI-powered code analysis platform for GitHub repositories
@@ -127,11 +127,10 @@ components:
         repositories:
           type: array
           items:
-            $ref: '#/components/schemas/GitHubRepository'
+            $ref: "#/components/schemas/GitHubRepository"
         hasMore:
           type: boolean
           description: Whether there are more repositories to load
-
 
     LoginRequest:
       type: object
@@ -154,7 +153,7 @@ components:
         token:
           type: string
         user:
-          $ref: '#/components/schemas/User'
+          $ref: "#/components/schemas/User"
 
     HealthCheck:
       type: object
@@ -223,7 +222,13 @@ components:
           type: string
         type:
           type: string
-          enum: [repository_imported, analysis_completed, issue_detected, optimization_found]
+          enum:
+            [
+              repository_imported,
+              analysis_completed,
+              issue_detected,
+              optimization_found,
+            ]
         message:
           type: string
         timestamp:
@@ -370,7 +375,7 @@ components:
         repositories:
           type: array
           items:
-            $ref: '#/components/schemas/Repository'
+            $ref: "#/components/schemas/Repository"
         total:
           type: integer
           minimum: 0
@@ -382,18 +387,18 @@ paths:
       description: Check the health of all services
       operationId: getHealth
       responses:
-        '200':
+        "200":
           description: Service health status
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthCheck'
-        '503':
+                $ref: "#/components/schemas/HealthCheck"
+        "503":
           description: Service unavailable
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/health:
     get:
@@ -401,18 +406,18 @@ paths:
       description: Check the health of API and dependencies
       operationId: getApiHealth
       responses:
-        '200':
+        "200":
           description: API health status
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthCheck'
-        '503':
+                $ref: "#/components/schemas/HealthCheck"
+        "503":
           description: Service unavailable
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/auth/login:
     post:
@@ -424,26 +429,26 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: "#/components/schemas/LoginRequest"
       responses:
-        '200':
+        "200":
           description: User authenticated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '401':
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
           description: Invalid credentials
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/auth/me:
     get:
@@ -453,24 +458,24 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        '200':
+        "200":
           description: Current user information
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-        '401':
+                $ref: "#/components/schemas/User"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/auth/github/login:
     get:
@@ -487,14 +492,14 @@ paths:
             type: string
             default: "http://localhost:3000/auth/github/callback"
       responses:
-        '302':
+        "302":
           description: Redirect to GitHub OAuth
-        '401':
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/auth/github/callback:
     post:
@@ -508,32 +513,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GitHubOAuthRequest'
+              $ref: "#/components/schemas/GitHubOAuthRequest"
       responses:
-        '200':
+        "200":
           description: OAuth successful, user GitHub account connected
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-        '400':
+                $ref: "#/components/schemas/User"
+        "400":
           description: Invalid OAuth request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '401':
+                $ref: "#/components/schemas/Error"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/auth/github/disconnect:
     post:
@@ -543,24 +548,24 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        '200':
+        "200":
           description: GitHub account disconnected successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-        '401':
+                $ref: "#/components/schemas/User"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/github/repositories:
     get:
@@ -578,30 +583,30 @@ paths:
             minimum: 1
             default: 1
       responses:
-        '200':
+        "200":
           description: List of GitHub repositories
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GitHubRepositoriesResponse'
-        '401':
+                $ref: "#/components/schemas/GitHubRepositoriesResponse"
+        "401":
           description: Unauthorized or GitHub not connected
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '429':
+                $ref: "#/components/schemas/Error"
+        "429":
           description: GitHub rate limit exceeded
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/github/repositories/{owner}/{repo}/validate:
     get:
@@ -624,36 +629,36 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Repository is valid and accessible
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GitHubRepository'
-        '401':
+                $ref: "#/components/schemas/GitHubRepository"
+        "401":
           description: Unauthorized or GitHub not connected
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '404':
+                $ref: "#/components/schemas/Error"
+        "404":
           description: Repository not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '429':
+                $ref: "#/components/schemas/Error"
+        "429":
           description: GitHub rate limit exceeded
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/dashboard/stats:
     get:
@@ -663,24 +668,24 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        '200':
+        "200":
           description: Dashboard statistics
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DashboardStats'
-        '401':
+                $ref: "#/components/schemas/DashboardStats"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/dashboard/activity:
     get:
@@ -699,26 +704,26 @@ paths:
             maximum: 100
             default: 10
       responses:
-        '200':
+        "200":
           description: Recent activity items
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ActivityItem'
-        '401':
+                  $ref: "#/components/schemas/ActivityItem"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/dashboard/trends:
     get:
@@ -737,26 +742,26 @@ paths:
             maximum: 90
             default: 30
       responses:
-        '200':
+        "200":
           description: Trend data points
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TrendDataPoint'
-        '401':
+                  $ref: "#/components/schemas/TrendDataPoint"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/repositories:
     get:
@@ -788,24 +793,24 @@ paths:
             type: string
             enum: [pending, importing, ready, error]
       responses:
-        '200':
+        "200":
           description: List of user repositories
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RepositoryListResponse'
-        '401':
+                $ref: "#/components/schemas/RepositoryListResponse"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
     post:
       summary: Create new repository
@@ -818,38 +823,38 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateRepositoryRequest'
+              $ref: "#/components/schemas/CreateRepositoryRequest"
       responses:
-        '201':
+        "201":
           description: Repository created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Repository'
-        '400':
+                $ref: "#/components/schemas/Repository"
+        "400":
           description: Invalid request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '401':
+                $ref: "#/components/schemas/Error"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '409':
+                $ref: "#/components/schemas/Error"
+        "409":
           description: Repository already exists
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/repositories/{id}:
     get:
@@ -866,30 +871,30 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Repository details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Repository'
-        '401':
+                $ref: "#/components/schemas/Repository"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '404':
+                $ref: "#/components/schemas/Error"
+        "404":
           description: Repository not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
     put:
       summary: Update repository
@@ -909,38 +914,38 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateRepositoryRequest'
+              $ref: "#/components/schemas/UpdateRepositoryRequest"
       responses:
-        '200':
+        "200":
           description: Repository updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Repository'
-        '400':
+                $ref: "#/components/schemas/Repository"
+        "400":
           description: Invalid request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '401':
+                $ref: "#/components/schemas/Error"
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '404':
+                $ref: "#/components/schemas/Error"
+        "404":
           description: Repository not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
     delete:
       summary: Delete repository
@@ -956,26 +961,26 @@ paths:
           schema:
             type: string
       responses:
-        '204':
+        "204":
           description: Repository deleted successfully
-        '401':
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '404':
+                $ref: "#/components/schemas/Error"
+        "404":
           description: Repository not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/repositories/{id}/stats:
     get:
@@ -992,7 +997,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Repository statistics
           content:
             application/json:
@@ -1017,21 +1022,21 @@ paths:
                   avgComplexity:
                     type: number
                     format: float
-        '401':
+        "401":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '404':
+                $ref: "#/components/schemas/Error"
+        "404":
           description: Repository not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"

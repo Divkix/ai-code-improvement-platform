@@ -11,7 +11,7 @@
 # ==============================================================================
 
 # Phony targets prevent conflicts with files of the same name.
-.PHONY: help up down clean logs ps sh
+.PHONY: help up down clean logs ps sh generate build dev backend-dev
 
 # Default environment is 'prod'
 env ?= prod
@@ -66,6 +66,30 @@ sh:
 	@service_name=$$(or $(service),backend); \
 	echo "💻 Accessing shell in '$$service_name' container..."; \
 	@$(DOCKER_COMPOSE) exec $$service_name sh
+
+# ------------------------------------------------------------------------------
+# Development Commands
+# ------------------------------------------------------------------------------
+
+## generate: Generate Go code from OpenAPI specification
+generate:
+	@echo "🔧 Generating Go code from OpenAPI spec..."
+	@mkdir -p backend/internal/generated
+	@cd backend && oapi-codegen -generate types -o internal/generated/types.go -package generated api/openapi.yaml
+	@cd backend && oapi-codegen -generate gin -o internal/generated/server.go -package generated api/openapi.yaml
+	@cd backend && oapi-codegen -generate client -o internal/generated/client.go -package generated api/openapi.yaml
+	@echo "✅ Code generation complete"
+
+## build: Generate code and build the backend binary
+build: generate
+	@echo "🔨 Building backend binary..."
+	@cd backend && go build -o bin/server cmd/server/main.go
+	@echo "✅ Build complete"
+
+## dev: Run backend in development mode (with code generation)
+backend-dev: generate
+	@echo "🚀 Starting backend in development mode..."
+	@cd backend && go run cmd/server/main.go
 
 # ------------------------------------------------------------------------------
 # Help
