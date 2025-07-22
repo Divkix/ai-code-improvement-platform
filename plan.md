@@ -288,14 +288,14 @@ Create SvelteKit repository management interface:
 - Fetch repository metadata from GitHub API
 
 ### Implementation Tasks
-- [ ] Set up GitHub OAuth App configuration
-- [ ] Implement GitHub OAuth flow
-- [ ] Create GitHub API client
-- [ ] Build repository import with progress tracking
-- [ ] Implement repository metadata fetching
-- [ ] Add GitHub repository validation
-- [ ] Create import progress UI
-- [ ] Handle GitHub API rate limits
+- [x] Set up GitHub OAuth App configuration
+- [x] Implement GitHub OAuth flow
+- [x] Create GitHub API client
+- [x] Build repository import with progress tracking
+- [x] Implement repository metadata fetching
+- [x] Add GitHub repository validation
+- [x] Create import progress UI
+- [x] Handle GitHub API rate limits
 
 ### Code Generation Prompts
 
@@ -340,15 +340,15 @@ Build repository import interface:
 ```
 
 ### Acceptance Criteria
-- [ ] Users can authenticate with GitHub OAuth
-- [ ] GitHub repository URLs are validated before import
-- [ ] Repository import process starts successfully
-- [ ] Progress is tracked and displayed in real-time
-- [ ] Repository metadata is fetched correctly
-- [ ] Import completes with "ready" status
-- [ ] Errors during import are handled gracefully
-- [ ] Users can retry failed imports
-- [ ] GitHub API rate limits are respected
+- [x] Users can authenticate with GitHub OAuth
+- [x] GitHub repository URLs are validated before import
+- [x] Repository import process starts successfully
+- [x] Progress is tracked and displayed in real-time
+- [x] Repository metadata is fetched correctly
+- [x] Import completes with "ready" status
+- [x] Errors during import are handled gracefully
+- [x] Users can retry failed imports
+- [x] GitHub API rate limits are respected
 
 ---
 
