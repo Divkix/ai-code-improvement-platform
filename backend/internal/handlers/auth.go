@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	"github-analyzer/internal/auth"
+	"github-analyzer/internal/generated"
 	"github-analyzer/internal/middleware"
-	"github-analyzer/internal/models"
 	"github-analyzer/internal/services"
 	"github.com/gin-gonic/gin"
 )
@@ -30,37 +30,37 @@ func NewAuthHandler(userService *services.UserService, authService *auth.AuthSer
 
 // LoginUser handles user login
 func (h *AuthHandler) LoginUser(c *gin.Context) {
-	var req models.LoginUserRequest
+	var req generated.LoginUserJSONRequestBody
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "invalid_request",
-			"message": "Invalid request body: " + err.Error(),
+		c.JSON(http.StatusBadRequest, generated.Error{
+			Error:   "invalid_request",
+			Message: "Invalid request body: " + err.Error(),
 		})
 		return
 	}
 
 	// Get user by email
-	user, err := h.userService.GetUserByEmail(c.Request.Context(), req.Email)
+	user, err := h.userService.GetUserByEmail(c.Request.Context(), string(req.Email))
 	if err != nil {
 		if err == services.ErrUserNotFound {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error":   "invalid_credentials",
-				"message": "Invalid email or password",
+			c.JSON(http.StatusUnauthorized, generated.Error{
+				Error:   "invalid_credentials",
+				Message: "Invalid email or password",
 			})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "internal_error",
-			"message": "Authentication failed",
+		c.JSON(http.StatusInternalServerError, generated.Error{
+			Error:   "internal_error",
+			Message: "Authentication failed",
 		})
 		return
 	}
 
 	// Check password
 	if err := h.authService.CheckPassword(user.Password, req.Password); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error":   "invalid_credentials",
-			"message": "Invalid email or password",
+		c.JSON(http.StatusUnauthorized, generated.Error{
+			Error:   "invalid_credentials",
+			Message: "Invalid email or password",
 		})
 		return
 	}
@@ -68,16 +68,16 @@ func (h *AuthHandler) LoginUser(c *gin.Context) {
 	// Generate token
 	token, err := h.authService.GenerateToken(user.ID.Hex(), user.Email)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "internal_error",
-			"message": "Failed to generate token",
+		c.JSON(http.StatusInternalServerError, generated.Error{
+			Error:   "internal_error",
+			Message: "Failed to generate token",
 		})
 		return
 	}
 
-	response := models.AuthResponse{
+	response := generated.AuthResponse{
 		Token: token,
-		User:  user.ToResponse(),
+		User:  user.ToGeneratedUser(),
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -87,9 +87,9 @@ func (h *AuthHandler) LoginUser(c *gin.Context) {
 func (h *AuthHandler) GetCurrentUser(c *gin.Context) {
 	userID, exists := middleware.GetUserIDFromContext(c)
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error":   "unauthorized",
-			"message": "User not found in context",
+		c.JSON(http.StatusUnauthorized, generated.Error{
+			Error:   "unauthorized",
+			Message: "User not found in context",
 		})
 		return
 	}
@@ -97,18 +97,18 @@ func (h *AuthHandler) GetCurrentUser(c *gin.Context) {
 	user, err := h.userService.GetUserByID(c.Request.Context(), userID)
 	if err != nil {
 		if err == services.ErrUserNotFound {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error":   "unauthorized",
-				"message": "User not found",
+			c.JSON(http.StatusUnauthorized, generated.Error{
+				Error:   "unauthorized",
+				Message: "User not found",
 			})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "internal_error",
-			"message": "Failed to get user information",
+		c.JSON(http.StatusInternalServerError, generated.Error{
+			Error:   "internal_error",
+			Message: "Failed to get user information",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, user.ToResponse())
+	c.JSON(http.StatusOK, user.ToGeneratedUser())
 }

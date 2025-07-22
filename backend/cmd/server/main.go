@@ -9,12 +9,16 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	swaggerFiles "github.com/swaggo/files"
 
 	"github-analyzer/internal/auth"
 	"github-analyzer/internal/config"
 	"github-analyzer/internal/database"
+	"github-analyzer/internal/generated"
 	"github-analyzer/internal/handlers"
 	"github-analyzer/internal/middleware"
+	"github-analyzer/internal/server"
 	"github-analyzer/internal/services"
 )
 
@@ -69,6 +73,15 @@ func main() {
 	repositoryHandler := handlers.NewRepositoryHandler(repositoryService)
 	githubHandler := handlers.NewGitHubHandler(githubService, userService)
 
+	// Create unified server implementing ServerInterface
+	unifiedServer := server.NewServer(
+		healthHandler,
+		authHandler,
+		dashboardHandler,
+		repositoryHandler,
+		githubHandler,
+	)
+
 	// Create Gin router
 	router := gin.New()
 	router.Use(gin.Logger())
@@ -81,73 +94,57 @@ func main() {
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Type", "Authorization"}
 	router.Use(cors.New(corsConfig))
 
-	// Health check routes (as defined in OpenAPI spec)
-	router.GET("/health", healthHandler.GetHealth)
-	router.GET("/api/health", healthHandler.GetApiHealth)
-
-	// API group
-	api := router.Group("/api")
-	{
-		// Authentication routes
-		auth := api.Group("/auth")
-		{
-			auth.POST("/login", authHandler.LoginUser)
-			auth.GET("/me", middleware.AuthMiddleware(authService), authHandler.GetCurrentUser)
-
-			// GitHub OAuth routes
-			github := auth.Group("/github")
-			github.Use(middleware.AuthMiddleware(authService))
-			{
-				github.GET("/login", githubHandler.GitHubLogin)
-				github.POST("/callback", githubHandler.GitHubCallback)
-				github.POST("/disconnect", githubHandler.GitHubDisconnect)
+	// Custom middleware configuration
+	middlewareFunc := func(c *gin.Context) {
+		// Apply authentication middleware to protected routes
+		path := c.FullPath()
+		if path != "/health" && path != "/api/auth/login" {
+			middleware.AuthMiddleware(authService)(c)
+			if c.IsAborted() {
+				return
 			}
 		}
-
-		// Protected API routes
-		protected := api.Group("")
-		protected.Use(middleware.AuthMiddleware(authService))
-		{
-			// Dashboard routes
-			dashboard := protected.Group("/dashboard")
-			{
-				dashboard.GET("/stats", dashboardHandler.GetDashboardStats)
-				dashboard.GET("/activity", dashboardHandler.GetDashboardActivity)
-				dashboard.GET("/trends", dashboardHandler.GetDashboardTrends)
-			}
-			
-			// Repository routes
-			repositories := protected.Group("/repositories")
-			{
-				repositories.GET("", repositoryHandler.GetRepositories)
-				repositories.POST("", repositoryHandler.CreateRepository)
-				repositories.GET("/:id", repositoryHandler.GetRepository)
-				repositories.PUT("/:id", repositoryHandler.UpdateRepository)
-				repositories.DELETE("/:id", repositoryHandler.DeleteRepository)
-				repositories.GET("/:id/stats", repositoryHandler.GetRepositoryStats)
-			}
-
-			// GitHub routes
-			githubAPI := protected.Group("/github")
-			{
-				githubAPI.GET("/repositories", githubHandler.GetGitHubRepositories)
-				githubAPI.GET("/repositories/:owner/:repo/validate", githubHandler.ValidateGitHubRepository)
-			}
-			
-			// Utility ping endpoint
-			protected.GET("/ping", func(c *gin.Context) {
-				c.JSON(http.StatusOK, gin.H{
-					"message": "pong",
-					"service": "github-analyzer-api",
-				})
-			})
-		}
+		c.Next()
 	}
+
+	// Register all routes using generated function with custom middleware
+	options := generated.GinServerOptions{
+		BaseURL: "",
+		Middlewares: []generated.MiddlewareFunc{
+			middlewareFunc,
+		},
+		ErrorHandler: func(c *gin.Context, err error, statusCode int) {
+			c.JSON(statusCode, generated.Error{
+				Error:   "request_error",
+				Message: err.Error(),
+			})
+		},
+	}
+
+	generated.RegisterHandlersWithOptions(router, unifiedServer, options)
+
+	// Add Swagger UI endpoint (serves the OpenAPI spec)
+	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	
+	// Serve OpenAPI specification directly
+	router.GET("/api/openapi.yaml", func(c *gin.Context) {
+		c.File("api/openapi.yaml")
+	})
+	
+	// Serve OpenAPI specification as JSON (if needed)
+	router.GET("/api/openapi.json", func(c *gin.Context) {
+		c.Header("Content-Type", "application/json")
+		c.Status(http.StatusNotImplemented)
+		c.JSON(http.StatusNotImplemented, gin.H{
+			"message": "OpenAPI JSON format not yet implemented - use /api/openapi.yaml",
+		})
+	})
 
 	// Start server
 	address := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
 	log.Printf("🚀 Server starting on %s", address)
-	log.Printf("📚 API Documentation: http://%s/docs (coming soon)", address)
+	log.Printf("📚 API Documentation (Swagger UI): http://%s/docs/", address)
+	log.Printf("📋 OpenAPI Specification: http://%s/api/openapi.yaml", address)
 	log.Printf("🏥 Health Check: http://%s/health", address)
 
 	if err := router.Run(address); err != nil {

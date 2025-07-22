@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github-analyzer/internal/database"
+	"github-analyzer/internal/generated"
 )
 
 type HealthHandler struct {
@@ -15,11 +16,7 @@ type HealthHandler struct {
 	qdrant  *database.Qdrant
 }
 
-type HealthResponse struct {
-	Status    string                 `json:"status"`
-	Services  map[string]string      `json:"services"`
-	Timestamp time.Time              `json:"timestamp"`
-}
+// HealthHandler implements health check methods from generated.ServerInterface
 
 func NewHealthHandler(mongoDB *database.MongoDB, qdrant *database.Qdrant) *HealthHandler {
 	return &HealthHandler{
@@ -30,38 +27,47 @@ func NewHealthHandler(mongoDB *database.MongoDB, qdrant *database.Qdrant) *Healt
 
 // GetHealth implements the /health endpoint
 func (h *HealthHandler) GetHealth(c *gin.Context) {
-	services := make(map[string]string)
-	overall := "healthy"
+	var mongodbStatus generated.HealthCheckServicesMongodb
+	var qdrantStatus generated.HealthCheckServicesQdrant
+	overall := generated.Healthy
 
 	// Check MongoDB
 	if err := h.mongoDB.Ping(); err != nil {
-		services["mongodb"] = "disconnected"
-		overall = "degraded"
+		mongodbStatus = generated.HealthCheckServicesMongodbDisconnected
+		overall = generated.Degraded
 	} else {
-		services["mongodb"] = "connected"
+		mongodbStatus = generated.HealthCheckServicesMongodbConnected
 	}
 
 	// Check Qdrant
 	if err := h.qdrant.Ping(); err != nil {
-		services["qdrant"] = "disconnected"
-		overall = "degraded"
+		qdrantStatus = generated.HealthCheckServicesQdrantDisconnected
+		overall = generated.Degraded
 	} else {
-		services["qdrant"] = "connected"
+		qdrantStatus = generated.HealthCheckServicesQdrantConnected
 	}
 
 	// If both services are down, mark as unhealthy
-	if services["mongodb"] == "disconnected" && services["qdrant"] == "disconnected" {
-		overall = "unhealthy"
+	if mongodbStatus == generated.HealthCheckServicesMongodbDisconnected && 
+		qdrantStatus == generated.HealthCheckServicesQdrantDisconnected {
+		overall = generated.Unhealthy
 	}
 
-	response := HealthResponse{
-		Status:    overall,
-		Services:  services,
-		Timestamp: time.Now(),
+	timestamp := time.Now()
+	response := generated.HealthCheck{
+		Status: overall,
+		Services: struct {
+			Mongodb *generated.HealthCheckServicesMongodb `json:"mongodb,omitempty"`
+			Qdrant  *generated.HealthCheckServicesQdrant  `json:"qdrant,omitempty"`
+		}{
+			Mongodb: &mongodbStatus,
+			Qdrant:  &qdrantStatus,
+		},
+		Timestamp: &timestamp,
 	}
 
 	statusCode := http.StatusOK
-	if overall == "unhealthy" {
+	if overall == generated.Unhealthy {
 		statusCode = http.StatusServiceUnavailable
 	}
 

@@ -5,8 +5,8 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 
+	"github-analyzer/internal/generated"
 	"github-analyzer/internal/middleware"
 	"github-analyzer/internal/services"
 	"github.com/gin-gonic/gin"
@@ -28,18 +28,18 @@ func NewDashboardHandler(dashboardService *services.DashboardService) *Dashboard
 func (h *DashboardHandler) GetDashboardStats(c *gin.Context) {
 	userID, exists := middleware.GetUserIDFromContext(c)
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error":   "unauthorized",
-			"message": "User not found in context",
+		c.JSON(http.StatusUnauthorized, generated.Error{
+			Error:   "unauthorized",
+			Message: "User not found in context",
 		})
 		return
 	}
 
 	stats, err := h.dashboardService.GetStats(c.Request.Context(), userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "internal_error",
-			"message": "Failed to get dashboard statistics",
+		c.JSON(http.StatusInternalServerError, generated.Error{
+			Error:   "internal_error",
+			Message: "Failed to get dashboard statistics",
 		})
 		return
 	}
@@ -48,31 +48,27 @@ func (h *DashboardHandler) GetDashboardStats(c *gin.Context) {
 }
 
 // GetDashboardActivity handles getting recent activity items
-func (h *DashboardHandler) GetDashboardActivity(c *gin.Context) {
+func (h *DashboardHandler) GetDashboardActivity(c *gin.Context, params generated.GetDashboardActivityParams) {
 	userID, exists := middleware.GetUserIDFromContext(c)
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error":   "unauthorized",
-			"message": "User not found in context",
+		c.JSON(http.StatusUnauthorized, generated.Error{
+			Error:   "unauthorized",
+			Message: "User not found in context",
 		})
 		return
 	}
 
-	// Parse limit parameter
+	// Use limit from params
 	limit := 10 // default
-	if limitStr := c.Query("limit"); limitStr != "" {
-		if parsedLimit, err := strconv.Atoi(limitStr); err == nil {
-			if parsedLimit >= 1 && parsedLimit <= 100 {
-				limit = parsedLimit
-			}
-		}
+	if params.Limit != nil && *params.Limit >= 1 && *params.Limit <= 100 {
+		limit = *params.Limit
 	}
 
 	activities, err := h.dashboardService.GetActivity(c.Request.Context(), userID, limit)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "internal_error",
-			"message": "Failed to get dashboard activity",
+		c.JSON(http.StatusInternalServerError, generated.Error{
+			Error:   "internal_error",
+			Message: "Failed to get dashboard activity",
 		})
 		return
 	}
@@ -81,31 +77,27 @@ func (h *DashboardHandler) GetDashboardActivity(c *gin.Context) {
 }
 
 // GetDashboardTrends handles getting trend data for charts
-func (h *DashboardHandler) GetDashboardTrends(c *gin.Context) {
+func (h *DashboardHandler) GetDashboardTrends(c *gin.Context, params generated.GetDashboardTrendsParams) {
 	userID, exists := middleware.GetUserIDFromContext(c)
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error":   "unauthorized",
-			"message": "User not found in context",
+		c.JSON(http.StatusUnauthorized, generated.Error{
+			Error:   "unauthorized",
+			Message: "User not found in context",
 		})
 		return
 	}
 
-	// Parse days parameter
+	// Use days from params
 	days := 30 // default
-	if daysStr := c.Query("days"); daysStr != "" {
-		if parsedDays, err := strconv.Atoi(daysStr); err == nil {
-			if parsedDays >= 7 && parsedDays <= 90 {
-				days = parsedDays
-			}
-		}
+	if params.Days != nil && *params.Days >= 7 && *params.Days <= 90 {
+		days = *params.Days
 	}
 
 	trends, err := h.dashboardService.GetTrends(c.Request.Context(), userID, days)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "internal_error",
-			"message": "Failed to get dashboard trends",
+		c.JSON(http.StatusInternalServerError, generated.Error{
+			Error:   "internal_error",
+			Message: "Failed to get dashboard trends",
 		})
 		return
 	}

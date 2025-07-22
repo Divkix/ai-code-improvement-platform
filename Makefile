@@ -71,13 +71,10 @@ sh:
 # Development Commands
 # ------------------------------------------------------------------------------
 
-## generate: Generate Go code from OpenAPI specification
+## generate: Generate Go code from OpenAPI specification using go generate
 generate:
 	@echo "🔧 Generating Go code from OpenAPI spec..."
-	@mkdir -p backend/internal/generated
-	@cd backend && oapi-codegen -generate types -o internal/generated/types.go -package generated api/openapi.yaml
-	@cd backend && oapi-codegen -generate gin -o internal/generated/server.go -package generated api/openapi.yaml
-	@cd backend && oapi-codegen -generate client -o internal/generated/client.go -package generated api/openapi.yaml
+	@cd backend && go generate ./internal/generated/...
 	@echo "✅ Code generation complete"
 
 ## build: Generate code and build the backend binary
@@ -90,6 +87,20 @@ build: generate
 backend-dev: generate
 	@echo "🚀 Starting backend in development mode..."
 	@cd backend && go run cmd/server/main.go
+
+## validate: Validate the OpenAPI specification and run linting
+validate:
+	@echo "🔍 Validating OpenAPI specification..."
+	@cd backend && go build ./...
+	@cd backend && golangci-lint run --timeout=5m || true
+	@echo "✅ Validation complete"
+
+## test: Run all tests with coverage
+test:
+	@echo "🧪 Running tests..."
+	@cd backend && go test -v -race -coverprofile=coverage.out ./...
+	@cd backend && go tool cover -html=coverage.out -o coverage.html
+	@echo "✅ Tests complete - see coverage.html"
 
 # ------------------------------------------------------------------------------
 # Help

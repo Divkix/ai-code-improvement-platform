@@ -6,6 +6,8 @@ package models
 import (
 	"time"
 
+	"github-analyzer/internal/generated"
+	"github.com/oapi-codegen/runtime/types"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -53,6 +55,25 @@ func (u *User) ToResponse() UserResponse {
 		Name:            u.Name,
 		GitHubConnected: u.GitHubConnected,
 		GitHubUsername:  u.GitHubUsername,
+		CreatedAt:       u.CreatedAt,
+	}
+}
+
+// ToGeneratedUser converts a User model to generated.User
+func (u *User) ToGeneratedUser() generated.User {
+	email := types.Email(u.Email)
+	githubConnected := u.GitHubConnected
+	var githubUsername *string
+	if u.GitHubUsername != "" {
+		githubUsername = &u.GitHubUsername
+	}
+
+	return generated.User{
+		Id:              u.ID.Hex(),
+		Email:           email,
+		Name:            u.Name,
+		GithubConnected: &githubConnected,
+		GithubUsername:  githubUsername,
 		CreatedAt:       u.CreatedAt,
 	}
 }
