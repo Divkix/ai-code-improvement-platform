@@ -174,7 +174,7 @@ func (s *GitHubService) GetRepositoryStatistics(ctx context.Context, accessToken
 func (s *GitHubService) CheckRateLimit(ctx context.Context, accessToken string) (*github.RateLimits, error) {
 	client := s.CreateClient(accessToken)
 	
-	rateLimits, _, err := client.RateLimits(ctx)
+	rateLimits, _, err := client.RateLimit.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check rate limit: %w", err)
 	}

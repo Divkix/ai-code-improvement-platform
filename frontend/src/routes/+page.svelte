@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Chart, registerables } from 'chart.js';
-	import { apiClient } from '$lib/api';
+	import { getDashboardStats, getDashboardActivity, getDashboardTrends } from '$lib/api/hooks';
 	import { authStore } from '$lib/stores/auth';
 	import type { DashboardStats, ActivityItem, TrendDataPoint } from '$lib/api';
 
@@ -21,9 +21,9 @@
 			error = null;
 
 			const [statsData, activitiesData, trendsData] = await Promise.all([
-				apiClient.getDashboardStats(),
-				apiClient.getDashboardActivity(6),
-				apiClient.getDashboardTrends(14)
+				getDashboardStats(),
+				getDashboardActivity(6),
+				getDashboardTrends(14)
 			]);
 
 			console.log('Received stats data from API:', statsData);
@@ -145,10 +145,10 @@
 	});
 
 	$effect(() => {
-	if (chartCanvas && trends.length > 0) {
-		createChart();
-	}
-});
+		if (chartCanvas && trends.length > 0) {
+			createChart();
+		}
+	});
 </script>
 
 <svelte:head>
@@ -358,7 +358,7 @@
 						href="/repositories"
 						class="inline-flex items-center rounded-lg bg-indigo-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700"
 					>
-						<svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<svg class="mr-2 -ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path
 								stroke-linecap="round"
 								stroke-linejoin="round"

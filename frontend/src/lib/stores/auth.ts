@@ -3,16 +3,7 @@
 
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
-import apiClient from '../api';
-
-export interface User {
-	id: string;
-	email: string;
-	name: string;
-	githubConnected: boolean;
-	githubUsername?: string;
-	createdAt: string;
-}
+import { apiClient, setAuthToken, type User } from '../api';
 
 export interface AuthState {
 	user: User | null;
@@ -57,6 +48,7 @@ function createAuthStore() {
 			if (token && userStr) {
 				try {
 					const user = JSON.parse(userStr);
+					setAuthToken(token);
 					update((state) => ({
 						...state,
 						user,
@@ -81,23 +73,30 @@ function createAuthStore() {
 			update((state) => ({ ...state, isLoading: true }));
 
 			try {
-				const response = await apiClient.login(email, password);
+				const { data, error } = await apiClient.POST('/api/auth/login', {
+					body: { email, password }
+				});
+
+				if (error) {
+					throw new Error(error.message || 'Login failed');
+				}
 
 				// Store token and user data
 				if (browser) {
-					localStorage.setItem('auth_token', response.token);
-					localStorage.setItem('auth_user', JSON.stringify(response.user));
+					localStorage.setItem('auth_token', data.token);
+					localStorage.setItem('auth_user', JSON.stringify(data.user));
+					setAuthToken(data.token);
 				}
 
 				update((state) => ({
 					...state,
-					user: response.user,
-					token: response.token,
+					user: data.user,
+					token: data.token,
 					isAuthenticated: true,
 					isLoading: false
 				}));
 
-				return response;
+				return data;
 			} catch (error) {
 				update((state) => ({ ...state, isLoading: false }));
 				throw error;
@@ -109,6 +108,7 @@ function createAuthStore() {
 			if (browser) {
 				localStorage.removeItem('auth_token');
 				localStorage.removeItem('auth_user');
+				setAuthToken(null);
 			}
 			set(loggedOutState);
 		},
@@ -116,9 +116,14 @@ function createAuthStore() {
 		// Validate current token
 		validateToken: async () => {
 			try {
-				const user = await apiClient.getCurrentUser();
+				const { data, error } = await apiClient.GET('/api/auth/me');
+
+				if (error) {
+					throw new Error(error.message || 'Token validation failed');
+				}
+
 				// Token is valid, update user info and set loading to false.
-				update((state) => ({ ...state, user, isLoading: false }));
+				update((state) => ({ ...state, user: data, isLoading: false }));
 			} catch (error) {
 				console.error('Token validation failed:', error);
 				// Token is invalid, log the user out.

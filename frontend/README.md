@@ -1,38 +1,102 @@
-# sv
+# GitHub Analyzer Frontend
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+AI-powered code analysis platform frontend built with SvelteKit and TypeScript. Features type-safe API integration with OpenAPI code generation.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- 🔐 **JWT Authentication** with automatic token management
+- 📊 **Dashboard** with repository analytics and metrics
+- 🔗 **GitHub Integration** with OAuth authentication
+- 💬 **AI Chat Interface** for code analysis (backend integration pending)
+- 📱 **Responsive Design** with TailwindCSS
+- ⚡ **Type Safety** with OpenAPI-generated types
+- 🔧 **Real-time Data** from backend API
+
+## Development Setup
+
+### Prerequisites
+
+- Node.js 18+ or Bun
+- Backend API server running (typically on port 8080)
+
+### Installation
 
 ```bash
-# create a new project in the current directory
-npx sv create
+# Install dependencies
+bun install
 
-# create a new project in my-app
-npx sv create my-app
+# Copy environment file and configure
+cp .env.example .env.local
+# Edit .env.local with your backend API URL
 ```
 
-## Developing
+### Environment Configuration
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Copy `.env.example` to `.env.local` and configure:
+
+```env
+# Backend API URL
+VITE_API_URL=http://localhost:8080
+```
+
+### Development Server
 
 ```bash
-npm run dev
+# Start development server
+bun run dev
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+# Or with auto-open browser
+bun run dev -- --open
+```
+
+### API Type Generation
+
+The frontend uses OpenAPI-generated types for complete type safety:
+
+```bash
+# Regenerate API types from backend OpenAPI spec
+bun run generate-api
 ```
 
 ## Building
 
-To create a production version of your app:
-
 ```bash
-npm run build
+# Build for production
+bun run build
+
+# Preview production build
+bun run preview
 ```
 
-You can preview the production build with `npm run preview`.
+## Project Structure
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+```
+src/
+├── lib/
+│   ├── api/           # Generated OpenAPI client and types
+│   ├── components/    # Reusable Svelte components
+│   └── stores/        # Svelte stores for state management
+├── routes/            # SvelteKit file-based routing
+│   ├── auth/         # Authentication pages
+│   ├── chat/         # AI chat interface
+│   └── repositories/ # Repository management
+└── app.html          # Main HTML template
+```
+
+## Key Technologies
+
+- **SvelteKit** - Frontend framework with file-based routing
+- **TypeScript** - Type safety throughout the application
+- **TailwindCSS** - Utility-first CSS framework
+- **openapi-fetch** - Type-safe HTTP client
+- **openapi-typescript** - API type generation
+- **Chart.js** - Data visualization
+
+## API Integration
+
+This frontend is designed to work with the backend API and features:
+
+- Complete OpenAPI integration with generated types
+- Automatic JWT token handling
+- Error handling with proper HTTP status codes
+- Real-time data synchronization

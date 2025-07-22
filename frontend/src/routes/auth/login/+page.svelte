@@ -43,7 +43,7 @@
 			<h2 class="mb-6 text-2xl font-bold text-gray-900">Sign in to your account</h2>
 		</div>
 
-		<div class="mb-6 rounded-lg bg-blue-50 border border-blue-200 p-4">
+		<div class="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
 			<div class="flex items-start">
 				<div class="flex-shrink-0">
 					<svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
@@ -58,7 +58,7 @@
 					<h3 class="text-sm font-medium text-blue-800">Demo Access Available</h3>
 					<div class="mt-2 text-sm text-blue-700">
 						<p class="mb-2">Use these credentials to explore the AI-powered code analyzer:</p>
-						<div class="bg-white rounded border border-blue-300 p-3 font-mono text-xs">
+						<div class="rounded border border-blue-300 bg-white p-3 font-mono text-xs">
 							<div><strong>Email:</strong> demo@github-analyzer.com</div>
 							<div><strong>Password:</strong> demo123456</div>
 						</div>

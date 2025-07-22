@@ -1,12 +1,35 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { getRepositories } from '$lib/api/hooks';
+	import type { Repository } from '$lib/api';
 
-	// The layout now handles the auth check.
-	onMount(() => {
-		// You can add other initialization logic here if needed
+	// Load repositories when component mounts
+	onMount(async () => {
+		await loadRepositories();
 	});
 
-	let selectedRepo = $state('backend-api');
+	async function loadRepositories() {
+		try {
+			repositoriesLoading = true;
+			const response = await getRepositories({ limit: 50 });
+			repositories = response.repositories.map((repo) => ({
+				...repo,
+				isPrivate: repo.isPrivate ?? false
+			}));
+
+			// Auto-select first repository if available
+			if (repositories.length > 0 && !selectedRepo) {
+				selectedRepo = repositories[0].id;
+			}
+		} catch (error) {
+			console.error('Failed to load repositories:', error);
+			// Keep empty array as fallback
+		} finally {
+			repositoriesLoading = false;
+		}
+	}
+
+	let selectedRepo = $state('');
 	let messages = $state([
 		{
 			role: 'assistant',
@@ -17,13 +40,8 @@
 	]);
 	let inputText = $state('');
 	let loading = $state(false);
-
-	// Mock repositories for selector
-	const repositories = [
-		{ id: 'backend-api', name: 'backend-api' },
-		{ id: 'frontend-web', name: 'frontend-web' },
-		{ id: 'mobile-app', name: 'mobile-app' }
-	];
+	let repositories = $state<Repository[]>([]);
+	let repositoriesLoading = $state(true);
 	// Suggested questions
 	const suggestedQuestions = [
 		'Explain the authentication flow',
@@ -36,6 +54,16 @@
 	async function sendMessage(event: Event) {
 		event.preventDefault();
 		if (!inputText.trim()) return;
+		if (!selectedRepo) {
+			// Show error if no repository selected
+			const errorMessage = {
+				role: 'assistant',
+				content: 'Please select a repository before asking questions.',
+				timestamp: new Date()
+			};
+			messages = [...messages, errorMessage];
+			return;
+		}
 
 		const userMessage = {
 			role: 'user',
@@ -48,14 +76,18 @@
 		inputText = '';
 		loading = true;
 		try {
-			// TODO: Replace with actual API call
+			// TODO: Replace with actual chat API when backend is ready
+			// This is currently a mock implementation for demonstration
 			await new Promise((resolve) => setTimeout(resolve, 2000));
-			// Simulate API call
 
-			// Mock response
+			// Get selected repository info for context
+			const selectedRepository = repositories.find((repo) => repo.id === selectedRepo);
+			const repoName = selectedRepository?.fullName || 'repository';
+
+			// Mock response with selected repository context
 			const assistantMessage = {
 				role: 'assistant',
-				content: `Based on my analysis of the ${selectedRepo} repository, here's what I found regarding "${query}":
+				content: `Based on my analysis of the ${repoName} repository, here's what I found regarding "${query}":
 
 \`\`\`go
 // Example code snippet that relates to your question
@@ -112,15 +144,24 @@ This implementation is secure but could be enhanced with refresh tokens for bett
 			</div>
 			<div class="flex items-center space-x-2">
 				<label for="repo-select" class="text-sm font-medium text-gray-700">Repository:</label>
-				<select
-					id="repo-select"
-					bind:value={selectedRepo}
-					class="rounded-md border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-				>
-					{#each repositories as repo (repo.id)}
-						<option value={repo.id}>{repo.name}</option>
-					{/each}
-				</select>
+				{#if repositoriesLoading}
+					<div class="flex items-center space-x-2">
+						<div class="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>
+						<span class="text-sm text-gray-500">Loading...</span>
+					</div>
+				{:else if repositories.length === 0}
+					<span class="text-sm text-gray-500">No repositories found</span>
+				{:else}
+					<select
+						id="repo-select"
+						bind:value={selectedRepo}
+						class="rounded-md border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+					>
+						{#each repositories as repo (repo.id)}
+							<option value={repo.id}>{repo.fullName}</option>
+						{/each}
+					</select>
+				{/if}
 			</div>
 		</div>
 
@@ -132,16 +173,9 @@ This implementation is secure but could be enhanced with refresh tokens for bett
 							? 'bg-blue-600 text-white'
 							: 'bg-gray-100 text-gray-900'} rounded-lg px-4 py-2"
 					>
-						{#if message.role === 'assistant'}
-							<div class="prose prose-sm max-w-none">
-								{@html message.content.replace(
-									/```(\w+)?\n([\s\S]*?)```/g,
-									'<pre class="bg-gray-800 text-green-400 p-3 rounded mt-2 mb-2 overflow-x-auto"><code>$2</code></pre>'
-								)}
-							</div>
-						{:else}
-							<p class="text-sm">{message.content}</p>
-						{/if}
+						<div class="prose prose-sm max-w-none">
+							<div class="text-sm whitespace-pre-wrap">{message.content}</div>
+						</div>
 						<div class="mt-1 text-xs opacity-70">
 							{message.timestamp.toLocaleTimeString()}
 						</div>
@@ -181,13 +215,15 @@ This implementation is secure but could be enhanced with refresh tokens for bett
 			<form onsubmit={sendMessage} class="flex space-x-2">
 				<input
 					bind:value={inputText}
-					placeholder="Ask about the code..."
+					placeholder={selectedRepo
+						? 'Ask about the code...'
+						: 'Select a repository to start chatting'}
 					class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
-					disabled={loading}
+					disabled={loading || !selectedRepo}
 				/>
 				<button
 					type="submit"
-					disabled={loading || !inputText.trim()}
+					disabled={loading || !inputText.trim() || !selectedRepo}
 					class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					Send

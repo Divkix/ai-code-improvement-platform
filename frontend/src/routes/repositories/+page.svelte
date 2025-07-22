@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import apiClient, { type Repository, type GitHubRepository, type User } from '$lib/api';
+	import {
+		getRepositories,
+		createRepository,
+		getRepository,
+		deleteRepository
+	} from '$lib/api/hooks';
+	import { type Repository, type GitHubRepository, type User } from '$lib/api';
 	import { authStore } from '$lib/stores/auth';
 	import GitHubConnection from '$lib/components/GitHubConnection.svelte';
 	import GitHubRepositoryBrowser from '$lib/components/GitHubRepositoryBrowser.svelte';
@@ -37,8 +43,11 @@
 		try {
 			loading = true;
 			error = '';
-			const response = await apiClient.getRepositories();
-			repositories = response.repositories || [];
+			const response = await getRepositories();
+			repositories = (response.repositories || []).map((repo) => ({
+				...repo,
+				isPrivate: repo.isPrivate ?? false
+			}));
 
 			// Start or stop progress polling based on repository statuses
 			manageProgressPolling();
@@ -83,9 +92,11 @@
 			// Poll each importing repository for updates
 			const updatePromises = importingRepos.map(async (repo) => {
 				try {
-					const updatedRepo = await apiClient.getRepository(repo.id);
+					const updatedRepo = await getRepository(repo.id);
 					// Update the repository in our local state
-					repositories = repositories.map((r) => (r.id === repo.id ? updatedRepo : r));
+					repositories = repositories.map((r) =>
+						r.id === repo.id ? { ...updatedRepo, isPrivate: updatedRepo.isPrivate ?? false } : r
+					);
 					return updatedRepo;
 				} catch (err) {
 					console.error(`Failed to update repository ${repo.id}:`, err);
@@ -117,13 +128,13 @@
 				return;
 			}
 
-			const newRepo = await apiClient.createRepository({
+			const newRepo = await createRepository({
 				name: parsed.name,
 				owner: parsed.owner,
 				fullName: parsed.fullName,
 				isPrivate: false // We'll assume public for now since we can't detect this from URL
 			});
-			repositories = [newRepo, ...repositories];
+			repositories = [{ ...newRepo, isPrivate: newRepo.isPrivate ?? false }, ...repositories];
 			showAddModal = false;
 			githubUrl = '';
 			error = '';
@@ -169,7 +180,7 @@
 		}
 
 		try {
-			await apiClient.deleteRepository(repo.id);
+			await deleteRepository(repo.id);
 			repositories = repositories.filter((r) => r.id !== repo.id);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to delete repository';
@@ -244,8 +255,7 @@
 	async function handleGitHubRepositoryImport(githubRepo: GitHubRepository) {
 		try {
 			// Use the new GitHub import API endpoint
-			const githubUrl = `https://github.com/${githubRepo.owner}/${githubRepo.name}`;
-			const newRepo = await apiClient.createRepository({
+			const newRepo = await createRepository({
 				name: githubRepo.name,
 				owner: githubRepo.owner,
 				fullName: githubRepo.fullName,
@@ -255,7 +265,7 @@
 				isPrivate: githubRepo.private
 			});
 
-			repositories = [newRepo, ...repositories];
+			repositories = [{ ...newRepo, isPrivate: newRepo.isPrivate ?? false }, ...repositories];
 			closeGitHubBrowser();
 			error = '';
 
@@ -411,7 +421,7 @@
 								</div>
 								{#if repo.status === 'importing'}
 									<div class="mt-2 flex items-center text-xs text-blue-600">
-										<svg class="-ml-1 mr-2 h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
+										<svg class="mr-2 -ml-1 h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
 											<circle
 												class="opacity-25"
 												cx="12"
@@ -434,21 +444,21 @@
 
 						<div class="mb-4 grid grid-cols-2 gap-4">
 							<div>
-								<dt class="text-xs font-medium uppercase tracking-wide text-gray-500">Language</dt>
+								<dt class="text-xs font-medium tracking-wide text-gray-500 uppercase">Language</dt>
 								<dd class="text-sm text-gray-900">{repo.primaryLanguage || 'Unknown'}</dd>
 							</div>
 							<div>
-								<dt class="text-xs font-medium uppercase tracking-wide text-gray-500">
+								<dt class="text-xs font-medium tracking-wide text-gray-500 uppercase">
 									Lines of Code
 								</dt>
 								<dd class="text-sm text-gray-900">{getLinesOfCode(repo).toLocaleString()}</dd>
 							</div>
 							<div>
-								<dt class="text-xs font-medium uppercase tracking-wide text-gray-500">Progress</dt>
+								<dt class="text-xs font-medium tracking-wide text-gray-500 uppercase">Progress</dt>
 								<dd class="text-sm text-gray-900">{repo.importProgress}%</dd>
 							</div>
 							<div>
-								<dt class="text-xs font-medium uppercase tracking-wide text-gray-500">
+								<dt class="text-xs font-medium tracking-wide text-gray-500 uppercase">
 									Last Updated
 								</dt>
 								<dd class="text-sm text-gray-900">{getLastAnalyzed(repo)}</dd>
@@ -481,7 +491,7 @@
 	<div class="fixed inset-0 z-50 overflow-y-auto">
 		<div class="flex min-h-screen items-center justify-center p-4">
 			<div
-				class="fixed inset-0 bg-black bg-opacity-50"
+				class="bg-opacity-50 fixed inset-0 bg-black"
 				onclick={closeAddModal}
 				onkeydown={closeAddModal}
 				role="button"
@@ -549,7 +559,7 @@
 								type="url"
 								id="githubUrl"
 								bind:value={githubUrl}
-								class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+								class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
 								placeholder="https://github.com/owner/repository or owner/repository"
 								required
 							/>
@@ -585,7 +595,7 @@
 	<div class="fixed inset-0 z-50 overflow-y-auto">
 		<div class="flex min-h-screen items-center justify-center p-4">
 			<div
-				class="fixed inset-0 bg-black bg-opacity-50"
+				class="bg-opacity-50 fixed inset-0 bg-black"
 				onclick={closeGitHubBrowser}
 				onkeydown={closeGitHubBrowser}
 				role="button"

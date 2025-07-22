@@ -10,6 +10,8 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/oapi-codegen/oapi-codegen/v2 v2.5.0
 	github.com/oapi-codegen/runtime v1.1.2
+	github.com/swaggo/files v1.0.1
+	github.com/swaggo/gin-swagger v1.6.0
 	go.mongodb.org/mongo-driver v1.17.4
 	golang.org/x/crypto v0.40.0
 	golang.org/x/oauth2 v0.30.0
@@ -55,8 +57,6 @@ require (
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/speakeasy-api/jsonpath v0.6.0 // indirect
 	github.com/speakeasy-api/openapi-overlay v0.10.2 // indirect
-	github.com/swaggo/files v1.0.1 // indirect
-	github.com/swaggo/gin-swagger v1.6.0 // indirect
 	github.com/swaggo/swag v1.8.12 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.0 // indirect

@@ -90,6 +90,7 @@ func (s *RepositoryService) GetRepositories(ctx context.Context, userID primitiv
 		if closeErr := cursor.Close(ctx); closeErr != nil {
 			// Log the error but don't override the main error
 			// In production, you'd want proper logging here
+			_ = closeErr // Explicitly ignore for now
 		}
 	}()
 
@@ -411,18 +412,27 @@ func (s *RepositoryService) processRepositoryImport(ctx context.Context, repoID 
 	repoIDStr := repoID.Hex()
 
 	// Update status to importing
-	s.UpdateRepositoryStatus(ctx, userID, repoIDStr, models.StatusImporting)
-	s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 10)
+	if err := s.UpdateRepositoryStatus(ctx, userID, repoIDStr, models.StatusImporting); err != nil {
+		return
+	}
+	if err := s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 10); err != nil {
+		return
+	}
 
 	// Fetch repository statistics from GitHub
 	stats, err := s.githubService.GetRepositoryStatistics(ctx, accessToken, githubRepo.Owner, githubRepo.Name)
 	if err != nil {
 		// Mark as error but don't fail completely
-		s.UpdateRepositoryStatus(ctx, userID, repoIDStr, models.StatusError)
+		if updateErr := s.UpdateRepositoryStatus(ctx, userID, repoIDStr, models.StatusError); updateErr != nil {
+			// Log error but continue
+			_ = updateErr
+		}
 		return
 	}
 
-	s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 50)
+	if err := s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 50); err != nil {
+		return
+	}
 
 	// Convert GitHub stats to our repository stats format
 	repoStats := &models.RepositoryStats{
@@ -435,15 +445,25 @@ func (s *RepositoryService) processRepositoryImport(ctx context.Context, repoID 
 	// Update repository with statistics
 	err = s.UpdateRepositoryStats(ctx, userID, repoIDStr, repoStats)
 	if err != nil {
-		s.UpdateRepositoryStatus(ctx, userID, repoIDStr, models.StatusError)
+		if updateErr := s.UpdateRepositoryStatus(ctx, userID, repoIDStr, models.StatusError); updateErr != nil {
+			// Log error but continue
+			_ = updateErr
+		}
 		return
 	}
 
-	s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 80)
+	if err := s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 80); err != nil {
+		return
+	}
 
 	// Mark repository as indexed and ready
-	s.MarkRepositoryIndexed(ctx, userID, repoIDStr)
-	s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 100)
+	if err := s.MarkRepositoryIndexed(ctx, userID, repoIDStr); err != nil {
+		return
+	}
+	if err := s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 100); err != nil {
+		// Final progress update failed, but repository is indexed
+		_ = err
+	}
 }
 
 // CreateRepositoryFromGitHub creates a repository with GitHub integration

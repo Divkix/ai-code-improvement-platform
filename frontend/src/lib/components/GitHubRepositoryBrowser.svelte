@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import apiClient, { type GitHubRepository, type User } from '$lib/api';
+	import { getGitHubRepositories } from '$lib/api/hooks';
+	import { type GitHubRepository, type User } from '$lib/api';
 
 	let {
 		user,
@@ -30,15 +31,28 @@
 			loading = true;
 			error = '';
 
-			const response = await apiClient.getGitHubRepositories(page);
+			const response = await getGitHubRepositories(page);
 
 			if (page === 1) {
-				repositories = response.repositories;
+				repositories = response.repositories.map((repo) => ({
+					...repo,
+					stargazersCount: repo.stargazersCount ?? 0,
+					forksCount: repo.forksCount ?? 0,
+					size: repo.size ?? 0
+				}));
 			} else {
-				repositories = [...repositories, ...response.repositories];
+				repositories = [
+					...repositories,
+					...response.repositories.map((repo) => ({
+						...repo,
+						stargazersCount: repo.stargazersCount ?? 0,
+						forksCount: repo.forksCount ?? 0,
+						size: repo.size ?? 0
+					}))
+				];
 			}
 
-			currentPage = response.currentPage;
+			currentPage = page;
 			hasMore = response.hasMore;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load GitHub repositories';
@@ -239,12 +253,12 @@
 									</svg>
 									{repo.forksCount}
 								</div>
-								<div>{formatSize(repo.size)}</div>
+								<div>{repo.size ? formatSize(repo.size) : 'N/A'}</div>
 							</div>
 						</div>
 
 						<div class="mt-3 text-xs text-gray-500">
-							Updated {formatDate(repo.updatedAt)}
+							Updated {repo.updatedAt ? formatDate(repo.updatedAt) : 'N/A'}
 						</div>
 
 						<div class="mt-4">

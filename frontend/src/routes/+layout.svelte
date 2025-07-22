@@ -19,7 +19,6 @@
 		const path = $page.url.pathname;
 		const isAuthRoute = path.startsWith('/auth');
 
-
 		// If not authenticated and not on an auth page, redirect to login
 		if (!isAuthenticated && !isAuthRoute) {
 			goto('/auth/login');
@@ -50,8 +49,9 @@
 								class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
 								>Repositories</a
 							>
-							<a href="/chat" class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
-								>Chat</a
+							<a
+								href="/chat"
+								class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700">Chat</a
 							>
 						</div>
 					{/if}
