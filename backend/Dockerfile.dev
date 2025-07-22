@@ -1,0 +1,17 @@
+# Use the official Golang image as build stage
+FROM golang:1.23-alpine AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Copy the source code
+COPY . .
+
+# Download dependencies
+RUN go mod download
+
+# Expose port 8080
+EXPOSE 8080
+
+# Command to run the executable
+CMD ["go", "run", "cmd/server/main.go"]
