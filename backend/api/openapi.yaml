@@ -492,8 +492,22 @@ paths:
             type: string
             default: "http://localhost:3000/auth/github/callback"
       responses:
-        "302":
-          description: Redirect to GitHub OAuth
+        "200":
+          description: GitHub OAuth login URL and state
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - auth_url
+                  - state
+                properties:
+                  auth_url:
+                    type: string
+                    description: GitHub OAuth authorization URL
+                  state:
+                    type: string
+                    description: OAuth state parameter for CSRF protection
         "401":
           description: Unauthorized
           content:

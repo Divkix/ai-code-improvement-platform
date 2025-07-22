@@ -132,7 +132,7 @@ export async function validateGitHubRepository(owner: string, repo: string) {
 }
 
 // GitHub OAuth
-export async function getGitHubLoginUrl(redirectUri?: string): Promise<{ auth_url: string; state: string }> {
+export async function getGitHubLoginUrl(redirectUri?: string) {
 	const { data, error } = await apiClient.GET('/api/auth/github/login', {
 		params: {
 			query: redirectUri ? { redirect_uri: redirectUri } : undefined

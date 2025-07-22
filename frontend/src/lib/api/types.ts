@@ -641,12 +641,19 @@ export interface operations {
 		};
 		requestBody?: never;
 		responses: {
-			/** @description Redirect to GitHub OAuth */
-			302: {
+			/** @description GitHub OAuth login URL and state */
+			200: {
 				headers: {
 					[name: string]: unknown;
 				};
-				content?: never;
+				content: {
+					'application/json': {
+						/** @description GitHub OAuth authorization URL */
+						auth_url: string;
+						/** @description OAuth state parameter for CSRF protection */
+						state: string;
+					};
+				};
 			};
 			/** @description Unauthorized */
 			401: {

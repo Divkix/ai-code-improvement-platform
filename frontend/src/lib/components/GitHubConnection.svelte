@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { handleGitHubCallback, disconnectGitHub as disconnectGitHubAPI, getGitHubLoginUrl } from '$lib/api/hooks';
+	import {
+		handleGitHubCallback,
+		disconnectGitHub as disconnectGitHubAPI,
+		getGitHubLoginUrl
+	} from '$lib/api/hooks';
 	import { type User } from '$lib/api';
 	import { authStore } from '$lib/stores/auth';
 
