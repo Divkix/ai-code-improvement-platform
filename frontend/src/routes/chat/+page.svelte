@@ -6,17 +6,17 @@
 		// You can add other initialization logic here if needed
 	});
 
-	let selectedRepo = 'backend-api';
-	let messages = [
+	let selectedRepo = $state('backend-api');
+	let messages = $state([
 		{
 			role: 'assistant',
 			content:
 				"Hello! I'm ready to help you analyze your code. What would you like to know about your repository?",
 			timestamp: new Date()
 		}
-	];
-	let inputText = '';
-	let loading = false;
+	]);
+	let inputText = $state('');
+	let loading = $state(false);
 
 	// Mock repositories for selector
 	const repositories = [
@@ -33,7 +33,8 @@
 		'What are the main security concerns?'
 	];
 
-	async function sendMessage() {
+	async function sendMessage(event: Event) {
+		event.preventDefault();
 		if (!inputText.trim()) return;
 
 		const userMessage = {
@@ -80,7 +81,7 @@ This implementation is secure but could be enhanced with refresh tokens for bett
 				analyzingFiles: ['src/auth/middleware.go', 'src/handlers/auth.go', 'src/models/user.go']
 			};
 			messages = [...messages, assistantMessage];
-		} catch { // FIX: Removed unused '_err' variable
+		} catch {
 			const errorMessage = {
 				role: 'assistant',
 				content: 'Sorry, I encountered an error processing your request. Please try again.',
@@ -94,7 +95,7 @@ This implementation is secure but could be enhanced with refresh tokens for bett
 
 	function askSuggested(question: string) {
 		inputText = question;
-		sendMessage();
+		sendMessage(new Event('submit'));
 	}
 </script>
 
@@ -133,7 +134,6 @@ This implementation is secure but could be enhanced with refresh tokens for bett
 					>
 						{#if message.role === 'assistant'}
 							<div class="prose prose-sm max-w-none">
-								// @eslint-disable-next-line svelte/no-at-html-tags
 								{@html message.content.replace(
 									/```(\w+)?\n([\s\S]*?)```/g,
 									'<pre class="bg-gray-800 text-green-400 p-3 rounded mt-2 mb-2 overflow-x-auto"><code>$2</code></pre>'
@@ -167,7 +167,7 @@ This implementation is secure but could be enhanced with refresh tokens for bett
 				<div class="flex flex-wrap gap-2">
 					{#each suggestedQuestions as question (question)}
 						<button
-							on:click={() => askSuggested(question)}
+							onclick={() => askSuggested(question)}
 							class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 hover:bg-gray-200"
 						>
 							{question}
@@ -178,7 +178,7 @@ This implementation is secure but could be enhanced with refresh tokens for bett
 		{/if}
 
 		<div class="border-t border-gray-200 p-4">
-			<form on:submit|preventDefault={sendMessage} class="flex space-x-2">
+			<form onsubmit={sendMessage} class="flex space-x-2">
 				<input
 					bind:value={inputText}
 					placeholder="Ask about the code..."

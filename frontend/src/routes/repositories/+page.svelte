@@ -5,13 +5,11 @@
 	onMount(() => {
 		loadRepositories();
 	});
-
 	let repositories = $state<Repository[]>([]);
 	let loading = $state(true);
 	let error = $state('');
 	let showAddModal = $state(false);
 	let githubUrl = $state('');
-
 	async function loadRepositories() {
 		try {
 			loading = true;
@@ -26,7 +24,8 @@
 		}
 	}
 
-	async function handleAddRepository() {
+	async function handleAddRepository(event: Event) {
+		event.preventDefault();
 		if (!githubUrl.trim()) {
 			error = 'Please enter a GitHub repository URL';
 			return;
@@ -311,7 +310,7 @@
 			<div class="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
 				<h3 class="mb-4 text-lg font-medium text-gray-900">Add Repository</h3>
 
-				<form on:submit|preventDefault={handleAddRepository}>
+				<form onsubmit={handleAddRepository}>
 					<div class="mb-4">
 						<label for="githubUrl" class="block text-sm font-medium text-gray-700"
 							>GitHub Repository URL</label
@@ -332,7 +331,7 @@
 					<div class="flex space-x-3">
 						<button
 							type="button"
-							on:click={closeAddModal}
+							onclick={closeAddModal}
 							class="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
 						>
 							Cancel

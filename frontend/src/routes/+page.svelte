@@ -7,7 +7,6 @@
 
 	Chart.register(...registerables);
 
-	// FIX: Use $state for all variables that will be reassigned to trigger UI updates
 	let stats = $state<DashboardStats | null>(null);
 	let activities = $state<ActivityItem[]>([]);
 	let trends = $state<TrendDataPoint[]>([]);
@@ -36,7 +35,10 @@
 			console.error('Failed to load dashboard data:', err);
 			error = err instanceof Error ? err.message : 'Failed to load dashboard data';
 
-			if (err instanceof Error && (err.message.includes('authorization') || err.message.includes('Unauthorized'))) {
+			if (
+				err instanceof Error &&
+				(err.message.includes('authorization') || err.message.includes('Unauthorized'))
+			) {
 				authStore.logout();
 			}
 		} finally {
@@ -98,20 +100,29 @@
 
 	function getSeverityColor(severity: string): string {
 		switch (severity) {
-			case 'error': return 'bg-red-400';
-			case 'warning': return 'bg-yellow-400';
-			case 'success': return 'bg-green-400';
-			default: return 'bg-blue-400';
+			case 'error':
+				return 'bg-red-400';
+			case 'warning':
+				return 'bg-yellow-400';
+			case 'success':
+				return 'bg-green-400';
+			default:
+				return 'bg-blue-400';
 		}
 	}
 
 	function getTypeIcon(type: string): string {
 		switch (type) {
-			case 'repository_imported': return '📁';
-			case 'analysis_completed': return '✅';
-			case 'issue_detected': return '⚠️';
-			case 'optimization_found': return '⚡';
-			default: return '📊';
+			case 'repository_imported':
+				return '📁';
+			case 'analysis_completed':
+				return '✅';
+			case 'issue_detected':
+				return '⚠️';
+			case 'optimization_found':
+				return '⚡';
+			default:
+				return '📊';
 		}
 	}
 
@@ -134,10 +145,10 @@
 	});
 
 	$effect(() => {
-		if (chartCanvas && trends.length > 0) {
-			createChart();
-		}
-	});
+	if (chartCanvas && trends.length > 0) {
+		createChart();
+	}
+});
 </script>
 
 <svelte:head>
@@ -347,7 +358,7 @@
 						href="/repositories"
 						class="inline-flex items-center rounded-lg bg-indigo-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700"
 					>
-						<svg class="mr-2 -ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path
 								stroke-linecap="round"
 								stroke-linejoin="round"
