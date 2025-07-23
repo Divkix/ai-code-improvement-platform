@@ -625,11 +625,27 @@ func (s *RepositoryService) storeCodeChunks(ctx context.Context, chunks []*model
 		// Insert batch with retry logic
 		var insertErr error
 		for attempt := 1; attempt <= 3; attempt++ {
-			result, err := collection.InsertMany(ctx, documents)
+			result, err := collection.InsertMany(ctx, documents, options.InsertMany().SetOrdered(false))
 			if err == nil {
 				totalInserted += len(documents)
 				log.Printf("Successfully inserted batch %d: %d chunks", batchNum, len(documents))
 				break
+			}
+
+			// Ignore duplicate key errors (contentHash unique index) and treat the rest as success
+			if we, ok := err.(mongo.BulkWriteException); ok {
+				allDup := true
+				for _, writeErr := range we.WriteErrors {
+					if writeErr.Code != 11000 { // duplicate key
+						allDup = false
+						break
+					}
+				}
+				if allDup {
+					totalInserted += len(documents) - len(we.WriteErrors)
+					log.Printf("Batch %d had %d duplicate chunks, skipped", batchNum, len(we.WriteErrors))
+					break
+				}
 			}
 			
 			insertErr = err
