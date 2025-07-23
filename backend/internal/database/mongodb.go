@@ -85,6 +85,8 @@ func (m *MongoDB) EnsureIndexes() error {
 				{Key: "fileName", Value: 5},
 				{Key: "imports", Value: 2},
 			}).
+			SetDefaultLanguage("none").
+			SetLanguageOverride("language_override").
 			SetName("CodeSearchIndex"),
 	}
 
