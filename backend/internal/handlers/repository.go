@@ -322,11 +322,11 @@ func (h *RepositoryHandler) GetRepositoryStats(c *gin.Context) {
 // These are typically called internally by import/processing services
 
 // UpdateRepositoryStatus handles updating repository status (internal use)
-func (h *RepositoryHandler) UpdateRepositoryStatus(userID primitive.ObjectID, repoID string, status string) error {
-	return h.repositoryService.UpdateRepositoryStatus(context.TODO(), userID, repoID, status)
+func (h *RepositoryHandler) UpdateRepositoryStatus(ctx context.Context, userID primitive.ObjectID, repoID string, status string) error {
+	return h.repositoryService.UpdateRepositoryStatus(ctx, userID, repoID, status)
 }
 
 // UpdateRepositoryProgress handles updating repository import progress (internal use)
-func (h *RepositoryHandler) UpdateRepositoryProgress(userID primitive.ObjectID, repoID string, progress int) error {
-	return h.repositoryService.UpdateRepositoryProgress(context.TODO(), userID, repoID, progress)
+func (h *RepositoryHandler) UpdateRepositoryProgress(ctx context.Context, userID primitive.ObjectID, repoID string, progress int) error {
+	return h.repositoryService.UpdateRepositoryProgress(ctx, userID, repoID, progress)
 }

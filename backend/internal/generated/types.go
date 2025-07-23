@@ -29,6 +29,14 @@ const (
 	RepositoryImported ActivityItemType = "repository_imported"
 )
 
+// Defines values for EmbeddingStatusResponseStatus.
+const (
+	EmbeddingStatusResponseStatusCompleted  EmbeddingStatusResponseStatus = "completed"
+	EmbeddingStatusResponseStatusFailed     EmbeddingStatusResponseStatus = "failed"
+	EmbeddingStatusResponseStatusPending    EmbeddingStatusResponseStatus = "pending"
+	EmbeddingStatusResponseStatusProcessing EmbeddingStatusResponseStatus = "processing"
+)
+
 // Defines values for HealthCheckServicesMongodb.
 const (
 	HealthCheckServicesMongodbConnected    HealthCheckServicesMongodb = "connected"
@@ -54,6 +62,13 @@ const (
 	RepositoryStatusImporting RepositoryStatus = "importing"
 	RepositoryStatusPending   RepositoryStatus = "pending"
 	RepositoryStatusReady     RepositoryStatus = "ready"
+)
+
+// Defines values for SimilarityResultRelevance.
+const (
+	High   SimilarityResultRelevance = "high"
+	Low    SimilarityResultRelevance = "low"
+	Medium SimilarityResultRelevance = "medium"
 )
 
 // Defines values for GetRepositoriesParamsStatus.
@@ -130,6 +145,36 @@ type DashboardStats struct {
 	IssuesPreventedMonthly  int     `json:"issuesPreventedMonthly"`
 	TotalRepositories       int     `json:"totalRepositories"`
 }
+
+// EmbeddingStatusResponse defines model for EmbeddingStatusResponse.
+type EmbeddingStatusResponse struct {
+	// CompletedAt When processing completed
+	CompletedAt *time.Time `json:"completedAt,omitempty"`
+
+	// EstimatedTimeRemaining Estimated time remaining in seconds
+	EstimatedTimeRemaining *int `json:"estimatedTimeRemaining,omitempty"`
+
+	// FailedChunks Number of failed chunks
+	FailedChunks *int `json:"failedChunks,omitempty"`
+
+	// ProcessedChunks Number of processed chunks
+	ProcessedChunks *int `json:"processedChunks,omitempty"`
+
+	// Progress Processing progress percentage
+	Progress int `json:"progress"`
+
+	// StartedAt When processing started
+	StartedAt *time.Time `json:"startedAt,omitempty"`
+
+	// Status Current embedding processing status
+	Status EmbeddingStatusResponseStatus `json:"status"`
+
+	// TotalChunks Total number of code chunks
+	TotalChunks *int `json:"totalChunks,omitempty"`
+}
+
+// EmbeddingStatusResponseStatus Current embedding processing status
+type EmbeddingStatusResponseStatus string
 
 // Error defines model for Error.
 type Error struct {
@@ -208,6 +253,33 @@ type HealthCheckServicesQdrant string
 
 // HealthCheckStatus defines model for HealthCheck.Status.
 type HealthCheckStatus string
+
+// HybridSearchRequest defines model for HybridSearchRequest.
+type HybridSearchRequest struct {
+	// FileType Optional file extension filter
+	FileType *string `json:"fileType,omitempty"`
+
+	// Language Optional programming language filter
+	Language *string `json:"language,omitempty"`
+
+	// Limit Maximum number of results
+	Limit *int `json:"limit,omitempty"`
+
+	// Offset Pagination offset
+	Offset *int `json:"offset,omitempty"`
+
+	// Query Search query string for hybrid search
+	Query string `json:"query"`
+
+	// RepositoryId Optional repository ID filter
+	RepositoryId *string `json:"repositoryId,omitempty"`
+
+	// TextWeight Weight for text matching (0.0 to 1.0)
+	TextWeight *float32 `json:"textWeight,omitempty"`
+
+	// VectorWeight Weight for vector similarity (0.0 to 1.0)
+	VectorWeight *float32 `json:"vectorWeight,omitempty"`
+}
 
 // LoginRequest defines model for LoginRequest.
 type LoginRequest struct {
@@ -323,6 +395,42 @@ type SearchStats struct {
 	TotalLines    int      `json:"totalLines"`
 }
 
+// SimilarityResult defines model for SimilarityResult.
+type SimilarityResult struct {
+	Content     string    `json:"content"`
+	ContentHash *string   `json:"contentHash,omitempty"`
+	CreatedAt   time.Time `json:"createdAt"`
+
+	// Distance Cosine distance (1.0 - score)
+	Distance *float32  `json:"distance,omitempty"`
+	EndLine  int       `json:"endLine"`
+	FileName string    `json:"fileName"`
+	FilePath string    `json:"filePath"`
+	Id       string    `json:"id"`
+	Imports  *[]string `json:"imports,omitempty"`
+	Language string    `json:"language"`
+	Metadata *struct {
+		Classes    *[]string `json:"classes,omitempty"`
+		Complexity *int      `json:"complexity,omitempty"`
+		Functions  *[]string `json:"functions,omitempty"`
+		Types      *[]string `json:"types,omitempty"`
+		Variables  *[]string `json:"variables,omitempty"`
+	} `json:"metadata,omitempty"`
+
+	// Relevance Relevance level based on similarity score
+	Relevance    *SimilarityResultRelevance `json:"relevance,omitempty"`
+	RepositoryId string                     `json:"repositoryId"`
+
+	// Score Cosine similarity score
+	Score     *float32   `json:"score,omitempty"`
+	StartLine int        `json:"startLine"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+	VectorId  *string    `json:"vectorId,omitempty"`
+}
+
+// SimilarityResultRelevance Relevance level based on similarity score
+type SimilarityResultRelevance string
+
 // TrendDataPoint defines model for TrendDataPoint.
 type TrendDataPoint struct {
 	CodeQuality      float32            `json:"codeQuality"`
@@ -350,6 +458,27 @@ type User struct {
 	GithubUsername *string `json:"githubUsername,omitempty"`
 	Id             string  `json:"id"`
 	Name           string  `json:"name"`
+}
+
+// VectorSearchRequest defines model for VectorSearchRequest.
+type VectorSearchRequest struct {
+	// FileType Optional file extension filter
+	FileType *string `json:"fileType,omitempty"`
+
+	// Language Optional programming language filter
+	Language *string `json:"language,omitempty"`
+
+	// Limit Maximum number of results
+	Limit *int `json:"limit,omitempty"`
+
+	// Offset Pagination offset
+	Offset *int `json:"offset,omitempty"`
+
+	// Query Search query string for semantic similarity
+	Query string `json:"query"`
+
+	// RepositoryId Optional repository ID filter
+	RepositoryId *string `json:"repositoryId,omitempty"`
 }
 
 // GithubLoginParams defines parameters for GithubLogin.
@@ -451,6 +580,15 @@ type GetRecentChunksParams struct {
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// FindSimilarChunksParams defines parameters for FindSimilarChunks.
+type FindSimilarChunksParams struct {
+	// Limit Maximum number of similar chunks to return
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// RepositoryId Optional repository ID filter
+	RepositoryId *string `form:"repositoryId,omitempty" json:"repositoryId,omitempty"`
+}
+
 // GetSearchStatsParams defines parameters for GetSearchStats.
 type GetSearchStatsParams struct {
 	// RepositoryId Filter by repository ID
@@ -483,3 +621,9 @@ type RepositorySearchJSONRequestBody = SearchRequest
 
 // GlobalSearchJSONRequestBody defines body for GlobalSearch for application/json ContentType.
 type GlobalSearchJSONRequestBody = SearchRequest
+
+// HybridSearchJSONRequestBody defines body for HybridSearch for application/json ContentType.
+type HybridSearchJSONRequestBody = HybridSearchRequest
+
+// VectorSearchJSONRequestBody defines body for VectorSearch for application/json ContentType.
+type VectorSearchJSONRequestBody = VectorSearchRequest

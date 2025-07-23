@@ -146,6 +146,12 @@ type ClientInterface interface {
 
 	UpdateRepository(ctx context.Context, id string, body UpdateRepositoryJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TriggerRepositoryEmbedding request
+	TriggerRepositoryEmbedding(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetRepositoryEmbeddingStatus request
+	GetRepositoryEmbeddingStatus(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// RepositorySearchWithBody request with any body
 	RepositorySearchWithBody(ctx context.Context, id string, params *RepositorySearchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -159,6 +165,11 @@ type ClientInterface interface {
 
 	GlobalSearch(ctx context.Context, params *GlobalSearchParams, body GlobalSearchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// HybridSearchWithBody request with any body
+	HybridSearchWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	HybridSearch(ctx context.Context, body HybridSearchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetLanguages request
 	GetLanguages(ctx context.Context, params *GetLanguagesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -168,11 +179,19 @@ type ClientInterface interface {
 	// GetRecentChunks request
 	GetRecentChunks(ctx context.Context, params *GetRecentChunksParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// FindSimilarChunks request
+	FindSimilarChunks(ctx context.Context, chunkId string, params *FindSimilarChunksParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetSearchStats request
 	GetSearchStats(ctx context.Context, params *GetSearchStatsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetSearchSuggestions request
 	GetSearchSuggestions(ctx context.Context, params *GetSearchSuggestionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// VectorSearchWithBody request with any body
+	VectorSearchWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	VectorSearch(ctx context.Context, body VectorSearchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetHealth request
 	GetHealth(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -418,6 +437,30 @@ func (c *Client) UpdateRepository(ctx context.Context, id string, body UpdateRep
 	return c.Client.Do(req)
 }
 
+func (c *Client) TriggerRepositoryEmbedding(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTriggerRepositoryEmbeddingRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetRepositoryEmbeddingStatus(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetRepositoryEmbeddingStatusRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) RepositorySearchWithBody(ctx context.Context, id string, params *RepositorySearchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRepositorySearchRequestWithBody(c.Server, id, params, contentType, body)
 	if err != nil {
@@ -478,6 +521,30 @@ func (c *Client) GlobalSearch(ctx context.Context, params *GlobalSearchParams, b
 	return c.Client.Do(req)
 }
 
+func (c *Client) HybridSearchWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewHybridSearchRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) HybridSearch(ctx context.Context, body HybridSearchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewHybridSearchRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) GetLanguages(ctx context.Context, params *GetLanguagesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetLanguagesRequest(c.Server, params)
 	if err != nil {
@@ -514,6 +581,18 @@ func (c *Client) GetRecentChunks(ctx context.Context, params *GetRecentChunksPar
 	return c.Client.Do(req)
 }
 
+func (c *Client) FindSimilarChunks(ctx context.Context, chunkId string, params *FindSimilarChunksParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewFindSimilarChunksRequest(c.Server, chunkId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) GetSearchStats(ctx context.Context, params *GetSearchStatsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetSearchStatsRequest(c.Server, params)
 	if err != nil {
@@ -528,6 +607,30 @@ func (c *Client) GetSearchStats(ctx context.Context, params *GetSearchStatsParam
 
 func (c *Client) GetSearchSuggestions(ctx context.Context, params *GetSearchSuggestionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetSearchSuggestionsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) VectorSearchWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewVectorSearchRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) VectorSearch(ctx context.Context, body VectorSearchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewVectorSearchRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1211,6 +1314,74 @@ func NewUpdateRepositoryRequestWithBody(server string, id string, contentType st
 	return req, nil
 }
 
+// NewTriggerRepositoryEmbeddingRequest generates requests for TriggerRepositoryEmbedding
+func NewTriggerRepositoryEmbeddingRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/repositories/%s/embed", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetRepositoryEmbeddingStatusRequest generates requests for GetRepositoryEmbeddingStatus
+func NewGetRepositoryEmbeddingStatusRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/repositories/%s/embedding-status", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewRepositorySearchRequest calls the generic RepositorySearch builder with application/json body
 func NewRepositorySearchRequest(server string, id string, params *RepositorySearchParams, body RepositorySearchJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -1472,6 +1643,46 @@ func NewGlobalSearchRequestWithBody(server string, params *GlobalSearchParams, c
 	return req, nil
 }
 
+// NewHybridSearchRequest calls the generic HybridSearch builder with application/json body
+func NewHybridSearchRequest(server string, body HybridSearchJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewHybridSearchRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewHybridSearchRequestWithBody generates requests for HybridSearch with any type of body
+func NewHybridSearchRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/search/hybrid")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetLanguagesRequest generates requests for GetLanguages
 func NewGetLanguagesRequest(server string, params *GetLanguagesParams) (*http.Request, error) {
 	var err error
@@ -1679,6 +1890,78 @@ func NewGetRecentChunksRequest(server string, params *GetRecentChunksParams) (*h
 	return req, nil
 }
 
+// NewFindSimilarChunksRequest generates requests for FindSimilarChunks
+func NewFindSimilarChunksRequest(server string, chunkId string, params *FindSimilarChunksParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "chunkId", runtime.ParamLocationPath, chunkId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/search/similar/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.RepositoryId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repositoryId", runtime.ParamLocationQuery, *params.RepositoryId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetSearchStatsRequest generates requests for GetSearchStats
 func NewGetSearchStatsRequest(server string, params *GetSearchStatsParams) (*http.Request, error) {
 	var err error
@@ -1785,6 +2068,46 @@ func NewGetSearchSuggestionsRequest(server string, params *GetSearchSuggestionsP
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewVectorSearchRequest calls the generic VectorSearch builder with application/json body
+func NewVectorSearchRequest(server string, body VectorSearchJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewVectorSearchRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewVectorSearchRequestWithBody generates requests for VectorSearch with any type of body
+func NewVectorSearchRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/search/vector")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -1915,6 +2238,12 @@ type ClientWithResponsesInterface interface {
 
 	UpdateRepositoryWithResponse(ctx context.Context, id string, body UpdateRepositoryJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateRepositoryResponse, error)
 
+	// TriggerRepositoryEmbeddingWithResponse request
+	TriggerRepositoryEmbeddingWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*TriggerRepositoryEmbeddingResponse, error)
+
+	// GetRepositoryEmbeddingStatusWithResponse request
+	GetRepositoryEmbeddingStatusWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetRepositoryEmbeddingStatusResponse, error)
+
 	// RepositorySearchWithBodyWithResponse request with any body
 	RepositorySearchWithBodyWithResponse(ctx context.Context, id string, params *RepositorySearchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RepositorySearchResponse, error)
 
@@ -1928,6 +2257,11 @@ type ClientWithResponsesInterface interface {
 
 	GlobalSearchWithResponse(ctx context.Context, params *GlobalSearchParams, body GlobalSearchJSONRequestBody, reqEditors ...RequestEditorFn) (*GlobalSearchResponse, error)
 
+	// HybridSearchWithBodyWithResponse request with any body
+	HybridSearchWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*HybridSearchResponse, error)
+
+	HybridSearchWithResponse(ctx context.Context, body HybridSearchJSONRequestBody, reqEditors ...RequestEditorFn) (*HybridSearchResponse, error)
+
 	// GetLanguagesWithResponse request
 	GetLanguagesWithResponse(ctx context.Context, params *GetLanguagesParams, reqEditors ...RequestEditorFn) (*GetLanguagesResponse, error)
 
@@ -1937,11 +2271,19 @@ type ClientWithResponsesInterface interface {
 	// GetRecentChunksWithResponse request
 	GetRecentChunksWithResponse(ctx context.Context, params *GetRecentChunksParams, reqEditors ...RequestEditorFn) (*GetRecentChunksResponse, error)
 
+	// FindSimilarChunksWithResponse request
+	FindSimilarChunksWithResponse(ctx context.Context, chunkId string, params *FindSimilarChunksParams, reqEditors ...RequestEditorFn) (*FindSimilarChunksResponse, error)
+
 	// GetSearchStatsWithResponse request
 	GetSearchStatsWithResponse(ctx context.Context, params *GetSearchStatsParams, reqEditors ...RequestEditorFn) (*GetSearchStatsResponse, error)
 
 	// GetSearchSuggestionsWithResponse request
 	GetSearchSuggestionsWithResponse(ctx context.Context, params *GetSearchSuggestionsParams, reqEditors ...RequestEditorFn) (*GetSearchSuggestionsResponse, error)
+
+	// VectorSearchWithBodyWithResponse request with any body
+	VectorSearchWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*VectorSearchResponse, error)
+
+	VectorSearchWithResponse(ctx context.Context, body VectorSearchJSONRequestBody, reqEditors ...RequestEditorFn) (*VectorSearchResponse, error)
 
 	// GetHealthWithResponse request
 	GetHealthWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHealthResponse, error)
@@ -2344,6 +2686,60 @@ func (r UpdateRepositoryResponse) StatusCode() int {
 	return 0
 }
 
+type TriggerRepositoryEmbeddingResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON202      *struct {
+		Message      *string `json:"message,omitempty"`
+		RepositoryId *string `json:"repositoryId,omitempty"`
+	}
+	JSON400 *Error
+	JSON401 *Error
+	JSON404 *Error
+	JSON500 *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r TriggerRepositoryEmbeddingResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TriggerRepositoryEmbeddingResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetRepositoryEmbeddingStatusResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *EmbeddingStatusResponse
+	JSON401      *Error
+	JSON404      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r GetRepositoryEmbeddingStatusResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetRepositoryEmbeddingStatusResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type RepositorySearchResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2422,6 +2818,36 @@ func (r GlobalSearchResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GlobalSearchResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type HybridSearchResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		HasMore *bool               `json:"hasMore,omitempty"`
+		Query   *string             `json:"query,omitempty"`
+		Results *[]SimilarityResult `json:"results,omitempty"`
+		Total   *int                `json:"total,omitempty"`
+	}
+	JSON400 *Error
+	JSON401 *Error
+	JSON500 *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r HybridSearchResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r HybridSearchResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -2516,6 +2942,36 @@ func (r GetRecentChunksResponse) StatusCode() int {
 	return 0
 }
 
+type FindSimilarChunksResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		Results     *[]SimilarityResult `json:"results,omitempty"`
+		SourceChunk *CodeChunk          `json:"sourceChunk,omitempty"`
+		Total       *int                `json:"total,omitempty"`
+	}
+	JSON400 *Error
+	JSON401 *Error
+	JSON404 *Error
+	JSON500 *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r FindSimilarChunksResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r FindSimilarChunksResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetSearchStatsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2561,6 +3017,36 @@ func (r GetSearchSuggestionsResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetSearchSuggestionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type VectorSearchResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		HasMore *bool               `json:"hasMore,omitempty"`
+		Query   *string             `json:"query,omitempty"`
+		Results *[]SimilarityResult `json:"results,omitempty"`
+		Total   *int                `json:"total,omitempty"`
+	}
+	JSON400 *Error
+	JSON401 *Error
+	JSON500 *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r VectorSearchResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r VectorSearchResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -2766,6 +3252,24 @@ func (c *ClientWithResponses) UpdateRepositoryWithResponse(ctx context.Context, 
 	return ParseUpdateRepositoryResponse(rsp)
 }
 
+// TriggerRepositoryEmbeddingWithResponse request returning *TriggerRepositoryEmbeddingResponse
+func (c *ClientWithResponses) TriggerRepositoryEmbeddingWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*TriggerRepositoryEmbeddingResponse, error) {
+	rsp, err := c.TriggerRepositoryEmbedding(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTriggerRepositoryEmbeddingResponse(rsp)
+}
+
+// GetRepositoryEmbeddingStatusWithResponse request returning *GetRepositoryEmbeddingStatusResponse
+func (c *ClientWithResponses) GetRepositoryEmbeddingStatusWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetRepositoryEmbeddingStatusResponse, error) {
+	rsp, err := c.GetRepositoryEmbeddingStatus(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetRepositoryEmbeddingStatusResponse(rsp)
+}
+
 // RepositorySearchWithBodyWithResponse request with arbitrary body returning *RepositorySearchResponse
 func (c *ClientWithResponses) RepositorySearchWithBodyWithResponse(ctx context.Context, id string, params *RepositorySearchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RepositorySearchResponse, error) {
 	rsp, err := c.RepositorySearchWithBody(ctx, id, params, contentType, body, reqEditors...)
@@ -2809,6 +3313,23 @@ func (c *ClientWithResponses) GlobalSearchWithResponse(ctx context.Context, para
 	return ParseGlobalSearchResponse(rsp)
 }
 
+// HybridSearchWithBodyWithResponse request with arbitrary body returning *HybridSearchResponse
+func (c *ClientWithResponses) HybridSearchWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*HybridSearchResponse, error) {
+	rsp, err := c.HybridSearchWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseHybridSearchResponse(rsp)
+}
+
+func (c *ClientWithResponses) HybridSearchWithResponse(ctx context.Context, body HybridSearchJSONRequestBody, reqEditors ...RequestEditorFn) (*HybridSearchResponse, error) {
+	rsp, err := c.HybridSearch(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseHybridSearchResponse(rsp)
+}
+
 // GetLanguagesWithResponse request returning *GetLanguagesResponse
 func (c *ClientWithResponses) GetLanguagesWithResponse(ctx context.Context, params *GetLanguagesParams, reqEditors ...RequestEditorFn) (*GetLanguagesResponse, error) {
 	rsp, err := c.GetLanguages(ctx, params, reqEditors...)
@@ -2836,6 +3357,15 @@ func (c *ClientWithResponses) GetRecentChunksWithResponse(ctx context.Context, p
 	return ParseGetRecentChunksResponse(rsp)
 }
 
+// FindSimilarChunksWithResponse request returning *FindSimilarChunksResponse
+func (c *ClientWithResponses) FindSimilarChunksWithResponse(ctx context.Context, chunkId string, params *FindSimilarChunksParams, reqEditors ...RequestEditorFn) (*FindSimilarChunksResponse, error) {
+	rsp, err := c.FindSimilarChunks(ctx, chunkId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseFindSimilarChunksResponse(rsp)
+}
+
 // GetSearchStatsWithResponse request returning *GetSearchStatsResponse
 func (c *ClientWithResponses) GetSearchStatsWithResponse(ctx context.Context, params *GetSearchStatsParams, reqEditors ...RequestEditorFn) (*GetSearchStatsResponse, error) {
 	rsp, err := c.GetSearchStats(ctx, params, reqEditors...)
@@ -2852,6 +3382,23 @@ func (c *ClientWithResponses) GetSearchSuggestionsWithResponse(ctx context.Conte
 		return nil, err
 	}
 	return ParseGetSearchSuggestionsResponse(rsp)
+}
+
+// VectorSearchWithBodyWithResponse request with arbitrary body returning *VectorSearchResponse
+func (c *ClientWithResponses) VectorSearchWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*VectorSearchResponse, error) {
+	rsp, err := c.VectorSearchWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseVectorSearchResponse(rsp)
+}
+
+func (c *ClientWithResponses) VectorSearchWithResponse(ctx context.Context, body VectorSearchJSONRequestBody, reqEditors ...RequestEditorFn) (*VectorSearchResponse, error) {
+	rsp, err := c.VectorSearch(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseVectorSearchResponse(rsp)
 }
 
 // GetHealthWithResponse request returning *GetHealthResponse
@@ -3558,6 +4105,110 @@ func ParseUpdateRepositoryResponse(rsp *http.Response) (*UpdateRepositoryRespons
 	return response, nil
 }
 
+// ParseTriggerRepositoryEmbeddingResponse parses an HTTP response from a TriggerRepositoryEmbeddingWithResponse call
+func ParseTriggerRepositoryEmbeddingResponse(rsp *http.Response) (*TriggerRepositoryEmbeddingResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TriggerRepositoryEmbeddingResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
+		var dest struct {
+			Message      *string `json:"message,omitempty"`
+			RepositoryId *string `json:"repositoryId,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON202 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetRepositoryEmbeddingStatusResponse parses an HTTP response from a GetRepositoryEmbeddingStatusWithResponse call
+func ParseGetRepositoryEmbeddingStatusResponse(rsp *http.Response) (*GetRepositoryEmbeddingStatusResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetRepositoryEmbeddingStatusResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EmbeddingStatusResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseRepositorySearchResponse parses an HTTP response from a RepositorySearchWithResponse call
 func ParseRepositorySearchResponse(rsp *http.Response) (*RepositorySearchResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -3683,6 +4334,58 @@ func ParseGlobalSearchResponse(rsp *http.Response) (*GlobalSearchResponse, error
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest SearchResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseHybridSearchResponse parses an HTTP response from a HybridSearchWithResponse call
+func ParseHybridSearchResponse(rsp *http.Response) (*HybridSearchResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &HybridSearchResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			HasMore *bool               `json:"hasMore,omitempty"`
+			Query   *string             `json:"query,omitempty"`
+			Results *[]SimilarityResult `json:"results,omitempty"`
+			Total   *int                `json:"total,omitempty"`
+		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -3850,6 +4553,64 @@ func ParseGetRecentChunksResponse(rsp *http.Response) (*GetRecentChunksResponse,
 	return response, nil
 }
 
+// ParseFindSimilarChunksResponse parses an HTTP response from a FindSimilarChunksWithResponse call
+func ParseFindSimilarChunksResponse(rsp *http.Response) (*FindSimilarChunksResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &FindSimilarChunksResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			Results     *[]SimilarityResult `json:"results,omitempty"`
+			SourceChunk *CodeChunk          `json:"sourceChunk,omitempty"`
+			Total       *int                `json:"total,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetSearchStatsResponse parses an HTTP response from a GetSearchStatsWithResponse call
 func ParseGetSearchStatsResponse(rsp *http.Response) (*GetSearchStatsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -3927,6 +4688,58 @@ func ParseGetSearchSuggestionsResponse(rsp *http.Response) (*GetSearchSuggestion
 			return nil, err
 		}
 		response.JSON401 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseVectorSearchResponse parses an HTTP response from a VectorSearchWithResponse call
+func ParseVectorSearchResponse(rsp *http.Response) (*VectorSearchResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &VectorSearchResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			HasMore *bool               `json:"hasMore,omitempty"`
+			Query   *string             `json:"query,omitempty"`
+			Results *[]SimilarityResult `json:"results,omitempty"`
+			Total   *int                `json:"total,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
 
 	}
 

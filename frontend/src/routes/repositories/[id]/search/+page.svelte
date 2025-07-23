@@ -105,8 +105,8 @@
 		}
 	}
 
-	async function handleSearch(event: CustomEvent<string>) {
-		searchQuery = event.detail;
+	async function handleSearch(event: CustomEvent<{ query: string; mode: 'text' | 'vector' | 'hybrid' }>) {
+		searchQuery = event.detail.query;
 		currentOffset = 0;
 		await performSearch(searchQuery);
 	}

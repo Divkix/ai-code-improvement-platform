@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -44,7 +45,15 @@ func main() {
 	}()
 
 	// Initialize Qdrant
-	qdrant := database.NewQdrant(cfg.Database.QdrantURL)
+	qdrant, err := database.NewQdrant(cfg.Database.QdrantURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to Qdrant: %v", err)
+	}
+	defer func() {
+		if err := qdrant.Close(); err != nil {
+			log.Printf("Error closing Qdrant connection: %v", err)
+		}
+	}()
 
 	// Test initial connections
 	if err := mongoDB.Ping(); err != nil {
@@ -72,8 +81,15 @@ func main() {
 	authService := auth.NewAuthService(cfg.JWT.Secret)
 	dashboardService := services.NewDashboardService()
 	githubService := services.NewGitHubService(mongoDB.Database(), cfg.GitHub.ClientID, cfg.GitHub.ClientSecret, cfg.GitHub.EncryptionKey)
-	repositoryService := services.NewRepositoryService(mongoDB.Database(), githubService, userService)
-	searchService := services.NewSearchService(mongoDB.Database())
+	
+	// Initialize vector search services first (needed by repository service)
+	voyageService := services.NewVoyageService(cfg.AI.VoyageAPIKey)
+	embeddingService := services.NewEmbeddingService(voyageService, qdrant, mongoDB, cfg)
+	embeddingPipeline := services.NewEmbeddingPipeline(embeddingService, mongoDB, cfg)
+	searchService := services.NewSearchService(mongoDB.Database(), voyageService, qdrant, cfg)
+	
+	// Initialize repository service with embedding pipeline
+	repositoryService := services.NewRepositoryService(mongoDB.Database(), githubService, userService, embeddingPipeline)
 
 	// Initialize handlers
 	healthHandler := handlers.NewHealthHandler(mongoDB, qdrant)
@@ -82,6 +98,7 @@ func main() {
 	repositoryHandler := handlers.NewRepositoryHandler(repositoryService)
 	githubHandler := handlers.NewGitHubHandler(githubService, userService)
 	searchHandler := handlers.NewSearchHandler(searchService)
+	vectorSearchHandler := handlers.NewVectorSearchHandler(searchService, embeddingService)
 
 	// Create unified server implementing ServerInterface
 	unifiedServer := server.NewServer(
@@ -91,6 +108,7 @@ func main() {
 		repositoryHandler,
 		githubHandler,
 		searchHandler,
+		vectorSearchHandler,
 	)
 
 	// Create Gin router
@@ -133,6 +151,33 @@ func main() {
 	}
 
 	generated.RegisterHandlersWithOptions(router, unifiedServer, options)
+	
+	// Initialize Qdrant collection before starting embedding pipeline
+	ctx := context.Background()
+	if err := embeddingService.InitializeCollection(ctx); err != nil {
+		log.Printf("Warning: Failed to initialize Qdrant collection: %v", err)
+	} else {
+		log.Println("✅ Qdrant collection initialized")
+	}
+	
+	// Start background embedding pipeline
+	if err := embeddingPipeline.Start(ctx); err != nil {
+		log.Printf("Warning: Failed to start embedding pipeline: %v", err)
+	} else {
+		log.Println("✅ Embedding pipeline started")
+		
+		// Queue existing repositories for embedding
+		if err := embeddingPipeline.QueueAllRepositories(ctx); err != nil {
+			log.Printf("Warning: Failed to queue existing repositories: %v", err)
+		}
+	}
+	
+	// Graceful shutdown handling
+	defer func() {
+		if err := embeddingPipeline.Stop(); err != nil {
+			log.Printf("Error stopping embedding pipeline: %v", err)
+		}
+	}()
 
 	// Add Swagger UI endpoint (serves the OpenAPI spec)
 	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

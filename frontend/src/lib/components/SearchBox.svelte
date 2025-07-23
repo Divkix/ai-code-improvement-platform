@@ -9,19 +9,22 @@
 	export let placeholder = 'Search code...';
 	export let disabled = false;
 	export let loading = false;
+	export let searchMode: 'text' | 'vector' | 'hybrid' = 'text';
+	export let showModeSelector = true;
 	// Remove autofocus prop to improve accessibility
 
 	const dispatch = createEventDispatcher<{
-		search: string;
+		search: { query: string; mode: 'text' | 'vector' | 'hybrid' };
 		clear: void;
 		focus: void;
 		blur: void;
+		modeChange: 'text' | 'vector' | 'hybrid';
 	}>();
 
 	// Debounced search function to avoid too many API calls
 	const debouncedSearch = debounce((query: string) => {
 		if (query.trim()) {
-			dispatch('search', query.trim());
+			dispatch('search', { query: query.trim(), mode: searchMode });
 		} else {
 			dispatch('clear');
 		}
@@ -39,7 +42,7 @@
 		if (event.key === 'Enter' && value.trim()) {
 			// Cancel debounce and search immediately on Enter
 			event.preventDefault();
-			dispatch('search', value.trim());
+			dispatch('search', { query: value.trim(), mode: searchMode });
 		}
 
 		if (event.key === 'Escape') {
@@ -61,9 +64,85 @@
 	function handleBlur() {
 		dispatch('blur');
 	}
+
+	function handleModeChange(mode: 'text' | 'vector' | 'hybrid') {
+		searchMode = mode;
+		dispatch('modeChange', mode);
+		
+		// Re-trigger search if there's a query
+		if (value.trim()) {
+			dispatch('search', { query: value.trim(), mode: searchMode });
+		}
+	}
+
+	// Get mode description for accessibility
+	function getModeDescription(mode: 'text' | 'vector' | 'hybrid') {
+		switch (mode) {
+			case 'text':
+				return 'Text-based keyword search';
+			case 'vector':
+				return 'Semantic AI-powered search';
+			case 'hybrid':
+				return 'Combined text and semantic search';
+			default:
+				return '';
+		}
+	}
 </script>
 
 <div class="search-box">
+	<!-- Search Mode Selector -->
+	{#if showModeSelector}
+		<div class="mode-selector" role="radiogroup" aria-label="Search mode">
+			<button
+				type="button"
+				class="mode-button"
+				class:active={searchMode === 'text'}
+				aria-pressed={searchMode === 'text'}
+				aria-label={getModeDescription('text')}
+				on:click={() => handleModeChange('text')}
+				{disabled}
+			>
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+				</svg>
+				Text
+			</button>
+			<button
+				type="button"
+				class="mode-button"
+				class:active={searchMode === 'vector'}
+				aria-pressed={searchMode === 'vector'}
+				aria-label={getModeDescription('vector')}
+				on:click={() => handleModeChange('vector')}
+				{disabled}
+			>
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M9 19c-5 0-8-2.5-8-5s3-5 8-5 8 2.5 8 5-3 5-8 5Z"/>
+					<path d="m8 19 8-14"/>
+					<path d="m1 14 8-14"/>
+					<path d="m15 5 4 14"/>
+				</svg>
+				Semantic
+			</button>
+			<button
+				type="button"
+				class="mode-button"
+				class:active={searchMode === 'hybrid'}
+				aria-pressed={searchMode === 'hybrid'}
+				aria-label={getModeDescription('hybrid')}
+				on:click={() => handleModeChange('hybrid')}
+				{disabled}
+			>
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M12 3v18m0-18 4 4m-4-4-4 4"/>
+					<path d="m8 17 4 4 4-4"/>
+				</svg>
+				Hybrid
+			</button>
+		</div>
+	{/if}
+
 	<div class="search-container">
 		<input
 			type="text"
@@ -128,6 +207,54 @@
 	.search-box {
 		width: 100%;
 		max-width: 600px;
+	}
+
+	.mode-selector {
+		display: flex;
+		gap: 2px;
+		background: #f3f4f6;
+		border-radius: 8px;
+		padding: 4px;
+		margin-bottom: 12px;
+		border: 1px solid #e5e7eb;
+	}
+
+	.mode-button {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		padding: 8px 12px;
+		border: none;
+		background: transparent;
+		border-radius: 6px;
+		font-size: 14px;
+		font-weight: 500;
+		color: #6b7280;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.mode-button:hover {
+		background: rgba(255, 255, 255, 0.8);
+		color: #374151;
+	}
+
+	.mode-button.active {
+		background: white;
+		color: #1f2937;
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+	}
+
+	.mode-button:disabled {
+		cursor: not-allowed;
+		opacity: 0.5;
+	}
+
+	.mode-button svg {
+		width: 16px;
+		height: 16px;
 	}
 
 	.search-container {

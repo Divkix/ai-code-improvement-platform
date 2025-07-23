@@ -11,22 +11,26 @@ import (
 
 // Repository represents a GitHub repository in our database
 type Repository struct {
-	ID              primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	UserID          primitive.ObjectID `bson:"userId" json:"userId"`
-	GitHubRepoID    *int64             `bson:"githubRepoId,omitempty" json:"githubRepoId,omitempty"`
-	Owner           string             `bson:"owner" json:"owner"`
-	Name            string             `bson:"name" json:"name"`
-	FullName        string             `bson:"fullName" json:"fullName"`
-	Description     *string            `bson:"description,omitempty" json:"description,omitempty"`
-	PrimaryLanguage *string            `bson:"primaryLanguage,omitempty" json:"primaryLanguage,omitempty"`
-	IsPrivate       bool               `bson:"isPrivate" json:"isPrivate"`
-	IndexedAt       *time.Time         `bson:"indexedAt,omitempty" json:"indexedAt,omitempty"`
-	LastSyncedAt    *time.Time         `bson:"lastSyncedAt,omitempty" json:"lastSyncedAt,omitempty"`
-	Status          string             `bson:"status" json:"status"`
-	ImportProgress  int                `bson:"importProgress" json:"importProgress"`
-	Stats           *RepositoryStats   `bson:"stats,omitempty" json:"stats,omitempty"`
-	CreatedAt       time.Time          `bson:"createdAt" json:"createdAt"`
-	UpdatedAt       time.Time          `bson:"updatedAt" json:"updatedAt"`
+	ID                 primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	UserID             primitive.ObjectID `bson:"userId" json:"userId"`
+	GitHubRepoID       *int64             `bson:"githubRepoId,omitempty" json:"githubRepoId,omitempty"`
+	Owner              string             `bson:"owner" json:"owner"`
+	Name               string             `bson:"name" json:"name"`
+	FullName           string             `bson:"fullName" json:"fullName"`
+	Description        *string            `bson:"description,omitempty" json:"description,omitempty"`
+	PrimaryLanguage    *string            `bson:"primaryLanguage,omitempty" json:"primaryLanguage,omitempty"`
+	IsPrivate          bool               `bson:"isPrivate" json:"isPrivate"`
+	IndexedAt          *time.Time         `bson:"indexedAt,omitempty" json:"indexedAt,omitempty"`
+	LastSyncedAt       *time.Time         `bson:"lastSyncedAt,omitempty" json:"lastSyncedAt,omitempty"`
+	Status             string             `bson:"status" json:"status"`
+	ImportProgress     int                `bson:"importProgress" json:"importProgress"`
+	EmbeddingStatus    string             `bson:"embeddingStatus,omitempty" json:"embeddingStatus,omitempty"`
+	EmbeddingProgress  int                `bson:"embeddingProgress,omitempty" json:"embeddingProgress,omitempty"`
+	EmbeddedChunksCount int               `bson:"embeddedChunksCount,omitempty" json:"embeddedChunksCount,omitempty"`
+	LastEmbeddedAt     *time.Time         `bson:"lastEmbeddedAt,omitempty" json:"lastEmbeddedAt,omitempty"`
+	Stats              *RepositoryStats   `bson:"stats,omitempty" json:"stats,omitempty"`
+	CreatedAt          time.Time          `bson:"createdAt" json:"createdAt"`
+	UpdatedAt          time.Time          `bson:"updatedAt" json:"updatedAt"`
 }
 
 // RepositoryStats contains detailed statistics about a repository

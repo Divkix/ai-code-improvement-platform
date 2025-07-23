@@ -4,10 +4,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { writable } from 'svelte/store';
+	import { goto } from '$app/navigation';
 	import SearchBox from '$lib/components/SearchBox.svelte';
 	import SearchResults from '$lib/components/SearchResults.svelte';
 	import SearchFilters from '$lib/components/SearchFilters.svelte';
-	import { searchClient } from '$lib/api/search-client';
+	import { apiClient } from '$lib/api/client';
 	import type { SearchResponse, SearchRequest } from '$lib/api/search-types';
 	import type { components } from '$lib/api/types';
 
@@ -15,6 +16,7 @@
 
 	// Search state
 	let searchQuery = '';
+	let searchMode: 'text' | 'vector' | 'hybrid' = 'text';
 	let searchResults: SearchResponse | null = null;
 	let loading = false;
 	let error: string | null = null;
@@ -37,27 +39,24 @@
 	async function loadInitialData() {
 		try {
 			// Load available languages and repositories for filters
-			const [languagesData, repositoriesResponse] = await Promise.all([
-				searchClient.getLanguages(),
-				fetch('/api/repositories')
+			const [languagesResponse, repositoriesResponse] = await Promise.all([
+				apiClient.GET('/api/search/languages'),
+				apiClient.GET('/api/repositories')
 			]);
 
-			availableLanguages = languagesData.languages || [];
+			if (languagesResponse.data) {
+				availableLanguages = languagesResponse.data.languages || [];
+			}
 
-			if (repositoriesResponse.ok) {
-				const reposData = await repositoriesResponse.json();
-				availableRepositories = reposData.repositories.map((repo: any) => ({
-					id: repo.id,
-					name: repo.name,
-					fullName: repo.fullName
-				}));
+			if (repositoriesResponse.data) {
+				availableRepositories = repositoriesResponse.data.repositories;
 			}
 		} catch (err) {
 			console.warn('Failed to load initial data:', err);
 		}
 	}
 
-	async function performSearch(query: string, offset = 0, append = false) {
+	async function performSearch(query: string, mode: 'text' | 'vector' | 'hybrid' = searchMode, offset = 0, append = false) {
 		if (!query.trim()) {
 			searchResults = null;
 			return;
@@ -67,16 +66,53 @@
 		error = null;
 
 		try {
-			const searchRequest: SearchRequest = {
-				query,
-				limit,
-				offset,
-				language: selectedLanguage || undefined,
-				fileType: selectedFileType || undefined,
-				repositoryId: selectedRepository || undefined
-			};
+			let response: any;
 
-			const data = await searchClient.search(searchRequest);
+			if (mode === 'vector') {
+				// Vector search using apiClient
+				response = await apiClient.POST('/api/search/vector', {
+					body: {
+						query,
+						repositoryId: selectedRepository || undefined,
+						language: selectedLanguage || undefined,
+						fileType: selectedFileType || undefined,
+						limit,
+						offset
+					}
+				});
+			} else if (mode === 'hybrid') {
+				// Hybrid search using apiClient
+				response = await apiClient.POST('/api/search/hybrid', {
+					body: {
+						query,
+						repositoryId: selectedRepository || undefined,
+						language: selectedLanguage || undefined,
+						fileType: selectedFileType || undefined,
+						vectorWeight: 0.7,
+						textWeight: 0.3,
+						limit,
+						offset
+					}
+				});
+			} else {
+				// Traditional text search using apiClient
+				response = await apiClient.POST('/api/search', {
+					body: {
+						query,
+						limit,
+						offset,
+						language: selectedLanguage || undefined,
+						fileType: selectedFileType || undefined,
+						repositoryId: selectedRepository || undefined
+					}
+				});
+			}
+
+			if (response.error) {
+				throw new Error(response.error.message || 'Search failed');
+			}
+
+			const data = response.data;
 
 			if (append && searchResults) {
 				// Append results for pagination
@@ -97,15 +133,23 @@
 		}
 	}
 
-	async function handleSearch(event: CustomEvent<string>) {
-		searchQuery = event.detail;
+	async function handleSearch(event: CustomEvent<{ query: string; mode: 'text' | 'vector' | 'hybrid' }>) {
+		searchQuery = event.detail.query;
+		searchMode = event.detail.mode;
 		currentOffset = 0;
-		await performSearch(searchQuery);
+		await performSearch(searchQuery, searchMode);
+	}
+
+	function handleModeChange(event: CustomEvent<'text' | 'vector' | 'hybrid'>) {
+		searchMode = event.detail;
+		if (searchQuery) {
+			performSearch(searchQuery, searchMode);
+		}
 	}
 
 	async function handleLoadMore() {
 		const newOffset = currentOffset + limit;
-		await performSearch(searchQuery, newOffset, true);
+		await performSearch(searchQuery, searchMode, newOffset, true);
 	}
 
 	async function handleFilterChange() {
@@ -138,9 +182,10 @@
 
 	function handleResultSelect(event: CustomEvent) {
 		const result = event.detail;
-		// Navigate to the specific file/line (implementation depends on your routing setup)
-		console.log('Selected result:', result);
-		// Example: navigate to `/repositories/${result.repositoryId}/files?path=${result.filePath}&line=${result.startLine}`
+		// Navigate to the repository file view with line highlighting
+		const encodedPath = encodeURIComponent(result.filePath);
+		const url = `/repositories/${result.repositoryId}/files?path=${encodedPath}&line=${result.startLine}&endLine=${result.endLine}`;
+		goto(url);
 	}
 
 	function handleRetry() {
@@ -173,7 +218,10 @@
 		<SearchBox
 			placeholder="Search for functions, classes, variables, or any code pattern..."
 			{loading}
+			{searchMode}
+			showModeSelector={true}
 			on:search={handleSearch}
+			on:modeChange={handleModeChange}
 			on:clear={() => {
 				searchQuery = '';
 				searchResults = null;
@@ -200,6 +248,7 @@
 			{loading}
 			{error}
 			query={searchQuery}
+			{searchMode}
 			on:loadMore={handleLoadMore}
 			on:selectResult={handleResultSelect}
 			on:retry={handleRetry}

@@ -13,6 +13,8 @@ import (
     "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
     
+    "github-analyzer/internal/config"
+    "github-analyzer/internal/database"
     "github-analyzer/internal/models"
 )
 
@@ -20,13 +22,19 @@ import (
 type SearchService struct {
     db           *mongo.Database
     codeChunks   *mongo.Collection
+    voyageService *VoyageService
+    qdrantClient  *database.Qdrant
+    config        *config.Config
 }
 
 // NewSearchService creates a new search service
-func NewSearchService(db *mongo.Database) *SearchService {
+func NewSearchService(db *mongo.Database, voyageService *VoyageService, qdrant *database.Qdrant, config *config.Config) *SearchService {
     return &SearchService{
-        db:         db,
-        codeChunks: db.Collection("code_chunks"),
+        db:            db,
+        codeChunks:    db.Collection("codechunks"),
+        voyageService: voyageService,
+        qdrantClient:  qdrant,
+        config:        config,
     }
 }
 
@@ -434,4 +442,216 @@ func max(a, b int) int {
         return a
     }
     return b
+}
+
+// VectorSearch performs semantic search using embeddings
+func (s *SearchService) VectorSearch(ctx context.Context, repositoryID primitive.ObjectID, query string, limit int) ([]models.SimilarityResult, error) {
+    if limit <= 0 || limit > 100 {
+        limit = 20
+    }
+
+    // Generate embedding for the query
+    embeddings, err := s.voyageService.GenerateEmbeddings(ctx, []string{query})
+    if err != nil {
+        return nil, fmt.Errorf("failed to generate query embedding: %w", err)
+    }
+
+    if len(embeddings) == 0 {
+        return nil, fmt.Errorf("no embeddings generated for query")
+    }
+
+    // Search for similar vectors in Qdrant
+    results, err := s.qdrantClient.SearchSimilar(ctx, s.config.Database.QdrantCollectionName, embeddings[0], limit, true)
+    if err != nil {
+        return nil, fmt.Errorf("vector search failed: %w", err)
+    }
+
+    // Convert Qdrant results to similarity results
+    similarityResults := make([]models.SimilarityResult, 0, len(results))
+    for _, result := range results {
+        chunkID, err := primitive.ObjectIDFromHex(result.ID)
+        if err != nil {
+            continue // Skip invalid IDs
+        }
+
+        // Get the full chunk data from MongoDB
+        var chunk models.CodeChunk
+        err = s.codeChunks.FindOne(ctx, bson.M{"_id": chunkID}).Decode(&chunk)
+        if err != nil {
+            continue // Skip chunks that can't be found
+        }
+
+        similarityResult := models.NewSimilarityResult(chunk, result.Score)
+        similarityResult.Highlight = s.generateHighlight(chunk.Content, query)
+
+        similarityResults = append(similarityResults, similarityResult)
+    }
+
+    return similarityResults, nil
+}
+
+// HybridSearch combines text and vector search with weighted scoring
+func (s *SearchService) HybridSearch(ctx context.Context, repositoryID primitive.ObjectID, query string, limit int, vectorWeight float64) ([]models.SimilarityResult, error) {
+    if limit <= 0 || limit > 100 {
+        limit = 20
+    }
+    if vectorWeight < 0 || vectorWeight > 1 {
+        vectorWeight = 0.7 // Default to 70% vector, 30% text
+    }
+
+    // Perform vector search
+    vectorResults, err := s.VectorSearch(ctx, repositoryID, query, limit*2) // Get more results for blending
+    if err != nil {
+        return nil, fmt.Errorf("vector search failed: %w", err)
+    }
+
+    // Perform text search
+    textSearchReq := models.SearchRequest{
+        Query:        query,
+        RepositoryID: repositoryID.Hex(),
+        Limit:        limit * 2,
+    }
+    textResults, err := s.SearchCodeChunks(ctx, textSearchReq)
+    if err != nil {
+        return nil, fmt.Errorf("text search failed: %w", err)
+    }
+
+    // Combine and re-score results
+    scoreMap := make(map[string]float64)
+    resultMap := make(map[string]models.SimilarityResult)
+
+    // Add vector results with vector weight
+    for _, result := range vectorResults {
+        key := result.ID.Hex()
+        scoreMap[key] = float64(result.Score) * vectorWeight
+        resultMap[key] = result
+    }
+
+    // Add text results with text weight
+    textWeight := 1.0 - vectorWeight
+    for _, result := range textResults.Results {
+        key := result.ID.Hex()
+        
+        // Convert text search result to similarity result  
+        chunk := models.CodeChunk{
+            ID:           result.ID,
+            RepositoryID: result.RepositoryID,
+            FilePath:     result.FilePath,
+            FileName:     result.FileName,
+            Language:     result.Language,
+            StartLine:    result.StartLine,
+            EndLine:      result.EndLine,
+            Content:      result.Content,
+            Metadata:     models.ChunkMetadata{
+                Functions: result.Metadata.Functions,
+                Classes:   result.Metadata.Classes,
+            },
+        }
+        similarityResult := models.NewSimilarityResult(chunk, float32(result.Score*textWeight))
+        similarityResult.Highlight = result.Highlight
+
+        if existingScore, exists := scoreMap[key]; exists {
+            // Combine scores
+            scoreMap[key] = existingScore + (result.Score * textWeight)
+            // Update the result with the new combined score
+            existingResult := resultMap[key]
+            existingResult.Score = float32(scoreMap[key])
+            existingResult.CalculateRelevance()
+            resultMap[key] = existingResult
+        } else {
+            scoreMap[key] = result.Score * textWeight
+            resultMap[key] = similarityResult
+        }
+    }
+
+    // Convert back to slice and sort by combined score
+    hybridResults := make([]models.SimilarityResult, 0, len(resultMap))
+    for key, result := range resultMap {
+        result.Score = float32(scoreMap[key])
+        result.CalculateRelevance()
+        hybridResults = append(hybridResults, result)
+    }
+
+    // Sort by combined score (descending)
+    for i := 0; i < len(hybridResults)-1; i++ {
+        for j := i + 1; j < len(hybridResults); j++ {
+            if hybridResults[i].Score < hybridResults[j].Score {
+                hybridResults[i], hybridResults[j] = hybridResults[j], hybridResults[i]
+            }
+        }
+    }
+
+    // Limit results
+    if len(hybridResults) > limit {
+        hybridResults = hybridResults[:limit]
+    }
+
+    return hybridResults, nil
+}
+
+// FindSimilarChunks finds chunks similar to a given chunk
+func (s *SearchService) FindSimilarChunks(ctx context.Context, chunkID primitive.ObjectID, limit int) ([]models.SimilarityResult, error) {
+    if limit <= 0 || limit > 100 {
+        limit = 10
+    }
+
+    // Get the source chunk
+    var sourceChunk models.CodeChunk
+    err := s.codeChunks.FindOne(ctx, bson.M{"_id": chunkID}).Decode(&sourceChunk)
+    if err != nil {
+        return nil, fmt.Errorf("source chunk not found: %w", err)
+    }
+
+    // Check if chunk has a vector ID
+    if !sourceChunk.IsIndexed() {
+        return nil, fmt.Errorf("source chunk is not indexed for vector search")
+    }
+
+    // For now, we'll use the chunk content to generate a query vector
+    // In a more sophisticated implementation, we would store vectors separately
+    embeddings, err := s.voyageService.GenerateEmbeddings(ctx, []string{sourceChunk.Content})
+    if err != nil {
+        return nil, fmt.Errorf("failed to generate query embedding: %w", err)
+    }
+
+    if len(embeddings) == 0 {
+        return nil, fmt.Errorf("no embeddings generated for source chunk")
+    }
+
+    // Search for similar vectors
+    results, err := s.qdrantClient.SearchSimilar(ctx, s.config.Database.QdrantCollectionName, embeddings[0], limit+1, true)
+    if err != nil {
+        return nil, fmt.Errorf("similarity search failed: %w", err)
+    }
+
+    // Convert results and exclude the source chunk
+    similarityResults := make([]models.SimilarityResult, 0, len(results))
+    for _, result := range results {
+        if result.ID == sourceChunk.VectorID {
+            continue // Skip the source chunk
+        }
+
+        resultChunkID, err := primitive.ObjectIDFromHex(result.ID)
+        if err != nil {
+            continue
+        }
+
+        // Get full chunk data
+        var chunk models.CodeChunk
+        err = s.codeChunks.FindOne(ctx, bson.M{"_id": resultChunkID}).Decode(&chunk)
+        if err != nil {
+            continue
+        }
+
+        similarityResult := models.NewSimilarityResult(chunk, result.Score)
+        similarityResult.Highlight = s.truncateContent(chunk.Content, 200)
+
+        similarityResults = append(similarityResults, similarityResult)
+
+        if len(similarityResults) >= limit {
+            break
+        }
+    }
+
+    return similarityResults, nil
 }

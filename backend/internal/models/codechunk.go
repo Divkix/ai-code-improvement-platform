@@ -63,6 +63,50 @@ type SearchResponse struct {
     Query   string         `json:"query"`
 }
 
+// VectorSearchRequest represents vector search request parameters
+type VectorSearchRequest struct {
+    Query        string `json:"query" binding:"required"`
+    RepositoryID string `json:"repositoryId,omitempty"`
+    Language     string `json:"language,omitempty"`
+    FileType     string `json:"fileType,omitempty"`
+    Limit        int    `json:"limit,omitempty"`
+    Offset       int    `json:"offset,omitempty"`
+}
+
+// HybridSearchRequest represents hybrid (text + vector) search request parameters
+type HybridSearchRequest struct {
+    Query        string  `json:"query" binding:"required"`
+    RepositoryID string  `json:"repositoryId,omitempty"`
+    Language     string  `json:"language,omitempty"`
+    FileType     string  `json:"fileType,omitempty"`
+    VectorWeight float64 `json:"vectorWeight,omitempty"` // 0.0 to 1.0, defaults to 0.7
+    TextWeight   float64 `json:"textWeight,omitempty"`   // 0.0 to 1.0, defaults to 0.3
+    Limit        int     `json:"limit,omitempty"`
+    Offset       int     `json:"offset,omitempty"`
+}
+
+// SimilarityResult represents a vector similarity search result with distance scores
+type SimilarityResult struct {
+    CodeChunk
+    Score      float32 `json:"score"`      // Cosine similarity score (0.0 to 1.0)
+    Distance   float32 `json:"distance"`   // Cosine distance (1.0 - score)
+    Relevance  string  `json:"relevance"`  // "high", "medium", "low" based on score
+    Highlight  string  `json:"highlight,omitempty"`
+}
+
+// EmbeddingStatusResponse represents the status of embedding processing for a repository
+type EmbeddingStatusResponse struct {
+    RepositoryID         string        `json:"repositoryId"`
+    Status               string        `json:"status"`               // pending, processing, completed, failed
+    Progress             int           `json:"progress"`             // 0-100
+    TotalChunks          *int          `json:"totalChunks,omitempty"`
+    ProcessedChunks      *int          `json:"processedChunks,omitempty"`
+    FailedChunks         *int          `json:"failedChunks,omitempty"`
+    StartedAt            *time.Time    `json:"startedAt,omitempty"`
+    CompletedAt          *time.Time    `json:"completedAt,omitempty"`
+    EstimatedTimeRemaining *time.Duration `json:"estimatedTimeRemaining,omitempty"`
+}
+
 // CreateCodeChunkRequest represents the request payload for creating a code chunk
 type CreateCodeChunkRequest struct {
     RepositoryID string        `json:"repositoryId" binding:"required"`
@@ -257,4 +301,125 @@ func NormalizeLanguage(language string) string {
     default:
         return language
     }
+}
+
+// Validate validates a vector search request
+func (req *VectorSearchRequest) Validate() error {
+    return ValidateVectorSearchRequest(*req)
+}
+
+// Validate validates a hybrid search request
+func (req *HybridSearchRequest) Validate() error {
+    return ValidateHybridSearchRequest(*req)
+}
+
+// ValidateVectorSearchRequest validates a vector search request
+func ValidateVectorSearchRequest(req VectorSearchRequest) error {
+    if req.Query == "" {
+        return fmt.Errorf("query is required")
+    }
+    
+    if len(req.Query) > 500 {
+        return fmt.Errorf("query too long (max 500 characters)")
+    }
+    
+    if req.Limit < 0 {
+        return fmt.Errorf("limit must be non-negative")
+    }
+    
+    if req.Limit > 100 {
+        return fmt.Errorf("limit too large (max 100)")
+    }
+    
+    if req.Offset < 0 {
+        return fmt.Errorf("offset must be non-negative")
+    }
+    
+    return nil
+}
+
+// ValidateHybridSearchRequest validates a hybrid search request
+func ValidateHybridSearchRequest(req HybridSearchRequest) error {
+    if req.Query == "" {
+        return fmt.Errorf("query is required")
+    }
+    
+    if len(req.Query) > 500 {
+        return fmt.Errorf("query too long (max 500 characters)")
+    }
+    
+    if req.Limit < 0 {
+        return fmt.Errorf("limit must be non-negative")
+    }
+    
+    if req.Limit > 100 {
+        return fmt.Errorf("limit too large (max 100)")
+    }
+    
+    if req.Offset < 0 {
+        return fmt.Errorf("offset must be non-negative")
+    }
+    
+    // Validate weights
+    if req.VectorWeight < 0 || req.VectorWeight > 1 {
+        return fmt.Errorf("vectorWeight must be between 0 and 1")
+    }
+    
+    if req.TextWeight < 0 || req.TextWeight > 1 {
+        return fmt.Errorf("textWeight must be between 0 and 1")
+    }
+    
+    // Weights should sum to approximately 1
+    if req.VectorWeight > 0 && req.TextWeight > 0 {
+        sum := req.VectorWeight + req.TextWeight
+        if sum < 0.95 || sum > 1.05 {
+            return fmt.Errorf("vectorWeight and textWeight should sum to 1.0 (got %.2f)", sum)
+        }
+    }
+    
+    return nil
+}
+
+// SetDefaultWeights sets default weights for hybrid search if not provided
+func (req *HybridSearchRequest) SetDefaultWeights() {
+    if req.VectorWeight == 0 && req.TextWeight == 0 {
+        req.VectorWeight = 0.7
+        req.TextWeight = 0.3
+    }
+}
+
+// SetDefaultLimits sets default limits for search requests if not provided
+func (req *VectorSearchRequest) SetDefaultLimits() {
+    if req.Limit == 0 {
+        req.Limit = 20
+    }
+}
+
+func (req *HybridSearchRequest) SetDefaultLimits() {
+    if req.Limit == 0 {
+        req.Limit = 20
+    }
+}
+
+// CalculateRelevance determines relevance level based on similarity score
+func (sr *SimilarityResult) CalculateRelevance() {
+    sr.Distance = 1.0 - sr.Score
+    
+    if sr.Score >= 0.85 {
+        sr.Relevance = "high"
+    } else if sr.Score >= 0.6 {
+        sr.Relevance = "medium"
+    } else {
+        sr.Relevance = "low"
+    }
+}
+
+// NewSimilarityResult creates a new SimilarityResult with calculated relevance
+func NewSimilarityResult(chunk CodeChunk, score float32) SimilarityResult {
+    result := SimilarityResult{
+        CodeChunk: chunk,
+        Score:     score,
+    }
+    result.CalculateRelevance()
+    return result
 }

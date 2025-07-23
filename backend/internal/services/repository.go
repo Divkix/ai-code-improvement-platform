@@ -6,6 +6,7 @@ package services
 import (
 	"context"
 	"errors"
+	"log"
 	"strings"
 	"time"
 
@@ -27,17 +28,19 @@ const RepositoryCollection = "repositories"
 
 // RepositoryService provides repository-related operations
 type RepositoryService struct {
-	collection    *mongo.Collection
-	githubService *GitHubService
-	userService   *UserService
+	collection        *mongo.Collection
+	githubService     *GitHubService
+	userService       *UserService
+	embeddingPipeline *EmbeddingPipeline
 }
 
 // NewRepositoryService creates a new repository service
-func NewRepositoryService(db *mongo.Database, githubService *GitHubService, userService *UserService) *RepositoryService {
+func NewRepositoryService(db *mongo.Database, githubService *GitHubService, userService *UserService, embeddingPipeline *EmbeddingPipeline) *RepositoryService {
 	return &RepositoryService{
-		collection:    db.Collection(RepositoryCollection),
-		githubService: githubService,
-		userService:   userService,
+		collection:        db.Collection(RepositoryCollection),
+		githubService:     githubService,
+		userService:       userService,
+		embeddingPipeline: embeddingPipeline,
 	}
 }
 
@@ -463,6 +466,15 @@ func (s *RepositoryService) processRepositoryImport(ctx context.Context, repoID 
 	if err := s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 100); err != nil {
 		// Final progress update failed, but repository is indexed
 		_ = err
+	}
+	
+	// Queue repository for embedding processing if pipeline is available
+	if s.embeddingPipeline != nil {
+		if err := s.embeddingPipeline.QueueRepository(ctx, repoID, 2); err != nil {
+			// Log error but don't fail the import
+			// The embedding can be triggered manually later
+			log.Printf("Failed to queue repository %s for embedding processing: %v", repoID.Hex(), err)
+		}
 	}
 }
 

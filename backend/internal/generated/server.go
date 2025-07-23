@@ -61,6 +61,12 @@ type ServerInterface interface {
 	// Update repository
 	// (PUT /api/repositories/{id})
 	UpdateRepository(c *gin.Context, id string)
+	// Trigger embedding processing for repository
+	// (POST /api/repositories/{id}/embed)
+	TriggerRepositoryEmbedding(c *gin.Context, id string)
+	// Get repository embedding status
+	// (GET /api/repositories/{id}/embedding-status)
+	GetRepositoryEmbeddingStatus(c *gin.Context, id string)
 	// Search within a specific repository
 	// (POST /api/repositories/{id}/search)
 	RepositorySearch(c *gin.Context, id string, params RepositorySearchParams)
@@ -70,6 +76,9 @@ type ServerInterface interface {
 	// Search code chunks across all repositories
 	// (POST /api/search)
 	GlobalSearch(c *gin.Context, params GlobalSearchParams)
+	// Hybrid search combining text and vector similarity
+	// (POST /api/search/hybrid)
+	HybridSearch(c *gin.Context)
 	// Get available programming languages
 	// (GET /api/search/languages)
 	GetLanguages(c *gin.Context, params GetLanguagesParams)
@@ -79,12 +88,18 @@ type ServerInterface interface {
 	// Get recently added code chunks
 	// (GET /api/search/recent)
 	GetRecentChunks(c *gin.Context, params GetRecentChunksParams)
+	// Find similar code chunks
+	// (GET /api/search/similar/{chunkId})
+	FindSimilarChunks(c *gin.Context, chunkId string, params FindSimilarChunksParams)
 	// Get search statistics
 	// (GET /api/search/stats)
 	GetSearchStats(c *gin.Context, params GetSearchStatsParams)
 	// Get search suggestions
 	// (GET /api/search/suggestions)
 	GetSearchSuggestions(c *gin.Context, params GetSearchSuggestionsParams)
+	// Vector-based semantic search
+	// (POST /api/search/vector)
+	VectorSearch(c *gin.Context)
 	// Health check endpoint
 	// (GET /health)
 	GetHealth(c *gin.Context)
@@ -469,6 +484,58 @@ func (siw *ServerInterfaceWrapper) UpdateRepository(c *gin.Context) {
 	siw.Handler.UpdateRepository(c, id)
 }
 
+// TriggerRepositoryEmbedding operation middleware
+func (siw *ServerInterfaceWrapper) TriggerRepositoryEmbedding(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.TriggerRepositoryEmbedding(c, id)
+}
+
+// GetRepositoryEmbeddingStatus operation middleware
+func (siw *ServerInterfaceWrapper) GetRepositoryEmbeddingStatus(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetRepositoryEmbeddingStatus(c, id)
+}
+
 // RepositorySearch operation middleware
 func (siw *ServerInterfaceWrapper) RepositorySearch(c *gin.Context) {
 
@@ -608,6 +675,21 @@ func (siw *ServerInterfaceWrapper) GlobalSearch(c *gin.Context) {
 	siw.Handler.GlobalSearch(c, params)
 }
 
+// HybridSearch operation middleware
+func (siw *ServerInterfaceWrapper) HybridSearch(c *gin.Context) {
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.HybridSearch(c)
+}
+
 // GetLanguages operation middleware
 func (siw *ServerInterfaceWrapper) GetLanguages(c *gin.Context) {
 
@@ -731,6 +813,51 @@ func (siw *ServerInterfaceWrapper) GetRecentChunks(c *gin.Context) {
 	siw.Handler.GetRecentChunks(c, params)
 }
 
+// FindSimilarChunks operation middleware
+func (siw *ServerInterfaceWrapper) FindSimilarChunks(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "chunkId" -------------
+	var chunkId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "chunkId", c.Param("chunkId"), &chunkId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter chunkId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params FindSimilarChunksParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", c.Request.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter limit: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "repositoryId" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "repositoryId", c.Request.URL.Query(), &params.RepositoryId)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter repositoryId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.FindSimilarChunks(c, chunkId, params)
+}
+
 // GetSearchStats operation middleware
 func (siw *ServerInterfaceWrapper) GetSearchStats(c *gin.Context) {
 
@@ -802,6 +929,21 @@ func (siw *ServerInterfaceWrapper) GetSearchSuggestions(c *gin.Context) {
 	siw.Handler.GetSearchSuggestions(c, params)
 }
 
+// VectorSearch operation middleware
+func (siw *ServerInterfaceWrapper) VectorSearch(c *gin.Context) {
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.VectorSearch(c)
+}
+
 // GetHealth operation middleware
 func (siw *ServerInterfaceWrapper) GetHealth(c *gin.Context) {
 
@@ -858,13 +1000,18 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.DELETE(options.BaseURL+"/api/repositories/:id", wrapper.DeleteRepository)
 	router.GET(options.BaseURL+"/api/repositories/:id", wrapper.GetRepository)
 	router.PUT(options.BaseURL+"/api/repositories/:id", wrapper.UpdateRepository)
+	router.POST(options.BaseURL+"/api/repositories/:id/embed", wrapper.TriggerRepositoryEmbedding)
+	router.GET(options.BaseURL+"/api/repositories/:id/embedding-status", wrapper.GetRepositoryEmbeddingStatus)
 	router.POST(options.BaseURL+"/api/repositories/:id/search", wrapper.RepositorySearch)
 	router.GET(options.BaseURL+"/api/repositories/:id/stats", wrapper.GetRepositoryStats)
 	router.POST(options.BaseURL+"/api/search", wrapper.GlobalSearch)
+	router.POST(options.BaseURL+"/api/search/hybrid", wrapper.HybridSearch)
 	router.GET(options.BaseURL+"/api/search/languages", wrapper.GetLanguages)
 	router.GET(options.BaseURL+"/api/search/quick", wrapper.QuickSearch)
 	router.GET(options.BaseURL+"/api/search/recent", wrapper.GetRecentChunks)
+	router.GET(options.BaseURL+"/api/search/similar/:chunkId", wrapper.FindSimilarChunks)
 	router.GET(options.BaseURL+"/api/search/stats", wrapper.GetSearchStats)
 	router.GET(options.BaseURL+"/api/search/suggestions", wrapper.GetSearchSuggestions)
+	router.POST(options.BaseURL+"/api/search/vector", wrapper.VectorSearch)
 	router.GET(options.BaseURL+"/health", wrapper.GetHealth)
 }

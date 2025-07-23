@@ -10,12 +10,13 @@ import (
 
 // Server implements generated.ServerInterface by delegating to individual handlers
 type Server struct {
-	health     *handlers.HealthHandler
-	auth       *handlers.AuthHandler
-	dashboard  *handlers.DashboardHandler
-	repository *handlers.RepositoryHandler
-	github     *handlers.GitHubHandler
-	search     *handlers.SearchHandler
+	health       *handlers.HealthHandler
+	auth         *handlers.AuthHandler
+	dashboard    *handlers.DashboardHandler
+	repository   *handlers.RepositoryHandler
+	github       *handlers.GitHubHandler
+	search       *handlers.SearchHandler
+	vectorSearch *handlers.VectorSearchHandler
 }
 
 // Ensure Server implements generated.ServerInterface
@@ -29,14 +30,16 @@ func NewServer(
 	repository *handlers.RepositoryHandler,
 	github *handlers.GitHubHandler,
 	search *handlers.SearchHandler,
+	vectorSearch *handlers.VectorSearchHandler,
 ) *Server {
 	return &Server{
-		health:     health,
-		auth:       auth,
-		dashboard:  dashboard,
-		repository: repository,
-		github:     github,
-		search:     search,
+		health:       health,
+		auth:         auth,
+		dashboard:    dashboard,
+		repository:   repository,
+		github:       github,
+		search:       search,
+		vectorSearch: vectorSearch,
 	}
 }
 
@@ -145,4 +148,26 @@ func (s *Server) GetRecentChunks(c *gin.Context, params generated.GetRecentChunk
 
 func (s *Server) GetSearchStats(c *gin.Context, params generated.GetSearchStatsParams) {
 	s.search.GetSearchStats(c)
+}
+
+// Vector Search endpoints
+func (s *Server) VectorSearch(c *gin.Context) {
+	s.vectorSearch.VectorSearch(c)
+}
+
+func (s *Server) HybridSearch(c *gin.Context) {
+	s.vectorSearch.HybridSearch(c)
+}
+
+func (s *Server) FindSimilarChunks(c *gin.Context, chunkId string, params generated.FindSimilarChunksParams) {
+	s.vectorSearch.FindSimilar(c)
+}
+
+// Repository embedding endpoints
+func (s *Server) TriggerRepositoryEmbedding(c *gin.Context, id string) {
+	s.vectorSearch.EmbedRepository(c)
+}
+
+func (s *Server) GetRepositoryEmbeddingStatus(c *gin.Context, id string) {
+	s.vectorSearch.GetEmbeddingStatus(c)
 }

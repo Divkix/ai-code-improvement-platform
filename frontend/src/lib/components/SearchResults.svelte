@@ -10,6 +10,7 @@
 	export let loading = false;
 	export let error: string | null = null;
 	export let query = '';
+	export let searchMode: 'text' | 'vector' | 'hybrid' = 'text';
 
 	const dispatch = createEventDispatcher<{
 		loadMore: void;
@@ -51,8 +52,12 @@
 		return colors[language.toLowerCase()] || '#6b7280';
 	}
 
-	function formatScore(score: number): string {
-		return score.toFixed(2);
+	function formatScore(score: number, mode: 'text' | 'vector' | 'hybrid'): string {
+		if (mode === 'text') {
+			return score.toFixed(2);
+		}
+		// Vector and hybrid scores are percentages
+		return (score * 100).toFixed(1) + '%';
 	}
 
 	function formatLineRange(startLine: number, endLine: number): string {
@@ -60,6 +65,42 @@
 			return `Line ${startLine}`;
 		}
 		return `Lines ${startLine}-${endLine}`;
+	}
+
+	function getScoreLabel(searchMode: 'text' | 'vector' | 'hybrid'): string {
+		switch (searchMode) {
+			case 'vector':
+				return 'Similarity';
+			case 'hybrid':
+				return 'Relevance';
+			default:
+				return 'Score';
+		}
+	}
+
+	function getRelevanceLevel(score: number, mode: 'text' | 'vector' | 'hybrid'): string {
+		if (mode === 'vector' || mode === 'hybrid') {
+			if (score >= 0.85) return 'high';
+			if (score >= 0.6) return 'medium';
+			return 'low';
+		}
+		// Text search score thresholds
+		if (score >= 5) return 'high';
+		if (score >= 2) return 'medium';
+		return 'low';
+	}
+
+	function getRelevanceColor(level: string): string {
+		switch (level) {
+			case 'high':
+				return '#10b981'; // green
+			case 'medium':
+				return '#f59e0b'; // amber
+			case 'low':
+				return '#6b7280'; // gray
+			default:
+				return '#6b7280';
+		}
 	}
 </script>
 
@@ -141,8 +182,26 @@
 								<span class="line-range">
 									{formatLineRange(result.startLine, result.endLine)}
 								</span>
-								<span class="relevance-score" title="Relevance Score">
-									Score: {formatScore(result.score)}
+								<span 
+									class="relevance-score" 
+									class:semantic={searchMode === 'vector' || searchMode === 'hybrid'}
+									style="color: {getRelevanceColor(getRelevanceLevel(result.score, searchMode))}"
+									title="{getScoreLabel(searchMode)}: {formatScore(result.score, searchMode)}"
+								>
+									{#if searchMode === 'vector'}
+										<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+											<path d="M9 19c-5 0-8-2.5-8-5s3-5 8-5 8 2.5 8 5-3 5-8 5Z"/>
+											<path d="m8 19 8-14"/>
+											<path d="m1 14 8-14"/>
+											<path d="m15 5 4 14"/>
+										</svg>
+									{:else if searchMode === 'hybrid'}
+										<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+											<path d="M12 3v18m0-18 4 4m-4-4-4 4"/>
+											<path d="m8 17 4 4 4-4"/>
+										</svg>
+									{/if}
+									{getScoreLabel(searchMode)}: {formatScore(result.score, searchMode)}
 								</span>
 							</div>
 						</div>
@@ -415,7 +474,19 @@
 		padding: 2px 6px;
 		background-color: #f3f4f6;
 		border-radius: 4px;
-		font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		font-weight: 500;
+	}
+
+	.relevance-score.semantic {
+		background-color: rgba(59, 130, 246, 0.1);
+		border: 1px solid rgba(59, 130, 246, 0.2);
+	}
+
+	.relevance-score svg {
+		opacity: 0.8;
 	}
 
 	.code-preview {

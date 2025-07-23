@@ -8,6 +8,8 @@ import (
 	"encoding/base64"
 	"net/http"
 	"strconv"
+	"sync"
+	"time"
 
 	"github-analyzer/internal/middleware"
 	"github-analyzer/internal/services"
@@ -16,10 +18,18 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// OAuthState represents a stored OAuth state with expiration
+type OAuthState struct {
+	UserID    string
+	CreatedAt time.Time
+}
+
 // GitHubHandler handles GitHub OAuth and repository operations
 type GitHubHandler struct {
 	githubService *services.GitHubService
 	userService   *services.UserService
+	stateStore    map[string]OAuthState
+	stateMutex    sync.RWMutex
 }
 
 // NewGitHubHandler creates a new GitHub handler
@@ -27,6 +37,7 @@ func NewGitHubHandler(githubService *services.GitHubService, userService *servic
 	return &GitHubHandler{
 		githubService: githubService,
 		userService:   userService,
+		stateStore:    make(map[string]OAuthState),
 	}
 }
 
@@ -43,7 +54,7 @@ type GitHubCallbackRequest struct {
 
 // GitHubLogin handles GitHub OAuth login initiation
 func (h *GitHubHandler) GitHubLogin(c *gin.Context) {
-	_, exists := middleware.GetUserIDFromContext(c)
+	userID, exists := middleware.GetUserIDFromContext(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error":   "unauthorized",
@@ -55,8 +66,9 @@ func (h *GitHubHandler) GitHubLogin(c *gin.Context) {
 	// Generate state for CSRF protection
 	state := generateRandomState()
 
-	// Store state in user session or cache (simplified for now)
-	// In production, you'd store this in Redis or session storage
+	// Store state with user association and expiration
+	h.storeOAuthState(state, userID)
+	
 	redirectURI := c.DefaultQuery("redirect_uri", "http://localhost:3000/auth/github/callback")
 	
 	oauthConfig := h.githubService.GetOAuthConfig()
@@ -102,8 +114,14 @@ func (h *GitHubHandler) GitHubCallback(c *gin.Context) {
 		return
 	}
 
-	// TODO: Validate state parameter against stored state
-	// For now, we'll skip this validation but it should be implemented for security
+	// Validate state parameter against stored state for CSRF protection
+	if !h.validateOAuthState(req.State, userID) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "invalid_state",
+			"message": "Invalid or expired OAuth state parameter",
+		})
+		return
+	}
 
 	// Exchange code for token
 	oauthConfig := h.githubService.GetOAuthConfig()
@@ -352,4 +370,55 @@ func generateRandomState() string {
 		return ""
 	}
 	return base64.URLEncoding.EncodeToString(b)
+}
+
+// storeOAuthState stores an OAuth state with user association and expiration
+func (h *GitHubHandler) storeOAuthState(state, userID string) {
+	h.stateMutex.Lock()
+	defer h.stateMutex.Unlock()
+	
+	h.stateStore[state] = OAuthState{
+		UserID:    userID,
+		CreatedAt: time.Now(),
+	}
+	
+	// Clean up expired states (older than 10 minutes)
+	h.cleanupExpiredStates()
+}
+
+// validateOAuthState validates an OAuth state parameter
+func (h *GitHubHandler) validateOAuthState(state, userID string) bool {
+	h.stateMutex.RLock()
+	defer h.stateMutex.RUnlock()
+	
+	storedState, exists := h.stateStore[state]
+	if !exists {
+		return false
+	}
+	
+	// Check if state has expired (10 minutes)
+	if time.Since(storedState.CreatedAt) > 10*time.Minute {
+		// Clean up expired state
+		delete(h.stateStore, state)
+		return false
+	}
+	
+	// Verify the state belongs to the same user
+	if storedState.UserID != userID {
+		return false
+	}
+	
+	// Remove state after successful validation (one-time use)
+	delete(h.stateStore, state)
+	return true
+}
+
+// cleanupExpiredStates removes expired OAuth states (called with mutex locked)
+func (h *GitHubHandler) cleanupExpiredStates() {
+	now := time.Now()
+	for state, oauthState := range h.stateStore {
+		if now.Sub(oauthState.CreatedAt) > 10*time.Minute {
+			delete(h.stateStore, state)
+		}
+	}
 }
