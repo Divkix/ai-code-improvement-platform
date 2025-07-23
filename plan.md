@@ -352,18 +352,94 @@ Build repository import interface:
 
 ---
 
-## Slice 6: Code Processing Pipeline (Days 7-9)
+## Slice 6: Search Foundation - Basic Text Search Through Code Chunks (Days 7-9) ✅
 
 ### Objectives
-- Implement file fetching from GitHub repositories
+- Implement basic text-based search through code chunks
+- Create search interface with filters and pagination
+- Build search result display with code highlighting
+- Establish foundation for advanced search functionality
+
+### Implementation Tasks
+- [x] Create CodeChunk model with MongoDB integration
+- [x] Implement MongoDB text index creation for search
+- [x] Build search service with MongoDB queries and scoring
+- [x] Create search handlers for API endpoints
+- [x] Update OpenAPI specification with search endpoints
+- [x] Create frontend search components (SearchBox, SearchResults, CodeSnippet, SearchFilters)
+- [x] Build search pages for global and repository-specific search
+- [x] Add search API integration and state management
+- [x] Test the search functionality and fix any issues
+- [x] Fix HTTP method mismatch in search client (GET vs POST)
+
+### Code Generation Prompts
+
+**Prompt 13: Search Backend with MongoDB Text Search** ✅
+```
+Implement text search with OpenAPI specification:
+- Define search endpoints in OpenAPI spec with query parameters
+- Generated handlers for type-safe search operations
+- MongoDB text search across code chunks with compound indexes
+- Search result models defined in OpenAPI schema
+- Repository filtering with proper parameter validation
+- Result ranking and pagination with structured responses
+- Search query preprocessing and optimization
+- Error handling with standardized error schemas
+- Basic search analytics and logging
+```
+
+**Prompt 14: Search Frontend Components** ✅
+```
+Create comprehensive search interface:
+- Search input component with debounced search and clear functionality
+- Search results display with pagination and result highlighting
+- Code snippet component with syntax highlighting and copy functionality
+- Search filters for language, file type, and repository selection
+- Loading states, error handling, and retry functionality
+- Responsive design with accessibility features
+- Mobile-optimized search experience
+- Search tips and user guidance
+```
+
+**Prompt 15: Search Integration and Testing** ✅
+```
+Build complete search system integration:
+- Global search page for searching across all repositories
+- Repository-specific search with breadcrumbs and context
+- API client for centralized search functionality
+- TypeScript type safety with generated OpenAPI types
+- HTTP method alignment (POST requests for complex search)
+- Error state handling and user feedback
+- Search functionality testing with Playwright
+- Performance optimization and caching strategies
+```
+
+### Acceptance Criteria
+- [x] Users can search for code using text queries through comprehensive search interface
+- [x] Search results show relevant code chunks with proper formatting and highlighting
+- [x] MongoDB text search with compound indexes provides fast, relevant results
+- [x] Search filters (language, file type, repository) work correctly
+- [x] Search API endpoints are properly integrated with OpenAPI specification
+- [x] Frontend components handle loading states, errors, and user interactions
+- [x] Search functionality works across multiple repositories with existing data
+- [x] HTTP methods are correctly aligned (POST for complex searches)
+- [x] Search interface is responsive and accessible on mobile devices
+- [x] Error handling provides clear feedback and retry functionality
+
+---
+
+## Slice 7: Code Processing Pipeline (Days 9-10)
+
+### Objectives
+- Implement file fetching from GitHub repositories  
 - Build code chunking algorithm for efficient processing
 - Store code chunks in MongoDB with metadata
-- Create foundation for search functionality
+- Create processing pipeline for repository content
 
 ### Implementation Tasks
 - [ ] Create code file fetching system
-- [ ] Implement intelligent code chunking algorithm
-- [ ] Build CodeChunk model and storage
+- [ ] Implement intelligent code chunking algorithm  
+- [ ] Build processing pipeline for repository files
 - [ ] Add file type filtering and language detection
 - [ ] Implement metadata extraction (functions, classes)
 - [ ] Create batch processing for large repositories
@@ -371,7 +447,7 @@ Build repository import interface:
 
 ### Code Generation Prompts
 
-**Prompt 13: File Fetching System**
+**Prompt 16: File Fetching System**
 ```
 Implement GitHub repository file fetching:
 - Recursive file tree traversal via GitHub API
@@ -384,7 +460,7 @@ Implement GitHub repository file fetching:
 - Progress tracking for file fetching phase
 ```
 
-**Prompt 14: Code Chunking Algorithm**
+**Prompt 17: Code Chunking Algorithm**
 ```
 Create intelligent code chunking system:
 - Chunk size optimization (150 lines with 50 line overlap)
@@ -397,19 +473,6 @@ Create intelligent code chunking system:
 - Storage in MongoDB with proper indexing
 ```
 
-**Prompt 15: Code Processing Pipeline**
-```
-Build complete code processing workflow:
-- Async processing pipeline for repository files
-- Batch processing with configurable batch sizes
-- Progress tracking throughout processing stages
-- Error handling and retry logic for failed chunks
-- Memory-efficient processing for large repositories
-- Duplicate content detection and skipping
-- Processing statistics and completion reporting
-- Integration with existing import progress system
-```
-
 ### Acceptance Criteria
 - [ ] Repository files are fetched completely from GitHub
 - [ ] Code is chunked into optimal sizes for processing
@@ -420,63 +483,6 @@ Build complete code processing workflow:
 - [ ] Large repositories are handled efficiently
 - [ ] Error states are recovered gracefully
 - [ ] Processing completes with repository status "ready"
-
----
-
-## Slice 7: Basic Search (Days 9-10)
-
-### Objectives
-- Implement simple text-based search through code chunks
-- Create basic chat interface for code queries
-- Build search result display with code highlighting
-- Establish foundation for RAG pipeline
-
-### Implementation Tasks
-- [ ] Create text search functionality in MongoDB
-- [ ] Build basic chat interface
-- [ ] Implement search result formatting
-- [ ] Add syntax highlighting for code
-- [ ] Create simple question-answer flow
-- [ ] Build search API endpoints
-
-### Code Generation Prompts
-
-**Prompt 16: Text Search Backend with OpenAPI**
-```
-Implement text search with OpenAPI specification:
-- Define search endpoints in OpenAPI spec with query parameters
-- Generated handlers for type-safe search operations
-- MongoDB text search across code chunks
-- Search result models defined in OpenAPI schema
-- Repository filtering with proper parameter validation
-- Result ranking and pagination with structured responses
-- Search query preprocessing and optimization
-- Error handling with standardized error schemas
-- Basic search analytics and logging
-```
-
-**Prompt 17: Basic Chat Interface**
-```
-Create simple chat interface for code queries:
-- Chat session management with message history
-- Simple text-based responses using search results
-- Code syntax highlighting with Prism.js
-- Message formatting and display
-- Basic suggested questions for onboarding
-- Chat session persistence
-- Loading states during search
-- Responsive chat design for mobile
-```
-
-### Acceptance Criteria
-- [ ] Users can search for code using text queries
-- [ ] Search results show relevant code chunks
-- [ ] Code is properly syntax highlighted
-- [ ] Basic chat interface accepts queries
-- [ ] Search results are formatted clearly
-- [ ] Multiple repositories can be searched
-- [ ] Search performance is acceptable (<2 seconds)
-- [ ] Error messages guide users for invalid queries
 
 ---
 

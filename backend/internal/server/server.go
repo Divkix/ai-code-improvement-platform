@@ -15,6 +15,7 @@ type Server struct {
 	dashboard  *handlers.DashboardHandler
 	repository *handlers.RepositoryHandler
 	github     *handlers.GitHubHandler
+	search     *handlers.SearchHandler
 }
 
 // Ensure Server implements generated.ServerInterface
@@ -27,6 +28,7 @@ func NewServer(
 	dashboard *handlers.DashboardHandler,
 	repository *handlers.RepositoryHandler,
 	github *handlers.GitHubHandler,
+	search *handlers.SearchHandler,
 ) *Server {
 	return &Server{
 		health:     health,
@@ -34,6 +36,7 @@ func NewServer(
 		dashboard:  dashboard,
 		repository: repository,
 		github:     github,
+		search:     search,
 	}
 }
 
@@ -113,4 +116,33 @@ func (s *Server) DeleteRepository(c *gin.Context, id string) {
 
 func (s *Server) GetRepositoryStats(c *gin.Context, id string) {
 	s.repository.GetRepositoryStats(c)
+}
+
+// Search endpoints
+func (s *Server) GlobalSearch(c *gin.Context, params generated.GlobalSearchParams) {
+	s.search.GlobalSearch(c)
+}
+
+func (s *Server) RepositorySearch(c *gin.Context, id string, params generated.RepositorySearchParams) {
+	s.search.RepositorySearch(c)
+}
+
+func (s *Server) GetSearchSuggestions(c *gin.Context, params generated.GetSearchSuggestionsParams) {
+	s.search.GetSearchSuggestions(c)
+}
+
+func (s *Server) QuickSearch(c *gin.Context, params generated.QuickSearchParams) {
+	s.search.QuickSearch(c)
+}
+
+func (s *Server) GetLanguages(c *gin.Context, params generated.GetLanguagesParams) {
+	s.search.GetLanguages(c)
+}
+
+func (s *Server) GetRecentChunks(c *gin.Context, params generated.GetRecentChunksParams) {
+	s.search.GetRecentChunks(c)
+}
+
+func (s *Server) GetSearchStats(c *gin.Context, params generated.GetSearchStatsParams) {
+	s.search.GetSearchStats(c)
 }

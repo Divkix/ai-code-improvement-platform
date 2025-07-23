@@ -4,1314 +4,1890 @@
  */
 
 export interface paths {
-	'/health': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Health check endpoint
-		 * @description Check the health of all services
-		 */
-		get: operations['getHealth'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/health': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * API health check endpoint
-		 * @description Check the health of API and dependencies
-		 */
-		get: operations['getApiHealth'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/auth/login': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Login user
-		 * @description Authenticate user and return JWT token
-		 */
-		post: operations['loginUser'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/auth/me': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get current user
-		 * @description Get current user information from JWT token
-		 */
-		get: operations['getCurrentUser'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/auth/github/login': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get GitHub OAuth login URL
-		 * @description Redirect to GitHub OAuth authorization
-		 */
-		get: operations['githubLogin'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/auth/github/callback': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Handle GitHub OAuth callback
-		 * @description Process GitHub OAuth callback and exchange code for token
-		 */
-		post: operations['githubCallback'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/auth/github/disconnect': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Disconnect GitHub account
-		 * @description Remove GitHub OAuth connection from user account
-		 */
-		post: operations['githubDisconnect'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/github/repositories': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get user's GitHub repositories
-		 * @description Fetch repositories from the authenticated user's GitHub account
-		 */
-		get: operations['getGitHubRepositories'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/github/repositories/{owner}/{repo}/validate': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Validate GitHub repository
-		 * @description Validate that a GitHub repository exists and is accessible
-		 */
-		get: operations['validateGitHubRepository'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/dashboard/stats': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get dashboard statistics
-		 * @description Retrieve key metrics and statistics for the dashboard
-		 */
-		get: operations['getDashboardStats'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/dashboard/activity': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get recent activity
-		 * @description Retrieve recent activity items for the dashboard
-		 */
-		get: operations['getDashboardActivity'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/dashboard/trends': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get trend data
-		 * @description Retrieve trend data for charts and analytics
-		 */
-		get: operations['getDashboardTrends'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/repositories': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get user's repositories
-		 * @description Retrieve a list of repositories owned by the current user
-		 */
-		get: operations['getRepositories'];
-		put?: never;
-		/**
-		 * Create new repository
-		 * @description Add a new repository for analysis
-		 */
-		post: operations['createRepository'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/repositories/{id}': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get repository by ID
-		 * @description Retrieve detailed information about a specific repository
-		 */
-		get: operations['getRepository'];
-		/**
-		 * Update repository
-		 * @description Update repository information
-		 */
-		put: operations['updateRepository'];
-		post?: never;
-		/**
-		 * Delete repository
-		 * @description Remove repository from analysis
-		 */
-		delete: operations['deleteRepository'];
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/repositories/{id}/stats': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get repository statistics
-		 * @description Retrieve detailed statistics for a repository
-		 */
-		get: operations['getRepositoryStats'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Health check endpoint
+         * @description Check the health of all services
+         */
+        get: operations["getHealth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * API health check endpoint
+         * @description Check the health of API and dependencies
+         */
+        get: operations["getApiHealth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Login user
+         * @description Authenticate user and return JWT token
+         */
+        post: operations["loginUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get current user
+         * @description Get current user information from JWT token
+         */
+        get: operations["getCurrentUser"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/github/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get GitHub OAuth login URL
+         * @description Redirect to GitHub OAuth authorization
+         */
+        get: operations["githubLogin"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/github/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Handle GitHub OAuth callback
+         * @description Process GitHub OAuth callback and exchange code for token
+         */
+        post: operations["githubCallback"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/github/disconnect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Disconnect GitHub account
+         * @description Remove GitHub OAuth connection from user account
+         */
+        post: operations["githubDisconnect"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/github/repositories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get user's GitHub repositories
+         * @description Fetch repositories from the authenticated user's GitHub account
+         */
+        get: operations["getGitHubRepositories"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/github/repositories/{owner}/{repo}/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Validate GitHub repository
+         * @description Validate that a GitHub repository exists and is accessible
+         */
+        get: operations["validateGitHubRepository"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get dashboard statistics
+         * @description Retrieve key metrics and statistics for the dashboard
+         */
+        get: operations["getDashboardStats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get recent activity
+         * @description Retrieve recent activity items for the dashboard
+         */
+        get: operations["getDashboardActivity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dashboard/trends": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get trend data
+         * @description Retrieve trend data for charts and analytics
+         */
+        get: operations["getDashboardTrends"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/repositories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get user's repositories
+         * @description Retrieve a list of repositories owned by the current user
+         */
+        get: operations["getRepositories"];
+        put?: never;
+        /**
+         * Create new repository
+         * @description Add a new repository for analysis
+         */
+        post: operations["createRepository"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/repositories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get repository by ID
+         * @description Retrieve detailed information about a specific repository
+         */
+        get: operations["getRepository"];
+        /**
+         * Update repository
+         * @description Update repository information
+         */
+        put: operations["updateRepository"];
+        post?: never;
+        /**
+         * Delete repository
+         * @description Remove repository from analysis
+         */
+        delete: operations["deleteRepository"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/repositories/{id}/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get repository statistics
+         * @description Retrieve detailed statistics for a repository
+         */
+        get: operations["getRepositoryStats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Search code chunks across all repositories
+         * @description Perform text search across all accessible code chunks with optional filters
+         */
+        post: operations["globalSearch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/repositories/{id}/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Search within a specific repository
+         * @description Perform text search within a specific repository's code chunks
+         */
+        post: operations["repositorySearch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/search/quick": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Quick search for autocomplete
+         * @description Lightweight search with limited results for autocomplete functionality
+         */
+        get: operations["quickSearch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/search/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get search suggestions
+         * @description Get autocomplete suggestions for search queries
+         */
+        get: operations["getSearchSuggestions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/search/languages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get available programming languages
+         * @description Retrieve a list of programming languages available for filtering
+         */
+        get: operations["getLanguages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/search/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get search statistics
+         * @description Retrieve statistics about the searchable code chunks
+         */
+        get: operations["getSearchStats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/search/recent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get recently added code chunks
+         * @description Retrieve the most recently added code chunks
+         */
+        get: operations["getRecentChunks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-	schemas: {
-		Error: {
-			error: string;
-			message: string;
-		};
-		User: {
-			id: string;
-			/** Format: email */
-			email: string;
-			name: string;
-			/** @description Whether the user has connected their GitHub account */
-			githubConnected?: boolean;
-			/** @description GitHub username if connected */
-			githubUsername?: string;
-			/** Format: date-time */
-			createdAt: string;
-		};
-		GitHubOAuthRequest: {
-			/** @description OAuth authorization code from GitHub */
-			code: string;
-			/** @description OAuth state parameter for security */
-			state: string;
-		};
-		GitHubRepository: {
-			/**
-			 * Format: int64
-			 * @description GitHub repository ID
-			 */
-			id: number;
-			/** @description Repository name */
-			name: string;
-			/** @description Full repository name (owner/repo) */
-			fullName: string;
-			/** @description Repository owner */
-			owner: string;
-			/** @description Repository description */
-			description?: string;
-			/** @description Whether the repository is private */
-			private: boolean;
-			/** @description Primary programming language */
-			language?: string;
-			/** @description Number of stars */
-			stargazersCount?: number;
-			/** @description Number of forks */
-			forksCount?: number;
-			/** @description Repository size in KB */
-			size?: number;
-			/** Format: date-time */
-			createdAt?: string;
-			/** Format: date-time */
-			updatedAt?: string;
-			/** Format: date-time */
-			pushedAt?: string;
-		};
-		GitHubRepositoriesResponse: {
-			repositories: components['schemas']['GitHubRepository'][];
-			/** @description Whether there are more repositories to load */
-			hasMore: boolean;
-		};
-		LoginRequest: {
-			/** Format: email */
-			email: string;
-			password: string;
-		};
-		AuthResponse: {
-			token: string;
-			user: components['schemas']['User'];
-		};
-		HealthCheck: {
-			/** @enum {string} */
-			status: 'healthy' | 'degraded' | 'unhealthy';
-			services: {
-				/** @enum {string} */
-				mongodb?: 'connected' | 'disconnected';
-				/** @enum {string} */
-				qdrant?: 'connected' | 'disconnected';
-			};
-			/** Format: date-time */
-			timestamp?: string;
-		};
-		DashboardStats: {
-			totalRepositories: number;
-			codeChunksProcessed: number;
-			/** Format: float */
-			avgResponseTime: number;
-			/** Format: float */
-			costSavingsMonthly: number;
-			issuesPreventedMonthly: number;
-			/** Format: float */
-			developerHoursReclaimed: number;
-		};
-		ActivityItem: {
-			id: string;
-			/** @enum {string} */
-			type: 'repository_imported' | 'analysis_completed' | 'issue_detected' | 'optimization_found';
-			message: string;
-			/** Format: date-time */
-			timestamp: string;
-			/** @enum {string} */
-			severity: 'info' | 'warning' | 'error' | 'success';
-			repositoryName?: string;
-		};
-		TrendDataPoint: {
-			/** Format: date */
-			date: string;
-			/** Format: float */
-			codeQuality: number;
-			issuesResolved: number;
-			/** Format: float */
-			performanceScore: number;
-		};
-		Repository: {
-			id: string;
-			userId: string;
-			/** Format: int64 */
-			githubRepoId?: number;
-			owner: string;
-			name: string;
-			/** @description Repository full name in format owner/name */
-			fullName: string;
-			description?: string;
-			primaryLanguage?: string;
-			isPrivate?: boolean;
-			/** Format: date-time */
-			indexedAt?: string;
-			/** Format: date-time */
-			lastSyncedAt?: string;
-			/** @enum {string} */
-			status: 'pending' | 'importing' | 'ready' | 'error';
-			importProgress?: number;
-			stats?: {
-				totalFiles?: number;
-				totalLines?: number;
-				languages?: {
-					[key: string]: number;
-				};
-				/** Format: date-time */
-				lastCommitDate?: string;
-			};
-			/** Format: date-time */
-			createdAt: string;
-			/** Format: date-time */
-			updatedAt: string;
-		};
-		CreateRepositoryRequest: {
-			name: string;
-			owner: string;
-			fullName: string;
-			description?: string;
-			/** Format: int64 */
-			githubRepoId?: number;
-			primaryLanguage?: string;
-			isPrivate?: boolean;
-		};
-		UpdateRepositoryRequest: {
-			name?: string;
-			description?: string;
-			primaryLanguage?: string;
-		};
-		RepositoryListResponse: {
-			repositories: components['schemas']['Repository'][];
-			total: number;
-		};
-	};
-	responses: never;
-	parameters: never;
-	requestBodies: never;
-	headers: never;
-	pathItems: never;
+    schemas: {
+        Error: {
+            error: string;
+            message: string;
+        };
+        User: {
+            id: string;
+            /** Format: email */
+            email: string;
+            name: string;
+            /** @description Whether the user has connected their GitHub account */
+            githubConnected?: boolean;
+            /** @description GitHub username if connected */
+            githubUsername?: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        GitHubOAuthRequest: {
+            /** @description OAuth authorization code from GitHub */
+            code: string;
+            /** @description OAuth state parameter for security */
+            state: string;
+        };
+        GitHubRepository: {
+            /**
+             * Format: int64
+             * @description GitHub repository ID
+             */
+            id: number;
+            /** @description Repository name */
+            name: string;
+            /** @description Full repository name (owner/repo) */
+            fullName: string;
+            /** @description Repository owner */
+            owner: string;
+            /** @description Repository description */
+            description?: string;
+            /** @description Whether the repository is private */
+            private: boolean;
+            /** @description Primary programming language */
+            language?: string;
+            /** @description Number of stars */
+            stargazersCount?: number;
+            /** @description Number of forks */
+            forksCount?: number;
+            /** @description Repository size in KB */
+            size?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            /** Format: date-time */
+            pushedAt?: string;
+        };
+        GitHubRepositoriesResponse: {
+            repositories: components["schemas"]["GitHubRepository"][];
+            /** @description Whether there are more repositories to load */
+            hasMore: boolean;
+        };
+        LoginRequest: {
+            /** Format: email */
+            email: string;
+            password: string;
+        };
+        AuthResponse: {
+            token: string;
+            user: components["schemas"]["User"];
+        };
+        HealthCheck: {
+            /** @enum {string} */
+            status: "healthy" | "degraded" | "unhealthy";
+            services: {
+                /** @enum {string} */
+                mongodb?: "connected" | "disconnected";
+                /** @enum {string} */
+                qdrant?: "connected" | "disconnected";
+            };
+            /** Format: date-time */
+            timestamp?: string;
+        };
+        DashboardStats: {
+            totalRepositories: number;
+            codeChunksProcessed: number;
+            /** Format: float */
+            avgResponseTime: number;
+            /** Format: float */
+            costSavingsMonthly: number;
+            issuesPreventedMonthly: number;
+            /** Format: float */
+            developerHoursReclaimed: number;
+        };
+        ActivityItem: {
+            id: string;
+            /** @enum {string} */
+            type: "repository_imported" | "analysis_completed" | "issue_detected" | "optimization_found";
+            message: string;
+            /** Format: date-time */
+            timestamp: string;
+            /** @enum {string} */
+            severity: "info" | "warning" | "error" | "success";
+            repositoryName?: string;
+        };
+        TrendDataPoint: {
+            /** Format: date */
+            date: string;
+            /** Format: float */
+            codeQuality: number;
+            issuesResolved: number;
+            /** Format: float */
+            performanceScore: number;
+        };
+        Repository: {
+            id: string;
+            userId: string;
+            /** Format: int64 */
+            githubRepoId?: number;
+            owner: string;
+            name: string;
+            /** @description Repository full name in format owner/name */
+            fullName: string;
+            description?: string;
+            primaryLanguage?: string;
+            isPrivate?: boolean;
+            /** Format: date-time */
+            indexedAt?: string;
+            /** Format: date-time */
+            lastSyncedAt?: string;
+            /** @enum {string} */
+            status: "pending" | "importing" | "ready" | "error";
+            importProgress?: number;
+            stats?: {
+                totalFiles?: number;
+                totalLines?: number;
+                languages?: {
+                    [key: string]: number;
+                };
+                /** Format: date-time */
+                lastCommitDate?: string;
+            };
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        CreateRepositoryRequest: {
+            name: string;
+            owner: string;
+            fullName: string;
+            description?: string;
+            /** Format: int64 */
+            githubRepoId?: number;
+            primaryLanguage?: string;
+            isPrivate?: boolean;
+        };
+        UpdateRepositoryRequest: {
+            name?: string;
+            description?: string;
+            primaryLanguage?: string;
+        };
+        RepositoryListResponse: {
+            repositories: components["schemas"]["Repository"][];
+            total: number;
+        };
+        CodeChunk: {
+            id: string;
+            repositoryId: string;
+            filePath: string;
+            fileName: string;
+            language: string;
+            startLine: number;
+            endLine: number;
+            content: string;
+            contentHash?: string;
+            imports?: string[];
+            metadata?: {
+                functions?: string[];
+                classes?: string[];
+                variables?: string[];
+                types?: string[];
+                complexity?: number;
+            };
+            vectorId?: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        SearchRequest: {
+            /** @description Search query string */
+            query: string;
+            /** @description Optional repository ID filter */
+            repositoryId?: string;
+            /** @description Optional programming language filter */
+            language?: string;
+            /** @description Optional file extension filter */
+            fileType?: string;
+            /**
+             * @description Maximum number of results
+             * @default 20
+             */
+            limit: number;
+            /**
+             * @description Pagination offset
+             * @default 0
+             */
+            offset: number;
+        };
+        SearchResult: components["schemas"]["CodeChunk"] & {
+            /**
+             * Format: float
+             * @description Relevance score
+             */
+            score?: number;
+            /** @description Highlighted content snippet */
+            highlight?: string;
+        };
+        SearchResponse: {
+            results: components["schemas"]["SearchResult"][];
+            /** @description Total number of matching results */
+            total: number;
+            /** @description Whether there are more results available */
+            hasMore: boolean;
+            /** @description The original search query */
+            query: string;
+        };
+        SearchStats: {
+            totalChunks: number;
+            totalLines: number;
+            /** Format: float */
+            avgComplexity: number;
+            languages: string[];
+        };
+    };
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-	getHealth: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Service health status */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HealthCheck'];
-				};
-			};
-			/** @description Service unavailable */
-			503: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-		};
-	};
-	getApiHealth: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description API health status */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HealthCheck'];
-				};
-			};
-			/** @description Service unavailable */
-			503: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-		};
-	};
-	loginUser: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['LoginRequest'];
-			};
-		};
-		responses: {
-			/** @description User authenticated successfully */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['AuthResponse'];
-				};
-			};
-			/** @description Invalid credentials */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Internal server error */
-			500: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-		};
-	};
-	getCurrentUser: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Current user information */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['User'];
-				};
-			};
-			/** @description Unauthorized */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Internal server error */
-			500: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-		};
-	};
-	githubLogin: {
-		parameters: {
-			query?: {
-				/** @description Redirect URI after OAuth completion */
-				redirect_uri?: string;
-			};
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description GitHub OAuth login URL and state */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': {
-						/** @description GitHub OAuth authorization URL */
-						auth_url: string;
-						/** @description OAuth state parameter for CSRF protection */
-						state: string;
-					};
-				};
-			};
-			/** @description Unauthorized */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-		};
-	};
-	githubCallback: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['GitHubOAuthRequest'];
-			};
-		};
-		responses: {
-			/** @description OAuth successful, user GitHub account connected */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['User'];
-				};
-			};
-			/** @description Invalid OAuth request */
-			400: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Unauthorized */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Internal server error */
-			500: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-		};
-	};
-	githubDisconnect: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description GitHub account disconnected successfully */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['User'];
-				};
-			};
-			/** @description Unauthorized */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Internal server error */
-			500: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-		};
-	};
-	getGitHubRepositories: {
-		parameters: {
-			query?: {
-				/** @description Page number for pagination */
-				page?: number;
-			};
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description List of GitHub repositories */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['GitHubRepositoriesResponse'];
-				};
-			};
-			/** @description Unauthorized or GitHub not connected */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description GitHub rate limit exceeded */
-			429: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Internal server error */
-			500: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-		};
-	};
-	validateGitHubRepository: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				/** @description Repository owner */
-				owner: string;
-				/** @description Repository name */
-				repo: string;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Repository is valid and accessible */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['GitHubRepository'];
-				};
-			};
-			/** @description Unauthorized or GitHub not connected */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Repository not found */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description GitHub rate limit exceeded */
-			429: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Internal server error */
-			500: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-		};
-	};
-	getDashboardStats: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Dashboard statistics */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['DashboardStats'];
-				};
-			};
-			/** @description Unauthorized */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Internal server error */
-			500: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-		};
-	};
-	getDashboardActivity: {
-		parameters: {
-			query?: {
-				/** @description Maximum number of activity items to return */
-				limit?: number;
-			};
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Recent activity items */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ActivityItem'][];
-				};
-			};
-			/** @description Unauthorized */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Internal server error */
-			500: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-		};
-	};
-	getDashboardTrends: {
-		parameters: {
-			query?: {
-				/** @description Number of days of trend data to return */
-				days?: number;
-			};
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Trend data points */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['TrendDataPoint'][];
-				};
-			};
-			/** @description Unauthorized */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Internal server error */
-			500: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-		};
-	};
-	getRepositories: {
-		parameters: {
-			query?: {
-				/** @description Maximum number of repositories to return */
-				limit?: number;
-				/** @description Number of repositories to skip */
-				offset?: number;
-				/** @description Filter by repository status */
-				status?: 'pending' | 'importing' | 'ready' | 'error';
-			};
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description List of user repositories */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['RepositoryListResponse'];
-				};
-			};
-			/** @description Unauthorized */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Internal server error */
-			500: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-		};
-	};
-	createRepository: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['CreateRepositoryRequest'];
-			};
-		};
-		responses: {
-			/** @description Repository created successfully */
-			201: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Repository'];
-				};
-			};
-			/** @description Invalid request */
-			400: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Unauthorized */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Repository already exists */
-			409: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Internal server error */
-			500: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-		};
-	};
-	getRepository: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				/** @description Repository ID */
-				id: string;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Repository details */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Repository'];
-				};
-			};
-			/** @description Unauthorized */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Repository not found */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Internal server error */
-			500: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-		};
-	};
-	updateRepository: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				/** @description Repository ID */
-				id: string;
-			};
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['UpdateRepositoryRequest'];
-			};
-		};
-		responses: {
-			/** @description Repository updated successfully */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Repository'];
-				};
-			};
-			/** @description Invalid request */
-			400: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Unauthorized */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Repository not found */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Internal server error */
-			500: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-		};
-	};
-	deleteRepository: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				/** @description Repository ID */
-				id: string;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Repository deleted successfully */
-			204: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content?: never;
-			};
-			/** @description Unauthorized */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Repository not found */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Internal server error */
-			500: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-		};
-	};
-	getRepositoryStats: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				/** @description Repository ID */
-				id: string;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Repository statistics */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': {
-						repositoryId?: string;
-						totalFiles?: number;
-						totalLines?: number;
-						languages?: {
-							[key: string]: number;
-						};
-						/** Format: date-time */
-						lastCommitDate?: string;
-						codeChunks?: number;
-						/** Format: float */
-						avgComplexity?: number;
-					};
-				};
-			};
-			/** @description Unauthorized */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Repository not found */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-			/** @description Internal server error */
-			500: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Error'];
-				};
-			};
-		};
-	};
+    getHealth: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Service health status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthCheck"];
+                };
+            };
+            /** @description Service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiHealth: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description API health status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthCheck"];
+                };
+            };
+            /** @description Service unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    loginUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description User authenticated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthResponse"];
+                };
+            };
+            /** @description Invalid credentials */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getCurrentUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current user information */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    githubLogin: {
+        parameters: {
+            query?: {
+                /** @description Redirect URI after OAuth completion */
+                redirect_uri?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description GitHub OAuth login URL and state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description GitHub OAuth authorization URL */
+                        auth_url: string;
+                        /** @description OAuth state parameter for CSRF protection */
+                        state: string;
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    githubCallback: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GitHubOAuthRequest"];
+            };
+        };
+        responses: {
+            /** @description OAuth successful, user GitHub account connected */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            /** @description Invalid OAuth request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    githubDisconnect: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description GitHub account disconnected successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getGitHubRepositories: {
+        parameters: {
+            query?: {
+                /** @description Page number for pagination */
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of GitHub repositories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GitHubRepositoriesResponse"];
+                };
+            };
+            /** @description Unauthorized or GitHub not connected */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description GitHub rate limit exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    validateGitHubRepository: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Repository owner */
+                owner: string;
+                /** @description Repository name */
+                repo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Repository is valid and accessible */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GitHubRepository"];
+                };
+            };
+            /** @description Unauthorized or GitHub not connected */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Repository not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description GitHub rate limit exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getDashboardStats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dashboard statistics */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardStats"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getDashboardActivity: {
+        parameters: {
+            query?: {
+                /** @description Maximum number of activity items to return */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recent activity items */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityItem"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getDashboardTrends: {
+        parameters: {
+            query?: {
+                /** @description Number of days of trend data to return */
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Trend data points */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrendDataPoint"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getRepositories: {
+        parameters: {
+            query?: {
+                /** @description Maximum number of repositories to return */
+                limit?: number;
+                /** @description Number of repositories to skip */
+                offset?: number;
+                /** @description Filter by repository status */
+                status?: "pending" | "importing" | "ready" | "error";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of user repositories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepositoryListResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createRepository: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRepositoryRequest"];
+            };
+        };
+        responses: {
+            /** @description Repository created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Repository"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Repository already exists */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getRepository: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Repository ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Repository details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Repository"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Repository not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    updateRepository: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Repository ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRepositoryRequest"];
+            };
+        };
+        responses: {
+            /** @description Repository updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Repository"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Repository not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    deleteRepository: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Repository ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Repository deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Repository not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getRepositoryStats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Repository ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Repository statistics */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        repositoryId?: string;
+                        totalFiles?: number;
+                        totalLines?: number;
+                        languages?: {
+                            [key: string]: number;
+                        };
+                        /** Format: date-time */
+                        lastCommitDate?: string;
+                        codeChunks?: number;
+                        /** Format: float */
+                        avgComplexity?: number;
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Repository not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    globalSearch: {
+        parameters: {
+            query?: {
+                /** @description Maximum number of results to return */
+                limit?: number;
+                /** @description Number of results to skip for pagination */
+                offset?: number;
+                /** @description Filter by programming language */
+                language?: string;
+                /** @description Filter by file extension */
+                fileType?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SearchRequest"];
+            };
+        };
+        responses: {
+            /** @description Search results */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    repositorySearch: {
+        parameters: {
+            query?: {
+                /** @description Maximum number of results to return */
+                limit?: number;
+                /** @description Number of results to skip for pagination */
+                offset?: number;
+                /** @description Filter by programming language */
+                language?: string;
+                /** @description Filter by file extension */
+                fileType?: string;
+            };
+            header?: never;
+            path: {
+                /** @description Repository ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SearchRequest"];
+            };
+        };
+        responses: {
+            /** @description Search results */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Repository not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    quickSearch: {
+        parameters: {
+            query: {
+                /** @description Search query */
+                q: string;
+                /** @description Filter by repository ID */
+                repositoryId?: string;
+                /** @description Filter by programming language */
+                language?: string;
+                /** @description Filter by file extension */
+                fileType?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Quick search results */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        results?: {
+                            id?: string;
+                            filePath?: string;
+                            fileName?: string;
+                            language?: string;
+                            highlight?: string;
+                            /** Format: float */
+                            score?: number;
+                        }[];
+                        total?: number;
+                        query?: string;
+                    };
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getSearchSuggestions: {
+        parameters: {
+            query: {
+                /** @description Partial search query */
+                q: string;
+                /** @description Filter by repository ID */
+                repositoryId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Search suggestions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        suggestions?: string[];
+                        query?: string;
+                    };
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getLanguages: {
+        parameters: {
+            query?: {
+                /** @description Filter by repository ID */
+                repositoryId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Available programming languages */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        languages?: string[];
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getSearchStats: {
+        parameters: {
+            query?: {
+                /** @description Filter by repository ID */
+                repositoryId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Search statistics */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchStats"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getRecentChunks: {
+        parameters: {
+            query?: {
+                /** @description Filter by repository ID */
+                repositoryId?: string;
+                /** @description Maximum number of chunks to return */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recent code chunks */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        chunks?: components["schemas"]["CodeChunk"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
 }

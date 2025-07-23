@@ -59,12 +59,21 @@ func main() {
 		log.Println("✅ Qdrant connected successfully")
 	}
 
+	// Initialize MongoDB collections and indexes
+	if err := mongoDB.InitializeCollections(); err != nil {
+		log.Printf("Warning: Failed to initialize MongoDB collections: %v", err)
+	}
+	if err := mongoDB.EnsureIndexes(); err != nil {
+		log.Printf("Warning: Failed to ensure MongoDB indexes: %v", err)
+	}
+
 	// Initialize services
 	userService := services.NewUserService(mongoDB.Database())
 	authService := auth.NewAuthService(cfg.JWT.Secret)
 	dashboardService := services.NewDashboardService()
 	githubService := services.NewGitHubService(mongoDB.Database(), cfg.GitHub.ClientID, cfg.GitHub.ClientSecret, cfg.GitHub.EncryptionKey)
 	repositoryService := services.NewRepositoryService(mongoDB.Database(), githubService, userService)
+	searchService := services.NewSearchService(mongoDB.Database())
 
 	// Initialize handlers
 	healthHandler := handlers.NewHealthHandler(mongoDB, qdrant)
@@ -72,6 +81,7 @@ func main() {
 	dashboardHandler := handlers.NewDashboardHandler(dashboardService)
 	repositoryHandler := handlers.NewRepositoryHandler(repositoryService)
 	githubHandler := handlers.NewGitHubHandler(githubService, userService)
+	searchHandler := handlers.NewSearchHandler(searchService)
 
 	// Create unified server implementing ServerInterface
 	unifiedServer := server.NewServer(
@@ -80,6 +90,7 @@ func main() {
 		dashboardHandler,
 		repositoryHandler,
 		githubHandler,
+		searchHandler,
 	)
 
 	// Create Gin router

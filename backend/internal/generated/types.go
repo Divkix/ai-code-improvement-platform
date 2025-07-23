@@ -86,6 +86,30 @@ type AuthResponse struct {
 	User  User   `json:"user"`
 }
 
+// CodeChunk defines model for CodeChunk.
+type CodeChunk struct {
+	Content     string    `json:"content"`
+	ContentHash *string   `json:"contentHash,omitempty"`
+	CreatedAt   time.Time `json:"createdAt"`
+	EndLine     int       `json:"endLine"`
+	FileName    string    `json:"fileName"`
+	FilePath    string    `json:"filePath"`
+	Id          string    `json:"id"`
+	Imports     *[]string `json:"imports,omitempty"`
+	Language    string    `json:"language"`
+	Metadata    *struct {
+		Classes    *[]string `json:"classes,omitempty"`
+		Complexity *int      `json:"complexity,omitempty"`
+		Functions  *[]string `json:"functions,omitempty"`
+		Types      *[]string `json:"types,omitempty"`
+		Variables  *[]string `json:"variables,omitempty"`
+	} `json:"metadata,omitempty"`
+	RepositoryId string     `json:"repositoryId"`
+	StartLine    int        `json:"startLine"`
+	UpdatedAt    *time.Time `json:"updatedAt,omitempty"`
+	VectorId     *string    `json:"vectorId,omitempty"`
+}
+
 // CreateRepositoryRequest defines model for CreateRepositoryRequest.
 type CreateRepositoryRequest struct {
 	Description     *string `json:"description,omitempty"`
@@ -227,6 +251,78 @@ type RepositoryListResponse struct {
 	Total        int          `json:"total"`
 }
 
+// SearchRequest defines model for SearchRequest.
+type SearchRequest struct {
+	// FileType Optional file extension filter
+	FileType *string `json:"fileType,omitempty"`
+
+	// Language Optional programming language filter
+	Language *string `json:"language,omitempty"`
+
+	// Limit Maximum number of results
+	Limit *int `json:"limit,omitempty"`
+
+	// Offset Pagination offset
+	Offset *int `json:"offset,omitempty"`
+
+	// Query Search query string
+	Query string `json:"query"`
+
+	// RepositoryId Optional repository ID filter
+	RepositoryId *string `json:"repositoryId,omitempty"`
+}
+
+// SearchResponse defines model for SearchResponse.
+type SearchResponse struct {
+	// HasMore Whether there are more results available
+	HasMore bool `json:"hasMore"`
+
+	// Query The original search query
+	Query   string         `json:"query"`
+	Results []SearchResult `json:"results"`
+
+	// Total Total number of matching results
+	Total int `json:"total"`
+}
+
+// SearchResult defines model for SearchResult.
+type SearchResult struct {
+	Content     string    `json:"content"`
+	ContentHash *string   `json:"contentHash,omitempty"`
+	CreatedAt   time.Time `json:"createdAt"`
+	EndLine     int       `json:"endLine"`
+	FileName    string    `json:"fileName"`
+	FilePath    string    `json:"filePath"`
+
+	// Highlight Highlighted content snippet
+	Highlight *string   `json:"highlight,omitempty"`
+	Id        string    `json:"id"`
+	Imports   *[]string `json:"imports,omitempty"`
+	Language  string    `json:"language"`
+	Metadata  *struct {
+		Classes    *[]string `json:"classes,omitempty"`
+		Complexity *int      `json:"complexity,omitempty"`
+		Functions  *[]string `json:"functions,omitempty"`
+		Types      *[]string `json:"types,omitempty"`
+		Variables  *[]string `json:"variables,omitempty"`
+	} `json:"metadata,omitempty"`
+	RepositoryId string `json:"repositoryId"`
+
+	// Score Relevance score
+	Score     *float32   `json:"score,omitempty"`
+	StartLine int        `json:"startLine"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+	VectorId  *string    `json:"vectorId,omitempty"`
+}
+
+// SearchStats defines model for SearchStats.
+type SearchStats struct {
+	AvgComplexity float32  `json:"avgComplexity"`
+	Languages     []string `json:"languages"`
+	TotalChunks   int      `json:"totalChunks"`
+	TotalLines    int      `json:"totalLines"`
+}
+
 // TrendDataPoint defines model for TrendDataPoint.
 type TrendDataPoint struct {
 	CodeQuality      float32            `json:"codeQuality"`
@@ -295,6 +391,81 @@ type GetRepositoriesParams struct {
 // GetRepositoriesParamsStatus defines parameters for GetRepositories.
 type GetRepositoriesParamsStatus string
 
+// RepositorySearchParams defines parameters for RepositorySearch.
+type RepositorySearchParams struct {
+	// Limit Maximum number of results to return
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of results to skip for pagination
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// Language Filter by programming language
+	Language *string `form:"language,omitempty" json:"language,omitempty"`
+
+	// FileType Filter by file extension
+	FileType *string `form:"fileType,omitempty" json:"fileType,omitempty"`
+}
+
+// GlobalSearchParams defines parameters for GlobalSearch.
+type GlobalSearchParams struct {
+	// Limit Maximum number of results to return
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of results to skip for pagination
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// Language Filter by programming language
+	Language *string `form:"language,omitempty" json:"language,omitempty"`
+
+	// FileType Filter by file extension
+	FileType *string `form:"fileType,omitempty" json:"fileType,omitempty"`
+}
+
+// GetLanguagesParams defines parameters for GetLanguages.
+type GetLanguagesParams struct {
+	// RepositoryId Filter by repository ID
+	RepositoryId *string `form:"repositoryId,omitempty" json:"repositoryId,omitempty"`
+}
+
+// QuickSearchParams defines parameters for QuickSearch.
+type QuickSearchParams struct {
+	// Q Search query
+	Q string `form:"q" json:"q"`
+
+	// RepositoryId Filter by repository ID
+	RepositoryId *string `form:"repositoryId,omitempty" json:"repositoryId,omitempty"`
+
+	// Language Filter by programming language
+	Language *string `form:"language,omitempty" json:"language,omitempty"`
+
+	// FileType Filter by file extension
+	FileType *string `form:"fileType,omitempty" json:"fileType,omitempty"`
+}
+
+// GetRecentChunksParams defines parameters for GetRecentChunks.
+type GetRecentChunksParams struct {
+	// RepositoryId Filter by repository ID
+	RepositoryId *string `form:"repositoryId,omitempty" json:"repositoryId,omitempty"`
+
+	// Limit Maximum number of chunks to return
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// GetSearchStatsParams defines parameters for GetSearchStats.
+type GetSearchStatsParams struct {
+	// RepositoryId Filter by repository ID
+	RepositoryId *string `form:"repositoryId,omitempty" json:"repositoryId,omitempty"`
+}
+
+// GetSearchSuggestionsParams defines parameters for GetSearchSuggestions.
+type GetSearchSuggestionsParams struct {
+	// Q Partial search query
+	Q string `form:"q" json:"q"`
+
+	// RepositoryId Filter by repository ID
+	RepositoryId *string `form:"repositoryId,omitempty" json:"repositoryId,omitempty"`
+}
+
 // GithubCallbackJSONRequestBody defines body for GithubCallback for application/json ContentType.
 type GithubCallbackJSONRequestBody = GitHubOAuthRequest
 
@@ -306,3 +477,9 @@ type CreateRepositoryJSONRequestBody = CreateRepositoryRequest
 
 // UpdateRepositoryJSONRequestBody defines body for UpdateRepository for application/json ContentType.
 type UpdateRepositoryJSONRequestBody = UpdateRepositoryRequest
+
+// RepositorySearchJSONRequestBody defines body for RepositorySearch for application/json ContentType.
+type RepositorySearchJSONRequestBody = SearchRequest
+
+// GlobalSearchJSONRequestBody defines body for GlobalSearch for application/json ContentType.
+type GlobalSearchJSONRequestBody = SearchRequest

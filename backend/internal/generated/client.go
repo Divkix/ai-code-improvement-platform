@@ -146,8 +146,33 @@ type ClientInterface interface {
 
 	UpdateRepository(ctx context.Context, id string, body UpdateRepositoryJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// RepositorySearchWithBody request with any body
+	RepositorySearchWithBody(ctx context.Context, id string, params *RepositorySearchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	RepositorySearch(ctx context.Context, id string, params *RepositorySearchParams, body RepositorySearchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetRepositoryStats request
 	GetRepositoryStats(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GlobalSearchWithBody request with any body
+	GlobalSearchWithBody(ctx context.Context, params *GlobalSearchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	GlobalSearch(ctx context.Context, params *GlobalSearchParams, body GlobalSearchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetLanguages request
+	GetLanguages(ctx context.Context, params *GetLanguagesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// QuickSearch request
+	QuickSearch(ctx context.Context, params *QuickSearchParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetRecentChunks request
+	GetRecentChunks(ctx context.Context, params *GetRecentChunksParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetSearchStats request
+	GetSearchStats(ctx context.Context, params *GetSearchStatsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetSearchSuggestions request
+	GetSearchSuggestions(ctx context.Context, params *GetSearchSuggestionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetHealth request
 	GetHealth(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -393,8 +418,116 @@ func (c *Client) UpdateRepository(ctx context.Context, id string, body UpdateRep
 	return c.Client.Do(req)
 }
 
+func (c *Client) RepositorySearchWithBody(ctx context.Context, id string, params *RepositorySearchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRepositorySearchRequestWithBody(c.Server, id, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RepositorySearch(ctx context.Context, id string, params *RepositorySearchParams, body RepositorySearchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRepositorySearchRequest(c.Server, id, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) GetRepositoryStats(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetRepositoryStatsRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GlobalSearchWithBody(ctx context.Context, params *GlobalSearchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGlobalSearchRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GlobalSearch(ctx context.Context, params *GlobalSearchParams, body GlobalSearchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGlobalSearchRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetLanguages(ctx context.Context, params *GetLanguagesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetLanguagesRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) QuickSearch(ctx context.Context, params *QuickSearchParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewQuickSearchRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetRecentChunks(ctx context.Context, params *GetRecentChunksParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetRecentChunksRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetSearchStats(ctx context.Context, params *GetSearchStatsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetSearchStatsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetSearchSuggestions(ctx context.Context, params *GetSearchSuggestionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetSearchSuggestionsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -1078,6 +1211,123 @@ func NewUpdateRepositoryRequestWithBody(server string, id string, contentType st
 	return req, nil
 }
 
+// NewRepositorySearchRequest calls the generic RepositorySearch builder with application/json body
+func NewRepositorySearchRequest(server string, id string, params *RepositorySearchParams, body RepositorySearchJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRepositorySearchRequestWithBody(server, id, params, "application/json", bodyReader)
+}
+
+// NewRepositorySearchRequestWithBody generates requests for RepositorySearch with any type of body
+func NewRepositorySearchRequestWithBody(server string, id string, params *RepositorySearchParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/repositories/%s/search", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Offset != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Language != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "language", runtime.ParamLocationQuery, *params.Language); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.FileType != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fileType", runtime.ParamLocationQuery, *params.FileType); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetRepositoryStatsRequest generates requests for GetRepositoryStats
 func NewGetRepositoryStatsRequest(server string, id string) (*http.Request, error) {
 	var err error
@@ -1102,6 +1352,433 @@ func NewGetRepositoryStatsRequest(server string, id string) (*http.Request, erro
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGlobalSearchRequest calls the generic GlobalSearch builder with application/json body
+func NewGlobalSearchRequest(server string, params *GlobalSearchParams, body GlobalSearchJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewGlobalSearchRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewGlobalSearchRequestWithBody generates requests for GlobalSearch with any type of body
+func NewGlobalSearchRequestWithBody(server string, params *GlobalSearchParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/search")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Offset != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Language != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "language", runtime.ParamLocationQuery, *params.Language); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.FileType != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fileType", runtime.ParamLocationQuery, *params.FileType); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetLanguagesRequest generates requests for GetLanguages
+func NewGetLanguagesRequest(server string, params *GetLanguagesParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/search/languages")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.RepositoryId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repositoryId", runtime.ParamLocationQuery, *params.RepositoryId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewQuickSearchRequest generates requests for QuickSearch
+func NewQuickSearchRequest(server string, params *QuickSearchParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/search/quick")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "q", runtime.ParamLocationQuery, params.Q); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		if params.RepositoryId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repositoryId", runtime.ParamLocationQuery, *params.RepositoryId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Language != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "language", runtime.ParamLocationQuery, *params.Language); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.FileType != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fileType", runtime.ParamLocationQuery, *params.FileType); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetRecentChunksRequest generates requests for GetRecentChunks
+func NewGetRecentChunksRequest(server string, params *GetRecentChunksParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/search/recent")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.RepositoryId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repositoryId", runtime.ParamLocationQuery, *params.RepositoryId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetSearchStatsRequest generates requests for GetSearchStats
+func NewGetSearchStatsRequest(server string, params *GetSearchStatsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/search/stats")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.RepositoryId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repositoryId", runtime.ParamLocationQuery, *params.RepositoryId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetSearchSuggestionsRequest generates requests for GetSearchSuggestions
+func NewGetSearchSuggestionsRequest(server string, params *GetSearchSuggestionsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/search/suggestions")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "q", runtime.ParamLocationQuery, params.Q); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		if params.RepositoryId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repositoryId", runtime.ParamLocationQuery, *params.RepositoryId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -1238,8 +1915,33 @@ type ClientWithResponsesInterface interface {
 
 	UpdateRepositoryWithResponse(ctx context.Context, id string, body UpdateRepositoryJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateRepositoryResponse, error)
 
+	// RepositorySearchWithBodyWithResponse request with any body
+	RepositorySearchWithBodyWithResponse(ctx context.Context, id string, params *RepositorySearchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RepositorySearchResponse, error)
+
+	RepositorySearchWithResponse(ctx context.Context, id string, params *RepositorySearchParams, body RepositorySearchJSONRequestBody, reqEditors ...RequestEditorFn) (*RepositorySearchResponse, error)
+
 	// GetRepositoryStatsWithResponse request
 	GetRepositoryStatsWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetRepositoryStatsResponse, error)
+
+	// GlobalSearchWithBodyWithResponse request with any body
+	GlobalSearchWithBodyWithResponse(ctx context.Context, params *GlobalSearchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GlobalSearchResponse, error)
+
+	GlobalSearchWithResponse(ctx context.Context, params *GlobalSearchParams, body GlobalSearchJSONRequestBody, reqEditors ...RequestEditorFn) (*GlobalSearchResponse, error)
+
+	// GetLanguagesWithResponse request
+	GetLanguagesWithResponse(ctx context.Context, params *GetLanguagesParams, reqEditors ...RequestEditorFn) (*GetLanguagesResponse, error)
+
+	// QuickSearchWithResponse request
+	QuickSearchWithResponse(ctx context.Context, params *QuickSearchParams, reqEditors ...RequestEditorFn) (*QuickSearchResponse, error)
+
+	// GetRecentChunksWithResponse request
+	GetRecentChunksWithResponse(ctx context.Context, params *GetRecentChunksParams, reqEditors ...RequestEditorFn) (*GetRecentChunksResponse, error)
+
+	// GetSearchStatsWithResponse request
+	GetSearchStatsWithResponse(ctx context.Context, params *GetSearchStatsParams, reqEditors ...RequestEditorFn) (*GetSearchStatsResponse, error)
+
+	// GetSearchSuggestionsWithResponse request
+	GetSearchSuggestionsWithResponse(ctx context.Context, params *GetSearchSuggestionsParams, reqEditors ...RequestEditorFn) (*GetSearchSuggestionsResponse, error)
 
 	// GetHealthWithResponse request
 	GetHealthWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHealthResponse, error)
@@ -1642,6 +2344,32 @@ func (r UpdateRepositoryResponse) StatusCode() int {
 	return 0
 }
 
+type RepositorySearchResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SearchResponse
+	JSON400      *Error
+	JSON401      *Error
+	JSON404      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r RepositorySearchResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RepositorySearchResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetRepositoryStatsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1669,6 +2397,170 @@ func (r GetRepositoryStatsResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetRepositoryStatsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GlobalSearchResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SearchResponse
+	JSON400      *Error
+	JSON401      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r GlobalSearchResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GlobalSearchResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetLanguagesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		Languages *[]string `json:"languages,omitempty"`
+	}
+	JSON401 *Error
+	JSON500 *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r GetLanguagesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetLanguagesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type QuickSearchResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		Query   *string `json:"query,omitempty"`
+		Results *[]struct {
+			FileName  *string  `json:"fileName,omitempty"`
+			FilePath  *string  `json:"filePath,omitempty"`
+			Highlight *string  `json:"highlight,omitempty"`
+			Id        *string  `json:"id,omitempty"`
+			Language  *string  `json:"language,omitempty"`
+			Score     *float32 `json:"score,omitempty"`
+		} `json:"results,omitempty"`
+		Total *int `json:"total,omitempty"`
+	}
+	JSON400 *Error
+	JSON401 *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r QuickSearchResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r QuickSearchResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetRecentChunksResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		Chunks *[]CodeChunk `json:"chunks,omitempty"`
+		Total  *int         `json:"total,omitempty"`
+	}
+	JSON401 *Error
+	JSON500 *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r GetRecentChunksResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetRecentChunksResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetSearchStatsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SearchStats
+	JSON401      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r GetSearchStatsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetSearchStatsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetSearchSuggestionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		Query       *string   `json:"query,omitempty"`
+		Suggestions *[]string `json:"suggestions,omitempty"`
+	}
+	JSON400 *Error
+	JSON401 *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r GetSearchSuggestionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetSearchSuggestionsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -1874,6 +2766,23 @@ func (c *ClientWithResponses) UpdateRepositoryWithResponse(ctx context.Context, 
 	return ParseUpdateRepositoryResponse(rsp)
 }
 
+// RepositorySearchWithBodyWithResponse request with arbitrary body returning *RepositorySearchResponse
+func (c *ClientWithResponses) RepositorySearchWithBodyWithResponse(ctx context.Context, id string, params *RepositorySearchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RepositorySearchResponse, error) {
+	rsp, err := c.RepositorySearchWithBody(ctx, id, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRepositorySearchResponse(rsp)
+}
+
+func (c *ClientWithResponses) RepositorySearchWithResponse(ctx context.Context, id string, params *RepositorySearchParams, body RepositorySearchJSONRequestBody, reqEditors ...RequestEditorFn) (*RepositorySearchResponse, error) {
+	rsp, err := c.RepositorySearch(ctx, id, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRepositorySearchResponse(rsp)
+}
+
 // GetRepositoryStatsWithResponse request returning *GetRepositoryStatsResponse
 func (c *ClientWithResponses) GetRepositoryStatsWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetRepositoryStatsResponse, error) {
 	rsp, err := c.GetRepositoryStats(ctx, id, reqEditors...)
@@ -1881,6 +2790,68 @@ func (c *ClientWithResponses) GetRepositoryStatsWithResponse(ctx context.Context
 		return nil, err
 	}
 	return ParseGetRepositoryStatsResponse(rsp)
+}
+
+// GlobalSearchWithBodyWithResponse request with arbitrary body returning *GlobalSearchResponse
+func (c *ClientWithResponses) GlobalSearchWithBodyWithResponse(ctx context.Context, params *GlobalSearchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GlobalSearchResponse, error) {
+	rsp, err := c.GlobalSearchWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGlobalSearchResponse(rsp)
+}
+
+func (c *ClientWithResponses) GlobalSearchWithResponse(ctx context.Context, params *GlobalSearchParams, body GlobalSearchJSONRequestBody, reqEditors ...RequestEditorFn) (*GlobalSearchResponse, error) {
+	rsp, err := c.GlobalSearch(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGlobalSearchResponse(rsp)
+}
+
+// GetLanguagesWithResponse request returning *GetLanguagesResponse
+func (c *ClientWithResponses) GetLanguagesWithResponse(ctx context.Context, params *GetLanguagesParams, reqEditors ...RequestEditorFn) (*GetLanguagesResponse, error) {
+	rsp, err := c.GetLanguages(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetLanguagesResponse(rsp)
+}
+
+// QuickSearchWithResponse request returning *QuickSearchResponse
+func (c *ClientWithResponses) QuickSearchWithResponse(ctx context.Context, params *QuickSearchParams, reqEditors ...RequestEditorFn) (*QuickSearchResponse, error) {
+	rsp, err := c.QuickSearch(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseQuickSearchResponse(rsp)
+}
+
+// GetRecentChunksWithResponse request returning *GetRecentChunksResponse
+func (c *ClientWithResponses) GetRecentChunksWithResponse(ctx context.Context, params *GetRecentChunksParams, reqEditors ...RequestEditorFn) (*GetRecentChunksResponse, error) {
+	rsp, err := c.GetRecentChunks(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetRecentChunksResponse(rsp)
+}
+
+// GetSearchStatsWithResponse request returning *GetSearchStatsResponse
+func (c *ClientWithResponses) GetSearchStatsWithResponse(ctx context.Context, params *GetSearchStatsParams, reqEditors ...RequestEditorFn) (*GetSearchStatsResponse, error) {
+	rsp, err := c.GetSearchStats(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSearchStatsResponse(rsp)
+}
+
+// GetSearchSuggestionsWithResponse request returning *GetSearchSuggestionsResponse
+func (c *ClientWithResponses) GetSearchSuggestionsWithResponse(ctx context.Context, params *GetSearchSuggestionsParams, reqEditors ...RequestEditorFn) (*GetSearchSuggestionsResponse, error) {
+	rsp, err := c.GetSearchSuggestions(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSearchSuggestionsResponse(rsp)
 }
 
 // GetHealthWithResponse request returning *GetHealthResponse
@@ -2587,6 +3558,60 @@ func ParseUpdateRepositoryResponse(rsp *http.Response) (*UpdateRepositoryRespons
 	return response, nil
 }
 
+// ParseRepositorySearchResponse parses an HTTP response from a RepositorySearchWithResponse call
+func ParseRepositorySearchResponse(rsp *http.Response) (*RepositorySearchResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RepositorySearchResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SearchResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetRepositoryStatsResponse parses an HTTP response from a GetRepositoryStatsWithResponse call
 func ParseGetRepositoryStatsResponse(rsp *http.Response) (*GetRepositoryStatsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -2636,6 +3661,272 @@ func ParseGetRepositoryStatsResponse(rsp *http.Response) (*GetRepositoryStatsRes
 			return nil, err
 		}
 		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGlobalSearchResponse parses an HTTP response from a GlobalSearchWithResponse call
+func ParseGlobalSearchResponse(rsp *http.Response) (*GlobalSearchResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GlobalSearchResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SearchResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetLanguagesResponse parses an HTTP response from a GetLanguagesWithResponse call
+func ParseGetLanguagesResponse(rsp *http.Response) (*GetLanguagesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetLanguagesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			Languages *[]string `json:"languages,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseQuickSearchResponse parses an HTTP response from a QuickSearchWithResponse call
+func ParseQuickSearchResponse(rsp *http.Response) (*QuickSearchResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &QuickSearchResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			Query   *string `json:"query,omitempty"`
+			Results *[]struct {
+				FileName  *string  `json:"fileName,omitempty"`
+				FilePath  *string  `json:"filePath,omitempty"`
+				Highlight *string  `json:"highlight,omitempty"`
+				Id        *string  `json:"id,omitempty"`
+				Language  *string  `json:"language,omitempty"`
+				Score     *float32 `json:"score,omitempty"`
+			} `json:"results,omitempty"`
+			Total *int `json:"total,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetRecentChunksResponse parses an HTTP response from a GetRecentChunksWithResponse call
+func ParseGetRecentChunksResponse(rsp *http.Response) (*GetRecentChunksResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetRecentChunksResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			Chunks *[]CodeChunk `json:"chunks,omitempty"`
+			Total  *int         `json:"total,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetSearchStatsResponse parses an HTTP response from a GetSearchStatsWithResponse call
+func ParseGetSearchStatsResponse(rsp *http.Response) (*GetSearchStatsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSearchStatsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SearchStats
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetSearchSuggestionsResponse parses an HTTP response from a GetSearchSuggestionsWithResponse call
+func ParseGetSearchSuggestionsResponse(rsp *http.Response) (*GetSearchSuggestionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSearchSuggestionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			Query       *string   `json:"query,omitempty"`
+			Suggestions *[]string `json:"suggestions,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
 
 	}
 
