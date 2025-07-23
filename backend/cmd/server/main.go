@@ -10,8 +10,8 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	ginSwagger "github.com/swaggo/gin-swagger"
 	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github-analyzer/internal/auth"
 	"github-analyzer/internal/config"
@@ -81,13 +81,13 @@ func main() {
 	authService := auth.NewAuthService(cfg.JWT.Secret)
 	dashboardService := services.NewDashboardService()
 	githubService := services.NewGitHubService(mongoDB.Database(), cfg.GitHub.ClientID, cfg.GitHub.ClientSecret, cfg.GitHub.EncryptionKey)
-	
+
 	// Initialize vector search services first (needed by repository service)
 	voyageService := services.NewVoyageService(cfg.AI.VoyageAPIKey)
 	embeddingService := services.NewEmbeddingService(voyageService, qdrant, mongoDB, cfg)
 	embeddingPipeline := services.NewEmbeddingPipeline(embeddingService, mongoDB, cfg)
 	searchService := services.NewSearchService(mongoDB.Database(), voyageService, qdrant, cfg)
-	
+
 	// Initialize repository service with embedding pipeline
 	repositoryService := services.NewRepositoryService(mongoDB.Database(), githubService, userService, embeddingPipeline)
 
@@ -118,16 +118,27 @@ func main() {
 
 	// CORS configuration
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = []string{"http://localhost:3000"}
+	corsConfig.AllowOrigins = []string{"http://localhost:3000", "http://localhost:5173"}
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Type", "Authorization"}
 	router.Use(cors.New(corsConfig))
 
 	// Custom middleware configuration
 	middlewareFunc := func(c *gin.Context) {
-		// Apply authentication middleware to protected routes
+		// Apply authentication middleware only to protected routes
 		path := c.FullPath()
-		if path != "/health" && path != "/api/auth/login" {
+		publicPaths := map[string]bool{
+			"/health":                   true,
+			"/api/health":               true,
+			"/api/auth/login":           true,
+			"/api/auth/github/login":    true,
+			"/api/auth/github/callback": true,
+			"/docs/*any":                true,
+			"/api/openapi.yaml":         true,
+			"/api/openapi.json":         true,
+		}
+
+		if !publicPaths[path] {
 			middleware.AuthMiddleware(authService)(c)
 			if c.IsAborted() {
 				return
@@ -151,7 +162,7 @@ func main() {
 	}
 
 	generated.RegisterHandlersWithOptions(router, unifiedServer, options)
-	
+
 	// Initialize Qdrant collection before starting embedding pipeline
 	ctx := context.Background()
 	if err := embeddingService.InitializeCollection(ctx); err != nil {
@@ -159,19 +170,19 @@ func main() {
 	} else {
 		log.Println("✅ Qdrant collection initialized")
 	}
-	
+
 	// Start background embedding pipeline
 	if err := embeddingPipeline.Start(ctx); err != nil {
 		log.Printf("Warning: Failed to start embedding pipeline: %v", err)
 	} else {
 		log.Println("✅ Embedding pipeline started")
-		
+
 		// Queue existing repositories for embedding
 		if err := embeddingPipeline.QueueAllRepositories(ctx); err != nil {
 			log.Printf("Warning: Failed to queue existing repositories: %v", err)
 		}
 	}
-	
+
 	// Graceful shutdown handling
 	defer func() {
 		if err := embeddingPipeline.Stop(); err != nil {
@@ -181,12 +192,12 @@ func main() {
 
 	// Add Swagger UI endpoint (serves the OpenAPI spec)
 	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	
+
 	// Serve OpenAPI specification directly
 	router.GET("/api/openapi.yaml", func(c *gin.Context) {
 		c.File("api/openapi.yaml")
 	})
-	
+
 	// Serve OpenAPI specification as JSON (if needed)
 	router.GET("/api/openapi.json", func(c *gin.Context) {
 		c.Header("Content-Type", "application/json")
