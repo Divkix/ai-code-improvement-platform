@@ -128,7 +128,7 @@
 			<p class="error-message">{error}</p>
 			<button class="retry-button" on:click={handleRetry}> Try Again </button>
 		</div>
-	{:else if results && results.results.length > 0}
+	{:else if results && Array.isArray(results.results) && results.results.length > 0}
 		<div class="results-header">
 			<h3>Search Results</h3>
 			<p class="results-meta">
@@ -137,7 +137,7 @@
 		</div>
 
 		<div class="results-list">
-			{#each results.results as result (result.id)}
+			{#each results.results as result, i (`${result.id}-${result.startLine}-${i}`)}
 				<div
 					class="result-item"
 					on:click={() => handleResultClick(result)}

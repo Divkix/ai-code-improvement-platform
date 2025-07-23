@@ -58,6 +58,8 @@ func (s *SearchService) CreateTextIndex(ctx context.Context) error {
 				{Key: "fileName", Value: 5},
 				{Key: "imports", Value: 2},
 			}).
+			SetDefaultLanguage("none").
+			SetLanguageOverride("language_override").
 			SetName("CodeSearchIndex"),
 	}
 
