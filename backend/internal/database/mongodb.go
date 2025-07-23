@@ -107,7 +107,7 @@ func (m *MongoDB) EnsureIndexes() error {
 		},
 		{
 			Keys:    bson.D{{Key: "contentHash", Value: 1}},
-			Options: options.Index().SetName("contentHash_1").SetUnique(true),
+			Options: options.Index().SetName("contentHash_1"),
 		},
 		{
 			Keys:    bson.D{{Key: "createdAt", Value: 1}},
