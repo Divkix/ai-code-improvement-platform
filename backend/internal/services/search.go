@@ -168,7 +168,7 @@ func (s *SearchService) SearchCodeChunks(ctx context.Context, req models.SearchR
     if err != nil {
         return nil, fmt.Errorf("search query failed: %w", err)
     }
-    defer cursor.Close(ctx)
+    defer func() { _ = cursor.Close(ctx) }()
     
     // Parse results
     var searchResults []models.SearchResult
@@ -215,7 +215,7 @@ func (s *SearchService) getSearchCount(ctx context.Context, matchStage bson.D) (
     if err != nil {
         return 0, fmt.Errorf("count query failed: %w", err)
     }
-    defer cursor.Close(ctx)
+    defer func() { _ = cursor.Close(ctx) }()
     
     if cursor.Next(ctx) {
         var countResult struct {
@@ -311,7 +311,7 @@ func (s *SearchService) GetLanguages(ctx context.Context, repositoryID string) (
     if err != nil {
         return nil, fmt.Errorf("failed to get languages: %w", err)
     }
-    defer cursor.Close(ctx)
+    defer func() { _ = cursor.Close(ctx) }()
     
     var languages []string
     for cursor.Next(ctx) {
@@ -352,7 +352,7 @@ func (s *SearchService) GetRecentChunks(ctx context.Context, repositoryID string
     if err != nil {
         return nil, fmt.Errorf("failed to get recent chunks: %w", err)
     }
-    defer cursor.Close(ctx)
+    defer func() { _ = cursor.Close(ctx) }()
     
     var chunks []models.CodeChunk
     if err := cursor.All(ctx, &chunks); err != nil {
@@ -388,7 +388,7 @@ func (s *SearchService) GetStats(ctx context.Context, repositoryID string) (*Sea
     if err != nil {
         return nil, fmt.Errorf("failed to get stats: %w", err)
     }
-    defer cursor.Close(ctx)
+    defer func() { _ = cursor.Close(ctx) }()
     
     if cursor.Next(ctx) {
         var result struct {
