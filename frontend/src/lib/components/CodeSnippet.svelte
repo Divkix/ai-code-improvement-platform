@@ -250,8 +250,8 @@
 		padding: 16px;
 		background: white;
 		overflow-x: auto;
-		font-size: 14px;
-		line-height: 1.5;
+		font-size: 10px; /* slightly smaller text */
+		line-height: 1; /* tighter line spacing */
 		color: #1f2937;
 	}
 
@@ -274,7 +274,7 @@
 	.code-line {
 		display: block;
 		position: relative;
-		min-height: 1.5em;
+		min-height: 1em; /* match new line-height */
 	}
 
 	.code-line:empty::before {
