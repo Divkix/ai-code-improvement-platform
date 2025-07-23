@@ -68,7 +68,7 @@
 	function handleModeChange(mode: 'text' | 'vector' | 'hybrid') {
 		searchMode = mode;
 		dispatch('modeChange', mode);
-		
+
 		// Re-trigger search if there's a query
 		if (value.trim()) {
 			dispatch('search', { query: value.trim(), mode: searchMode });
@@ -103,8 +103,15 @@
 				on:click={() => handleModeChange('text')}
 				{disabled}
 			>
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+				<svg
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
+					<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
 				</svg>
 				Text
 			</button>
@@ -117,11 +124,18 @@
 				on:click={() => handleModeChange('vector')}
 				{disabled}
 			>
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M9 19c-5 0-8-2.5-8-5s3-5 8-5 8 2.5 8 5-3 5-8 5Z"/>
-					<path d="m8 19 8-14"/>
-					<path d="m1 14 8-14"/>
-					<path d="m15 5 4 14"/>
+				<svg
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
+					<path d="M9 19c-5 0-8-2.5-8-5s3-5 8-5 8 2.5 8 5-3 5-8 5Z" />
+					<path d="m8 19 8-14" />
+					<path d="m1 14 8-14" />
+					<path d="m15 5 4 14" />
 				</svg>
 				Semantic
 			</button>
@@ -134,9 +148,16 @@
 				on:click={() => handleModeChange('hybrid')}
 				{disabled}
 			>
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M12 3v18m0-18 4 4m-4-4-4 4"/>
-					<path d="m8 17 4 4 4-4"/>
+				<svg
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
+					<path d="M12 3v18m0-18 4 4m-4-4-4 4" />
+					<path d="m8 17 4 4 4-4" />
 				</svg>
 				Hybrid
 			</button>

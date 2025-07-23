@@ -56,7 +56,12 @@
 		}
 	}
 
-	async function performSearch(query: string, mode: 'text' | 'vector' | 'hybrid' = searchMode, offset = 0, append = false) {
+	async function performSearch(
+		query: string,
+		mode: 'text' | 'vector' | 'hybrid' = searchMode,
+		offset = 0,
+		append = false
+	) {
 		if (!query.trim()) {
 			searchResults = null;
 			return;
@@ -133,7 +138,9 @@
 		}
 	}
 
-	async function handleSearch(event: CustomEvent<{ query: string; mode: 'text' | 'vector' | 'hybrid' }>) {
+	async function handleSearch(
+		event: CustomEvent<{ query: string; mode: 'text' | 'vector' | 'hybrid' }>
+	) {
 		searchQuery = event.detail.query;
 		searchMode = event.detail.mode;
 		currentOffset = 0;

@@ -148,11 +148,18 @@
 				title="Refresh status"
 				aria-label="Refresh embedding status"
 			>
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<polyline points="23,4 23,10 17,10"/>
-					<polyline points="1,20 1,14 7,14"/>
-					<path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10"/>
-					<path d="M3.51 15a9 9 0 0 0 14.85 3.36L23 14"/>
+				<svg
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
+					<polyline points="23,4 23,10 17,10" />
+					<polyline points="1,20 1,14 7,14" />
+					<path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10" />
+					<path d="M3.51 15a9 9 0 0 0 14.85 3.36L23 14" />
 				</svg>
 			</button>
 		{/if}
@@ -166,9 +173,7 @@
 	{:else if error}
 		<div class="error-state">
 			<p class="error-message">{error}</p>
-			<button class="retry-button" on:click={fetchStatus}>
-				Try Again
-			</button>
+			<button class="retry-button" on:click={fetchStatus}> Try Again </button>
 		</div>
 	{:else if status}
 		<div class="status-content">
@@ -176,9 +181,11 @@
 			<div class="status-overview">
 				<div class="status-badge" style="background-color: {getStatusColor(status.status)}">
 					<span class="status-icon">{getStatusIcon(status.status)}</span>
-					<span class="status-text">{status.status.charAt(0).toUpperCase() + status.status.slice(1)}</span>
+					<span class="status-text"
+						>{status.status.charAt(0).toUpperCase() + status.status.slice(1)}</span
+					>
 				</div>
-				
+
 				{#if status.status === 'processing'}
 					<div class="progress-info">
 						<span class="progress-text">{status.progress}% complete</span>
@@ -194,8 +201,8 @@
 			<!-- Progress Bar -->
 			{#if status.status === 'processing' || status.status === 'completed'}
 				<div class="progress-bar">
-					<div 
-						class="progress-fill" 
+					<div
+						class="progress-fill"
 						class:completed={status.status === 'completed'}
 						style="width: {status.progress}%"
 					></div>
@@ -249,34 +256,40 @@
 			<!-- Action Buttons -->
 			<div class="actions">
 				{#if status.status === 'pending' || status.status === 'failed'}
-					<button 
-						class="action-button primary"
-						on:click={triggerEmbedding}
-						disabled={loading}
-					>
+					<button class="action-button primary" on:click={triggerEmbedding} disabled={loading}>
 						{#if loading}
 							<div class="button-spinner"></div>
 						{:else}
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<polygon points="5,3 19,12 5,21 5,3"/>
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<polygon points="5,3 19,12 5,21 5,3" />
 							</svg>
 						{/if}
 						{status.status === 'failed' ? 'Retry Embedding' : 'Start Embedding'}
 					</button>
 				{:else if status.status === 'completed'}
-					<button 
-						class="action-button secondary"
-						on:click={triggerEmbedding}
-						disabled={loading}
-					>
+					<button class="action-button secondary" on:click={triggerEmbedding} disabled={loading}>
 						{#if loading}
 							<div class="button-spinner"></div>
 						{:else}
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<polyline points="23,4 23,10 17,10"/>
-								<polyline points="1,20 1,14 7,14"/>
-								<path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10"/>
-								<path d="M3.51 15a9 9 0 0 0 14.85 3.36L23 14"/>
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<polyline points="23,4 23,10 17,10" />
+								<polyline points="1,20 1,14 7,14" />
+								<path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10" />
+								<path d="M3.51 15a9 9 0 0 0 14.85 3.36L23 14" />
 							</svg>
 						{/if}
 						Re-embed Repository
@@ -300,7 +313,10 @@
 		border: 1px solid #e5e7eb;
 		border-radius: 8px;
 		padding: 20px;
-		font-family: system-ui, -apple-system, sans-serif;
+		font-family:
+			system-ui,
+			-apple-system,
+			sans-serif;
 	}
 
 	.status-header {
@@ -530,8 +546,12 @@
 	}
 
 	@keyframes spin {
-		0% { transform: rotate(0deg); }
-		100% { transform: rotate(360deg); }
+		0% {
+			transform: rotate(0deg);
+		}
+		100% {
+			transform: rotate(360deg);
+		}
 	}
 
 	.empty-state {

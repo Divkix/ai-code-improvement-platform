@@ -182,23 +182,37 @@
 								<span class="line-range">
 									{formatLineRange(result.startLine, result.endLine)}
 								</span>
-								<span 
-									class="relevance-score" 
+								<span
+									class="relevance-score"
 									class:semantic={searchMode === 'vector' || searchMode === 'hybrid'}
 									style="color: {getRelevanceColor(getRelevanceLevel(result.score, searchMode))}"
 									title="{getScoreLabel(searchMode)}: {formatScore(result.score, searchMode)}"
 								>
 									{#if searchMode === 'vector'}
-										<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-											<path d="M9 19c-5 0-8-2.5-8-5s3-5 8-5 8 2.5 8 5-3 5-8 5Z"/>
-											<path d="m8 19 8-14"/>
-											<path d="m1 14 8-14"/>
-											<path d="m15 5 4 14"/>
+										<svg
+											width="12"
+											height="12"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+										>
+											<path d="M9 19c-5 0-8-2.5-8-5s3-5 8-5 8 2.5 8 5-3 5-8 5Z" />
+											<path d="m8 19 8-14" />
+											<path d="m1 14 8-14" />
+											<path d="m15 5 4 14" />
 										</svg>
 									{:else if searchMode === 'hybrid'}
-										<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-											<path d="M12 3v18m0-18 4 4m-4-4-4 4"/>
-											<path d="m8 17 4 4 4-4"/>
+										<svg
+											width="12"
+											height="12"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+										>
+											<path d="M12 3v18m0-18 4 4m-4-4-4 4" />
+											<path d="m8 17 4 4 4-4" />
 										</svg>
 									{/if}
 									{getScoreLabel(searchMode)}: {formatScore(result.score, searchMode)}
