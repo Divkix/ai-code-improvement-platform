@@ -4,11 +4,11 @@
 package models
 
 import (
-    "crypto/sha256"
-    "fmt"
-    "time"
+	"crypto/sha256"
+	"fmt"
+	"time"
 
-    "go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // CodeChunk represents a processed code segment stored in MongoDB
@@ -40,9 +40,9 @@ type ChunkMetadata struct {
 
 // SearchResult represents a search result with relevance score
 type SearchResult struct {
-    CodeChunk
-    Score     float64 `json:"score"`
-    Highlight string  `json:"highlight,omitempty"`
+    CodeChunk `bson:",inline"`
+    Score     float64 `json:"score" bson:"score"`
+    Highlight string  `json:"highlight,omitempty" bson:"-"`
 }
 
 // SearchRequest represents search request parameters

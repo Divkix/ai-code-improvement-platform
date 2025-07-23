@@ -223,7 +223,9 @@
 
 					<div class="code-preview">
 						<CodeSnippet
-							content={result.highlight || result.content}
+							content={result.highlight && result.highlight.trim().length > 0
+								? result.highlight
+								: result.content}
 							language={result.language}
 							searchTerm={query}
 							maxLines={8}
