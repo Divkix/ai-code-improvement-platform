@@ -128,14 +128,12 @@ func main() {
 		// Apply authentication middleware only to protected routes
 		path := c.FullPath()
 		publicPaths := map[string]bool{
-			"/health":                   true,
-			"/api/health":               true,
-			"/api/auth/login":           true,
-			"/api/auth/github/login":    true,
-			"/api/auth/github/callback": true,
-			"/docs/*any":                true,
-			"/api/openapi.yaml":         true,
-			"/api/openapi.json":         true,
+			"/health":           true,
+			"/api/health":       true,
+			"/api/auth/login":   true,
+			"/docs/*any":        true,
+			"/api/openapi.yaml": true,
+			"/api/openapi.json": true,
 		}
 
 		if !publicPaths[path] {
