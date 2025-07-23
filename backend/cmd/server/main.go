@@ -98,7 +98,7 @@ func main() {
 	repositoryHandler := handlers.NewRepositoryHandler(repositoryService)
 	githubHandler := handlers.NewGitHubHandler(githubService, userService)
 	searchHandler := handlers.NewSearchHandler(searchService)
-	vectorSearchHandler := handlers.NewVectorSearchHandler(searchService, embeddingService)
+	vectorSearchHandler := handlers.NewVectorSearchHandler(searchService, embeddingService, embeddingPipeline)
 
 	// Create unified server implementing ServerInterface
 	unifiedServer := server.NewServer(

@@ -6,6 +6,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -63,6 +64,13 @@ func (s *RepositoryService) CreateRepository(ctx context.Context, userID primiti
 	}
 
 	repo.ID = result.InsertedID.(primitive.ObjectID)
+	
+	// Auto-trigger import for GitHub repositories
+	if repo.GitHubRepoID != nil && repo.Owner != "" {
+		log.Printf("🚀 Auto-triggering import for GitHub repository: %s", repo.FullName)
+		go s.autoTriggerGitHubImport(context.Background(), repo.ID, userID, repo.Owner, repo.Name)
+	}
+	
 	return repo, nil
 }
 
@@ -350,11 +358,16 @@ func (s *RepositoryService) ImportRepositoryFromGitHub(ctx context.Context, user
 	// Get user and check GitHub connection
 	user, err := s.userService.GetByID(ctx, userID)
 	if err != nil {
+		log.Printf("❌ Failed to get user %s: %v", userID.Hex(), err)
 		return nil, err
 	}
 
+	log.Printf("🔍 User found: %s, GitHubToken length: %d, GitHubUsername: %s", 
+		user.Email, len(user.GitHubToken), user.GitHubUsername)
+
 	if user.GitHubToken == "" {
-		return nil, errors.New("github account is not connected")
+		log.Printf("❌ GitHub account is not connected for user %s", user.Email)
+		return nil, errors.New("github account is not connected - please connect your GitHub account first")
 	}
 
 	// Decrypt GitHub token
@@ -413,67 +426,129 @@ func (s *RepositoryService) ImportRepositoryFromGitHub(ctx context.Context, user
 // processRepositoryImport handles the async import process
 func (s *RepositoryService) processRepositoryImport(ctx context.Context, repoID primitive.ObjectID, userID primitive.ObjectID, accessToken string, githubRepo *GitHubRepository) {
 	repoIDStr := repoID.Hex()
-
+	
+	log.Printf("🔄 Starting processRepositoryImport for repository %s (%s/%s)", repoIDStr, githubRepo.Owner, githubRepo.Name)
+	
 	// Update status to importing
+	log.Printf("📝 Updating repository status to importing...")
 	if err := s.UpdateRepositoryStatus(ctx, userID, repoIDStr, models.StatusImporting); err != nil {
+		log.Printf("❌ CRITICAL: Failed to update repository status to importing: %v", err)
+		log.Printf("   Repository ID: %s, User ID: %s", repoIDStr, userID.Hex())
 		return
 	}
+	log.Printf("✅ Repository status updated to importing")
+	
+	log.Printf("Starting repository import for %s/%s", githubRepo.Owner, githubRepo.Name)
+	
+	// Step 1: Fetch repository statistics (10% progress)
 	if err := s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 10); err != nil {
-		return
+		log.Printf("Failed to update progress: %v", err)
 	}
-
-	// Fetch repository statistics from GitHub
+	
 	stats, err := s.githubService.GetRepositoryStatistics(ctx, accessToken, githubRepo.Owner, githubRepo.Name)
 	if err != nil {
-		// Mark as error but don't fail completely
+		log.Printf("Failed to fetch repository statistics: %v", err)
 		if updateErr := s.UpdateRepositoryStatus(ctx, userID, repoIDStr, models.StatusError); updateErr != nil {
-			// Log error but continue
-			_ = updateErr
+			log.Printf("Failed to update status to error: %v", updateErr)
 		}
 		return
 	}
-
-	if err := s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 50); err != nil {
+	
+	// Step 2: Fetch repository files (30% progress)
+	if err := s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 30); err != nil {
+		log.Printf("Failed to update progress: %v", err)
+	}
+	
+	log.Printf("Fetching files from %s/%s", githubRepo.Owner, githubRepo.Name)
+	files, err := s.githubService.FetchRepositoryFiles(ctx, accessToken, githubRepo.Owner, githubRepo.Name)
+	if err != nil {
+		log.Printf("Failed to fetch repository files: %v", err)
+		if updateErr := s.UpdateRepositoryStatus(ctx, userID, repoIDStr, models.StatusError); updateErr != nil {
+			log.Printf("Failed to update status to error: %v", updateErr)
+		}
 		return
 	}
-
-	// Convert GitHub stats to our repository stats format
+	
+	log.Printf("Fetched %d files from %s/%s", len(files), githubRepo.Owner, githubRepo.Name)
+	
+	// Step 3: Process and chunk files (50% progress) 
+	if err := s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 50); err != nil {
+		log.Printf("Failed to update progress: %v", err)
+	}
+	
+	processor := NewCodeProcessor()
+	chunks, err := processor.ProcessAndChunkFiles(files, repoID)
+	if err != nil {
+		log.Printf("Failed to process and chunk files: %v", err)
+		if updateErr := s.UpdateRepositoryStatus(ctx, userID, repoIDStr, models.StatusError); updateErr != nil {
+			log.Printf("Failed to update status to error: %v", updateErr)
+		}
+		return
+	}
+	
+	log.Printf("Created %d code chunks from %d files", len(chunks), len(files))
+	
+	// Step 4: Store code chunks in MongoDB (70% progress)
+	if err := s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 70); err != nil {
+		log.Printf("Failed to update progress: %v", err)
+	}
+	
+	if err := s.storeCodeChunks(ctx, chunks); err != nil {
+		log.Printf("Failed to store code chunks: %v", err)
+		if updateErr := s.UpdateRepositoryStatus(ctx, userID, repoIDStr, models.StatusError); updateErr != nil {
+			log.Printf("Failed to update status to error: %v", updateErr)
+		}
+		return
+	}
+	
+	log.Printf("Stored %d code chunks in MongoDB", len(chunks))
+	
+	// Step 5: Update repository statistics (85% progress)
+	if err := s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 85); err != nil {
+		log.Printf("Failed to update progress: %v", err)
+	}
+	
+	// Convert GitHub stats to our repository stats format with actual file data
 	repoStats := &models.RepositoryStats{
-		TotalFiles:     stats["total_files"].(int),
-		TotalLines:     stats["total_lines"].(int),
+		TotalFiles:     len(files),
+		TotalLines:     s.calculateTotalLines(files),
 		Languages:      stats["languages"].(map[string]int),
 		LastCommitDate: stats["last_commit_date"].(*time.Time),
 	}
-
+	
 	// Update repository with statistics
 	err = s.UpdateRepositoryStats(ctx, userID, repoIDStr, repoStats)
 	if err != nil {
+		log.Printf("Failed to update repository stats: %v", err)
 		if updateErr := s.UpdateRepositoryStatus(ctx, userID, repoIDStr, models.StatusError); updateErr != nil {
-			// Log error but continue
-			_ = updateErr
+			log.Printf("Failed to update status to error: %v", updateErr)
 		}
 		return
 	}
-
-	if err := s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 80); err != nil {
+	
+	// Step 6: Mark repository as ready (100% progress)
+	if err := s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 95); err != nil {
+		log.Printf("Failed to update progress: %v", err)
+	}
+	
+	// Mark repository as ready (instead of just "indexed")
+	if err := s.UpdateRepositoryStatus(ctx, userID, repoIDStr, models.StatusReady); err != nil {
+		log.Printf("Failed to mark repository as ready: %v", err)
 		return
 	}
-
-	// Mark repository as indexed and ready
-	if err := s.MarkRepositoryIndexed(ctx, userID, repoIDStr); err != nil {
-		return
-	}
+	
 	if err := s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 100); err != nil {
-		// Final progress update failed, but repository is indexed
-		_ = err
+		log.Printf("Failed to update final progress: %v", err)
 	}
+	
+	log.Printf("Successfully completed import for repository %s/%s", githubRepo.Owner, githubRepo.Name)
 	
 	// Queue repository for embedding processing if pipeline is available
 	if s.embeddingPipeline != nil {
 		if err := s.embeddingPipeline.QueueRepository(ctx, repoID, 2); err != nil {
-			// Log error but don't fail the import
-			// The embedding can be triggered manually later
 			log.Printf("Failed to queue repository %s for embedding processing: %v", repoID.Hex(), err)
+		} else {
+			log.Printf("Queued repository %s for embedding processing", repoID.Hex())
 		}
 	}
 }
@@ -515,3 +590,193 @@ func (s *RepositoryService) parseGitHubURL(url string) (string, string, error) {
 
 	return parts[0], parts[1], nil
 }
+
+// storeCodeChunks stores code chunks in MongoDB with enhanced batch processing and error handling
+func (s *RepositoryService) storeCodeChunks(ctx context.Context, chunks []*models.CodeChunk) error {
+	if len(chunks) == 0 {
+		log.Printf("No chunks to store")
+		return nil
+	}
+	
+	collection := s.collection.Database().Collection("codechunks")
+	
+	// Process chunks in batches of 100 for better performance
+	const batchSize = 100
+	var totalInserted int
+	var failedBatches []string
+	
+	log.Printf("Storing %d code chunks in %d batches", len(chunks), (len(chunks)+batchSize-1)/batchSize)
+	
+	for i := 0; i < len(chunks); i += batchSize {
+		end := i + batchSize
+		if end > len(chunks) {
+			end = len(chunks)
+		}
+		
+		batch := chunks[i:end]
+		batchNum := (i / batchSize) + 1
+		
+		// Convert to []interface{} for bulk insert
+		documents := make([]interface{}, len(batch))
+		for j, chunk := range batch {
+			documents[j] = chunk
+		}
+		
+		// Insert batch with retry logic
+		var insertErr error
+		for attempt := 1; attempt <= 3; attempt++ {
+			result, err := collection.InsertMany(ctx, documents)
+			if err == nil {
+				totalInserted += len(documents)
+				log.Printf("Successfully inserted batch %d: %d chunks", batchNum, len(documents))
+				break
+			}
+			
+			insertErr = err
+			if attempt < 3 {
+				backoff := time.Duration(attempt) * time.Second
+				log.Printf("Failed to insert batch %d (attempt %d/3), retrying in %v: %v", 
+					batchNum, attempt, backoff, err)
+				time.Sleep(backoff)
+			} else {
+				log.Printf("Failed to insert batch %d after 3 attempts: %v", batchNum, err)
+				failedBatches = append(failedBatches, fmt.Sprintf("batch-%d", batchNum))
+			}
+			
+			// For partial inserts, log how many were successful
+			if result != nil && len(result.InsertedIDs) > 0 {
+				totalInserted += len(result.InsertedIDs)
+				log.Printf("Partial success in batch %d: %d/%d chunks inserted", 
+					batchNum, len(result.InsertedIDs), len(documents))
+			}
+		}
+		
+		// If we still have an error after retries, continue with next batch but log it
+		if insertErr != nil {
+			log.Printf("Skipping failed batch %d, continuing with remaining batches", batchNum)
+		}
+	}
+	
+	log.Printf("Chunk storage complete: %d/%d chunks inserted successfully", totalInserted, len(chunks))
+	
+	if len(failedBatches) > 0 {
+		return fmt.Errorf("failed to insert %d batches: %v (successfully inserted %d/%d chunks)", 
+			len(failedBatches), failedBatches, totalInserted, len(chunks))
+	}
+	
+	return nil
+}
+
+// calculateTotalLines calculates total lines from repository files
+func (s *RepositoryService) calculateTotalLines(files []*models.RepositoryFile) int {
+	totalLines := 0
+	for _, file := range files {
+		if file.IsValidForProcessing() {
+			totalLines += file.GetLineCount()
+		}
+	}
+	return totalLines
+}
+
+// autoTriggerGitHubImport automatically triggers import for newly created GitHub repositories
+func (s *RepositoryService) autoTriggerGitHubImport(ctx context.Context, repoID primitive.ObjectID, userID primitive.ObjectID, owner, repoName string) {
+	log.Printf("🔄 Starting auto-import for repository %s (%s/%s)", repoID.Hex(), owner, repoName)
+	
+	// Get user and check GitHub connection
+	user, err := s.userService.GetByID(ctx, userID)
+	if err != nil {
+		log.Printf("❌ Failed to get user %s for auto-import: %v", userID.Hex(), err)
+		s.UpdateRepositoryStatus(ctx, userID, repoID.Hex(), models.StatusError)
+		return
+	}
+
+	log.Printf("🔍 Auto-import user found: %s, GitHubToken length: %d, GitHubUsername: %s", 
+		user.Email, len(user.GitHubToken), user.GitHubUsername)
+
+	if user.GitHubToken == "" {
+		log.Printf("❌ GitHub account is not connected for user %s during auto-import", user.Email)
+		s.UpdateRepositoryStatus(ctx, userID, repoID.Hex(), models.StatusError)
+		return
+	}
+
+	// Decrypt GitHub token
+	accessToken, err := s.githubService.DecryptToken(user.GitHubToken)
+	if err != nil {
+		log.Printf("❌ Failed to decrypt GitHub token for auto-import: %v", err)
+		s.UpdateRepositoryStatus(ctx, userID, repoID.Hex(), models.StatusError)
+		return
+	}
+
+	// Validate repository still exists and is accessible
+	githubRepo, err := s.githubService.ValidateRepository(ctx, accessToken, owner, repoName)
+	if err != nil {
+		log.Printf("❌ Repository validation failed during auto-import: %v", err)
+		s.UpdateRepositoryStatus(ctx, userID, repoID.Hex(), models.StatusError)
+		return
+	}
+
+	log.Printf("✅ GitHub repository validated for auto-import: %s", githubRepo.FullName)
+
+	// Start the import process
+	s.processRepositoryImport(ctx, repoID, userID, accessToken, githubRepo)
+}
+
+// TriggerRepositoryImport manually triggers repository import for repositories stuck in pending/error status
+func (s *RepositoryService) TriggerRepositoryImport(ctx context.Context, userID primitive.ObjectID, repoID string) error {
+	// Get repository details
+	repo, err := s.GetRepository(ctx, userID, repoID)
+	if err != nil {
+		return err
+	}
+
+	// Get user and check GitHub connection
+	user, err := s.userService.GetByID(ctx, userID)
+	if err != nil {
+		log.Printf("❌ Failed to get user %s: %v", userID.Hex(), err)
+		return err
+	}
+
+	log.Printf("🔍 User found: %s, GitHubToken length: %d, GitHubUsername: %s", 
+		user.Email, len(user.GitHubToken), user.GitHubUsername)
+
+	if user.GitHubToken == "" {
+		log.Printf("❌ GitHub account is not connected for user %s", user.Email)
+		return errors.New("github account is not connected - please connect your GitHub account first")
+	}
+
+	// Decrypt GitHub token
+	accessToken, err := s.githubService.DecryptToken(user.GitHubToken)
+	if err != nil {
+		return errors.New("failed to decrypt GitHub token")
+	}
+
+	// Parse owner and repo from full name
+	parts := strings.Split(repo.FullName, "/")
+	if len(parts) != 2 {
+		return errors.New("invalid repository full name format")
+	}
+	owner, repoName := parts[0], parts[1]
+
+	// Validate repository still exists and is accessible
+	githubRepo, err := s.githubService.ValidateRepository(ctx, accessToken, owner, repoName)
+	if err != nil {
+		return fmt.Errorf("repository validation failed: %w", err)
+	}
+
+	log.Printf("🚀 Manually triggering import for repository %s (%s)", repo.ID.Hex(), repo.FullName)
+
+	// Reset repository status and progress
+	if err := s.UpdateRepositoryStatus(ctx, userID, repoID, models.StatusImporting); err != nil {
+		return fmt.Errorf("failed to update repository status: %w", err)
+	}
+
+	if err := s.UpdateRepositoryProgress(ctx, userID, repoID, 0); err != nil {
+		return fmt.Errorf("failed to reset repository progress: %w", err)
+	}
+
+	// Start async import process
+	go s.processRepositoryImport(context.Background(), repo.ID, userID, accessToken, githubRepo)
+
+	return nil
+}
+

@@ -330,3 +330,76 @@ func (h *RepositoryHandler) UpdateRepositoryStatus(ctx context.Context, userID p
 func (h *RepositoryHandler) UpdateRepositoryProgress(ctx context.Context, userID primitive.ObjectID, repoID string, progress int) error {
 	return h.repositoryService.UpdateRepositoryProgress(ctx, userID, repoID, progress)
 }
+
+// TriggerRepositoryImport handles manually triggering repository import for stuck repositories
+func (h *RepositoryHandler) TriggerRepositoryImport(c *gin.Context) {
+	userID, exists := middleware.GetUserIDFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "unauthorized",
+			"message": "User not found in context",
+		})
+		return
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "unauthorized",
+			"message": "Invalid user ID",
+		})
+		return
+	}
+
+	repoID := c.Param("id")
+	if repoID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "invalid_request",
+			"message": "Repository ID is required",
+		})
+		return
+	}
+
+	// Get repository to check current status
+	repo, err := h.repositoryService.GetRepository(c.Request.Context(), objectID, repoID)
+	if err != nil {
+		if err == services.ErrRepositoryNotFound {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error":   "repository_not_found",
+				"message": "Repository not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "internal_error",
+			"message": "Failed to retrieve repository",
+		})
+		return
+	}
+
+	// Only allow triggering import for pending or error status repositories
+	if repo.Status != models.StatusPending && repo.Status != models.StatusError {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "invalid_status",
+			"message": "Repository import can only be triggered for repositories with 'pending' or 'error' status",
+			"current_status": repo.Status,
+		})
+		return
+	}
+
+	// Trigger the import process
+	err = h.repositoryService.TriggerRepositoryImport(c.Request.Context(), objectID, repoID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "import_failed",
+			"message": "Failed to trigger repository import: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusAccepted, gin.H{
+		"message": "Repository import triggered successfully",
+		"repository_id": repoID,
+		"status": "importing",
+	})
+}

@@ -121,6 +121,11 @@ func (s *Server) GetRepositoryStats(c *gin.Context, id string) {
 	s.repository.GetRepositoryStats(c)
 }
 
+// TriggerRepositoryImport triggers manual repository import for stuck repositories
+func (s *Server) TriggerRepositoryImport(c *gin.Context, id string) {
+	s.repository.TriggerRepositoryImport(c)
+}
+
 // Search endpoints
 func (s *Server) GlobalSearch(c *gin.Context, params generated.GlobalSearchParams) {
 	s.search.GlobalSearch(c)

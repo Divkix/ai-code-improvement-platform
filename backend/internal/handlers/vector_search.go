@@ -4,6 +4,7 @@ package handlers
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -14,14 +15,16 @@ import (
 )
 
 type VectorSearchHandler struct {
-	searchService    *services.SearchService
-	embeddingService *services.EmbeddingService
+	searchService     *services.SearchService
+	embeddingService  *services.EmbeddingService
+	embeddingPipeline *services.EmbeddingPipeline
 }
 
-func NewVectorSearchHandler(searchService *services.SearchService, embeddingService *services.EmbeddingService) *VectorSearchHandler {
+func NewVectorSearchHandler(searchService *services.SearchService, embeddingService *services.EmbeddingService, embeddingPipeline *services.EmbeddingPipeline) *VectorSearchHandler {
 	return &VectorSearchHandler{
-		searchService:    searchService,
-		embeddingService: embeddingService,
+		searchService:     searchService,
+		embeddingService:  embeddingService,
+		embeddingPipeline: embeddingPipeline,
 	}
 }
 
@@ -161,16 +164,19 @@ func (vsh *VectorSearchHandler) EmbedRepository(c *gin.Context) {
 		return
 	}
 
-	// Start embedding processing in background
-	go func() {
-		backgroundCtx := context.Background()
-		if err := vsh.embeddingService.ProcessRepository(backgroundCtx, repositoryID); err != nil {
-			// Log error but don't fail the request since it's async
-			// In production, you might want to use a proper job queue
-			// For now, just log the error
-			println("Background embedding processing failed:", err.Error())
-		}
-	}()
+	// Queue repository for embedding processing using the pipeline
+	if err := vsh.embeddingPipeline.QueueRepository(ctx, repositoryID, 2); err != nil {
+		// If queueing fails, fall back to direct processing (but log the error)
+		log.Printf("Failed to queue repository for embedding, falling back to direct processing: %v", err)
+		go func() {
+			backgroundCtx := context.Background()
+			if err := vsh.embeddingService.ProcessRepository(backgroundCtx, repositoryID); err != nil {
+				log.Printf("Background embedding processing failed: %v", err)
+			}
+		}()
+	} else {
+		log.Printf("Successfully queued repository %s for embedding processing", repositoryID.Hex())
+	}
 
 	c.JSON(http.StatusAccepted, gin.H{
 		"message": "Embedding processing started",

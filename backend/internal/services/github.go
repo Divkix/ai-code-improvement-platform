@@ -12,8 +12,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"time"
 
+	"github-analyzer/internal/models"
 	"github.com/google/go-github/v73/github"
 	"golang.org/x/oauth2"
 	oauth2_github "golang.org/x/oauth2/github"
@@ -288,4 +290,241 @@ func (s *GitHubService) GetRateLimitResetTime(err error) *time.Time {
 		}
 	}
 	return nil
+}
+
+// FetchRepositoryFiles fetches all files from a GitHub repository
+func (s *GitHubService) FetchRepositoryFiles(ctx context.Context, accessToken, owner, repo string) ([]*models.RepositoryFile, error) {
+	client := s.CreateClient(accessToken)
+	
+	log.Printf("Fetching files for repository: %s/%s", owner, repo)
+	
+	// Get the repository tree (recursive)
+	tree, _, err := client.Git.GetTree(ctx, owner, repo, "HEAD", true)
+	if err != nil {
+		if s.IsRateLimited(err) {
+			return nil, fmt.Errorf("github rate limit exceeded while fetching tree: %w", err)
+		}
+		return nil, fmt.Errorf("failed to fetch repository tree: %w", err)
+	}
+	
+	var files []*models.RepositoryFile
+	var totalFiles int
+	var processedFiles int
+	
+	// Count total files to process
+	for _, entry := range tree.Entries {
+		if entry.GetType() == "blob" {
+			totalFiles++
+		}
+	}
+	
+	log.Printf("Found %d files to process in %s/%s", totalFiles, owner, repo)
+	
+	// Process files in batches to avoid rate limits
+	const batchSize = 50
+	
+	for i := 0; i < len(tree.Entries); i += batchSize {
+		end := i + batchSize
+		if end > len(tree.Entries) {
+			end = len(tree.Entries)
+		}
+		
+		batch := tree.Entries[i:end]
+		batchFiles, err := s.processBatch(ctx, client, owner, repo, batch)
+		if err != nil {
+			log.Printf("Failed to process batch %d-%d: %v", i, end-1, err)
+			continue
+		}
+		
+		files = append(files, batchFiles...)
+		processedFiles += len(batchFiles)
+		
+		log.Printf("Processed %d/%d files", processedFiles, totalFiles)
+	}
+	
+	log.Printf("Successfully fetched %d files from %s/%s", len(files), owner, repo)
+	return files, nil
+}
+
+// processBatch processes a batch of repository files with enhanced error handling
+func (s *GitHubService) processBatch(ctx context.Context, client *github.Client, owner, repo string, entries []*github.TreeEntry) ([]*models.RepositoryFile, error) {
+	var files []*models.RepositoryFile
+	var failedFiles []string
+	var skippedFiles int
+	
+	log.Printf("Processing batch of %d entries for %s/%s", len(entries), owner, repo)
+	
+	for _, entry := range entries {
+		// Only process files (blobs), not directories (trees)
+		if entry.GetType() != "blob" {
+			continue
+		}
+		
+		// Create basic file info first
+		path := entry.GetPath()
+		sha := entry.GetSHA()
+		size := entry.GetSize()
+		
+		// Skip files that are too large or clearly not code files
+		if size > 1024*1024 { // Skip files larger than 1MB
+			log.Printf("Skipping large file: %s (%d bytes) - exceeds 1MB limit", path, size)
+			skippedFiles++
+			continue
+		}
+		
+		// Create repository file with empty content first
+		repoFile := models.NewRepositoryFile(path, "", sha, size)
+		
+		// Skip non-code files early
+		if !repoFile.IsCodeFile() {
+			skippedFiles++
+			continue
+		}
+		
+		// Fetch file content with retry logic
+		content, err := s.getFileContentWithRetry(ctx, client, owner, repo, path, 3)
+		if err != nil {
+			log.Printf("Failed to fetch content for %s after retries: %v", path, err)
+			failedFiles = append(failedFiles, path)
+			continue
+		}
+		
+		// Update file with content
+		repoFile.Content = content
+		repoFile.Size = len(content)
+		
+		// Validate file is suitable for processing
+		if !repoFile.IsValidForProcessing() {
+			log.Printf("Skipping file %s - not valid for processing (size: %d, lines: %d)", 
+				path, repoFile.Size, repoFile.GetLineCount())
+			skippedFiles++
+			continue
+		}
+		
+		files = append(files, repoFile)
+	}
+	
+	// Log batch processing summary
+	log.Printf("Batch processing complete for %s/%s: %d files processed, %d skipped, %d failed", 
+		owner, repo, len(files), skippedFiles, len(failedFiles))
+	
+	if len(failedFiles) > 0 {
+		log.Printf("Failed files: %v", failedFiles)
+	}
+	
+	return files, nil
+}
+
+// getFileContentWithRetry fetches file content with retry logic for rate limiting
+func (s *GitHubService) getFileContentWithRetry(ctx context.Context, client *github.Client, owner, repo, path string, maxRetries int) (string, error) {
+	var lastErr error
+	
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		content, err := s.GetFileContent(ctx, client, owner, repo, path)
+		if err == nil {
+			return content, nil
+		}
+		
+		lastErr = err
+		
+		// If it's a rate limit error, wait and retry
+		if s.IsRateLimited(err) {
+			if resetTime := s.GetRateLimitResetTime(err); resetTime != nil {
+				waitDuration := time.Until(*resetTime)
+				if waitDuration > 0 && waitDuration < 5*time.Minute {
+					log.Printf("Rate limited, waiting %v before retry %d/%d for %s", waitDuration, attempt, maxRetries, path)
+					time.Sleep(waitDuration)
+					continue
+				}
+			}
+			// Exponential backoff for rate limits without reset time
+			backoff := time.Duration(attempt*attempt) * time.Second
+			log.Printf("Rate limited, backing off %v before retry %d/%d for %s", backoff, attempt, maxRetries, path)
+			time.Sleep(backoff)
+			continue
+		}
+		
+		// For other errors, don't retry immediately
+		if attempt < maxRetries {
+			backoff := time.Duration(attempt) * time.Second
+			log.Printf("Error fetching %s, retrying in %v (attempt %d/%d): %v", path, backoff, attempt, maxRetries, err)
+			time.Sleep(backoff)
+		}
+	}
+	
+	return "", fmt.Errorf("failed to fetch %s after %d attempts: %w", path, maxRetries, lastErr)
+}
+
+// GetFileContent fetches the content of a specific file from GitHub
+func (s *GitHubService) GetFileContent(ctx context.Context, client *github.Client, owner, repo, path string) (string, error) {
+	fileContent, _, _, err := client.Repositories.GetContents(ctx, owner, repo, path, nil)
+	if err != nil {
+		if s.IsRateLimited(err) {
+			return "", fmt.Errorf("github rate limit exceeded while fetching %s: %w", path, err)
+		}
+		return "", fmt.Errorf("failed to fetch file content for %s: %w", path, err)
+	}
+	
+	if fileContent == nil {
+		return "", fmt.Errorf("file content is nil for %s", path)
+	}
+	
+	content, err := fileContent.GetContent()
+	if err != nil {
+		return "", fmt.Errorf("failed to decode file content for %s: %w", path, err)
+	}
+	
+	return content, nil
+}
+
+// GetRepositoryTree fetches the repository tree structure
+func (s *GitHubService) GetRepositoryTree(ctx context.Context, accessToken, owner, repo string) (*models.RepositoryTree, error) {
+	client := s.CreateClient(accessToken)
+	
+	tree, _, err := client.Git.GetTree(ctx, owner, repo, "HEAD", true)
+	if err != nil {
+		if s.IsRateLimited(err) {
+			return nil, fmt.Errorf("github rate limit exceeded while fetching tree: %w", err)
+		}
+		return nil, fmt.Errorf("failed to fetch repository tree: %w", err)
+	}
+	
+	repoTree := &models.RepositoryTree{
+		SHA: tree.GetSHA(),
+		URL: "", // GitHub Tree object doesn't have URL field
+	}
+	
+	for _, entry := range tree.Entries {
+		item := &models.RepositoryTreeItem{
+			Path: entry.GetPath(),
+			Mode: entry.GetMode(),
+			Type: entry.GetType(),
+			SHA:  entry.GetSHA(),
+			URL:  entry.GetURL(),
+		}
+		
+		if entry.Size != nil {
+			size := *entry.Size
+			item.Size = &size
+		}
+		
+		repoTree.Tree = append(repoTree.Tree, item)
+	}
+	
+	return repoTree, nil
+}
+
+// GetRepositoryLanguages fetches the languages used in a repository with detailed stats
+func (s *GitHubService) GetRepositoryLanguages(ctx context.Context, accessToken, owner, repo string) (map[string]int, error) {
+	client := s.CreateClient(accessToken)
+	
+	languages, _, err := client.Repositories.ListLanguages(ctx, owner, repo)
+	if err != nil {
+		if s.IsRateLimited(err) {
+			return nil, fmt.Errorf("github rate limit exceeded while fetching languages: %w", err)
+		}
+		return nil, fmt.Errorf("failed to fetch repository languages: %w", err)
+	}
+	
+	return languages, nil
 }
