@@ -16,6 +16,7 @@
 	const filePath = currentPage.url.searchParams.get('path') ?? '';
 	const startLine = Number(currentPage.url.searchParams.get('line') ?? '1');
 	const endLine = Number(currentPage.url.searchParams.get('endLine') ?? startLine);
+	const searchTerm = currentPage.url.searchParams.get('q') ?? '';
 
 	onMount(async () => {
 		try {
@@ -57,8 +58,24 @@
 {:else if error}
 	<p style="padding:1rem;color:#dc2626">{error}</p>
 {:else}
-	<div style="padding:1rem">
-		<h2>{filePath}</h2>
-		<CodeSnippet {content} {language} showLineNumbers={true} {startLine} />
+	<div class="viewer">
+		<h2 class="file-path">{filePath}</h2>
+		<CodeSnippet {content} {language} {searchTerm} showLineNumbers={true} {startLine} />
 	</div>
 {/if}
+
+<style>
+	.viewer {
+		max-width: 900px;
+		margin: 32px auto;
+		padding: 0 16px;
+	}
+
+	.file-path {
+		font-size: 18px;
+		font-weight: 600;
+		color: #1f2937;
+		margin-bottom: 16px;
+		word-break: break-all;
+	}
+</style>
