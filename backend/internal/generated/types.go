@@ -151,8 +151,8 @@ type EmbeddingStatusResponse struct {
 	// CompletedAt When processing completed
 	CompletedAt *time.Time `json:"completedAt,omitempty"`
 
-	// EstimatedTimeRemaining Estimated time remaining in seconds
-	EstimatedTimeRemaining *int `json:"estimatedTimeRemaining,omitempty"`
+	// EstimatedTimeRemaining Estimated time remaining (duration, e.g., "1h2m3s")
+	EstimatedTimeRemaining *string `json:"estimatedTimeRemaining,omitempty"`
 
 	// FailedChunks Number of failed chunks
 	FailedChunks *int `json:"failedChunks,omitempty"`
@@ -162,6 +162,9 @@ type EmbeddingStatusResponse struct {
 
 	// Progress Processing progress percentage
 	Progress int `json:"progress"`
+
+	// RepositoryId ID of the repository
+	RepositoryId string `json:"repositoryId"`
 
 	// StartedAt When processing started
 	StartedAt *time.Time `json:"startedAt,omitempty"`

@@ -67,6 +67,9 @@ type ServerInterface interface {
 	// Get repository embedding status
 	// (GET /api/repositories/{id}/embedding-status)
 	GetRepositoryEmbeddingStatus(c *gin.Context, id string)
+	// Trigger repository import
+	// (POST /api/repositories/{id}/import)
+	TriggerRepositoryImport(c *gin.Context, id string)
 	// Search within a specific repository
 	// (POST /api/repositories/{id}/search)
 	RepositorySearch(c *gin.Context, id string, params RepositorySearchParams)
@@ -536,6 +539,32 @@ func (siw *ServerInterfaceWrapper) GetRepositoryEmbeddingStatus(c *gin.Context) 
 	siw.Handler.GetRepositoryEmbeddingStatus(c, id)
 }
 
+// TriggerRepositoryImport operation middleware
+func (siw *ServerInterfaceWrapper) TriggerRepositoryImport(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.TriggerRepositoryImport(c, id)
+}
+
 // RepositorySearch operation middleware
 func (siw *ServerInterfaceWrapper) RepositorySearch(c *gin.Context) {
 
@@ -1002,6 +1031,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.PUT(options.BaseURL+"/api/repositories/:id", wrapper.UpdateRepository)
 	router.POST(options.BaseURL+"/api/repositories/:id/embed", wrapper.TriggerRepositoryEmbedding)
 	router.GET(options.BaseURL+"/api/repositories/:id/embedding-status", wrapper.GetRepositoryEmbeddingStatus)
+	router.POST(options.BaseURL+"/api/repositories/:id/import", wrapper.TriggerRepositoryImport)
 	router.POST(options.BaseURL+"/api/repositories/:id/search", wrapper.RepositorySearch)
 	router.GET(options.BaseURL+"/api/repositories/:id/stats", wrapper.GetRepositoryStats)
 	router.POST(options.BaseURL+"/api/search", wrapper.GlobalSearch)

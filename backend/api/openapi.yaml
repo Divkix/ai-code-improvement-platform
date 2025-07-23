@@ -638,9 +638,13 @@ components:
     EmbeddingStatusResponse:
       type: object
       required:
+        - repositoryId
         - status
         - progress
       properties:
+        repositoryId:
+          type: string
+          description: ID of the repository
         status:
           type: string
           enum: [pending, processing, completed, failed]
@@ -671,9 +675,8 @@ components:
           format: date-time
           description: When processing completed
         estimatedTimeRemaining:
-          type: integer
-          minimum: 0
-          description: Estimated time remaining in seconds
+          type: string
+          description: Estimated time remaining (duration, e.g., "1h2m3s")
 
 paths:
   /health:
@@ -1784,7 +1787,7 @@ paths:
 
   /api/search/hybrid:
     post:
-      summary: Hybrid search combining text and vector similarity  
+      summary: Hybrid search combining text and vector similarity
       description: Perform search using both text matching and semantic similarity with configurable weights
       operationId: hybridSearch
       security:
@@ -1982,6 +1985,64 @@ paths:
                 $ref: "#/components/schemas/Error"
         "404":
           description: Repository not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/repositories/{id}/import:
+    post:
+      summary: Trigger repository import
+      description: Manually trigger repository import for stuck or pending repositories
+      operationId: triggerRepositoryImport
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Repository ID
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Import triggered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Repository import triggered"
+                  repositoryId:
+                    type: string
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Repository not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Invalid status
           content:
             application/json:
               schema:

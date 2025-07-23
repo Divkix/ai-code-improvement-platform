@@ -58,6 +58,11 @@ export const vectorSearchAPI: {
 	): Promise<
 		operations['getRepositoryEmbeddingStatus']['responses']['200']['content']['application/json']
 	>;
+	importRepository(
+		repositoryId: string
+	): Promise<
+		operations['triggerRepositoryImport']['responses']['202']['content']['application/json']
+	>;
 } = {
 	// Perform semantic vector search
 	async vectorSearch(query: string, repositoryId?: string, limit?: number, offset?: number) {
@@ -144,6 +149,21 @@ export const vectorSearchAPI: {
 
 		if (error) {
 			throw new Error(error.error || 'Failed to get embedding status');
+		}
+
+		return data;
+	},
+
+	// Manually trigger repository import for stuck/pending repositories
+	async importRepository(repositoryId: string) {
+		const { data, error } = await apiClient.POST('/api/repositories/{id}/import', {
+			params: {
+				path: { id: repositoryId }
+			}
+		});
+
+		if (error) {
+			throw new Error(error.error || 'Failed to trigger repository import');
 		}
 
 		return data;

@@ -152,6 +152,9 @@ type ClientInterface interface {
 	// GetRepositoryEmbeddingStatus request
 	GetRepositoryEmbeddingStatus(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TriggerRepositoryImport request
+	TriggerRepositoryImport(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// RepositorySearchWithBody request with any body
 	RepositorySearchWithBody(ctx context.Context, id string, params *RepositorySearchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -451,6 +454,18 @@ func (c *Client) TriggerRepositoryEmbedding(ctx context.Context, id string, reqE
 
 func (c *Client) GetRepositoryEmbeddingStatus(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetRepositoryEmbeddingStatusRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TriggerRepositoryImport(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTriggerRepositoryImportRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -1382,6 +1397,40 @@ func NewGetRepositoryEmbeddingStatusRequest(server string, id string) (*http.Req
 	return req, nil
 }
 
+// NewTriggerRepositoryImportRequest generates requests for TriggerRepositoryImport
+func NewTriggerRepositoryImportRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/repositories/%s/import", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewRepositorySearchRequest calls the generic RepositorySearch builder with application/json body
 func NewRepositorySearchRequest(server string, id string, params *RepositorySearchParams, body RepositorySearchJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -2244,6 +2293,9 @@ type ClientWithResponsesInterface interface {
 	// GetRepositoryEmbeddingStatusWithResponse request
 	GetRepositoryEmbeddingStatusWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetRepositoryEmbeddingStatusResponse, error)
 
+	// TriggerRepositoryImportWithResponse request
+	TriggerRepositoryImportWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*TriggerRepositoryImportResponse, error)
+
 	// RepositorySearchWithBodyWithResponse request with any body
 	RepositorySearchWithBodyWithResponse(ctx context.Context, id string, params *RepositorySearchParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RepositorySearchResponse, error)
 
@@ -2734,6 +2786,36 @@ func (r GetRepositoryEmbeddingStatusResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetRepositoryEmbeddingStatusResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TriggerRepositoryImportResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON202      *struct {
+		Message      *string `json:"message,omitempty"`
+		RepositoryId *string `json:"repositoryId,omitempty"`
+	}
+	JSON400 *Error
+	JSON401 *Error
+	JSON404 *Error
+	JSON409 *Error
+	JSON500 *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r TriggerRepositoryImportResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TriggerRepositoryImportResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -3268,6 +3350,15 @@ func (c *ClientWithResponses) GetRepositoryEmbeddingStatusWithResponse(ctx conte
 		return nil, err
 	}
 	return ParseGetRepositoryEmbeddingStatusResponse(rsp)
+}
+
+// TriggerRepositoryImportWithResponse request returning *TriggerRepositoryImportResponse
+func (c *ClientWithResponses) TriggerRepositoryImportWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*TriggerRepositoryImportResponse, error) {
+	rsp, err := c.TriggerRepositoryImport(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTriggerRepositoryImportResponse(rsp)
 }
 
 // RepositorySearchWithBodyWithResponse request with arbitrary body returning *RepositorySearchResponse
@@ -4196,6 +4287,70 @@ func ParseGetRepositoryEmbeddingStatusResponse(rsp *http.Response) (*GetReposito
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTriggerRepositoryImportResponse parses an HTTP response from a TriggerRepositoryImportWithResponse call
+func ParseTriggerRepositoryImportResponse(rsp *http.Response) (*TriggerRepositoryImportResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TriggerRepositoryImportResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
+		var dest struct {
+			Message      *string `json:"message,omitempty"`
+			RepositoryId *string `json:"repositoryId,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON202 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest Error
