@@ -702,7 +702,9 @@ func (s *RepositoryService) autoTriggerGitHubImport(ctx context.Context, repoID 
 	user, err := s.userService.GetByID(ctx, userID)
 	if err != nil {
 		log.Printf("❌ Failed to get user %s for auto-import: %v", userID.Hex(), err)
-		s.UpdateRepositoryStatus(ctx, userID, repoID.Hex(), models.StatusError)
+		if errStatus := s.UpdateRepositoryStatus(ctx, userID, repoID.Hex(), models.StatusError); errStatus != nil {
+			log.Printf("Failed to set repository status to error: %v", errStatus)
+		}
 		return
 	}
 
@@ -711,7 +713,9 @@ func (s *RepositoryService) autoTriggerGitHubImport(ctx context.Context, repoID 
 
 	if user.GitHubToken == "" {
 		log.Printf("❌ GitHub account is not connected for user %s during auto-import", user.Email)
-		s.UpdateRepositoryStatus(ctx, userID, repoID.Hex(), models.StatusError)
+		if errStatus := s.UpdateRepositoryStatus(ctx, userID, repoID.Hex(), models.StatusError); errStatus != nil {
+			log.Printf("Failed to set repository status to error: %v", errStatus)
+		}
 		return
 	}
 
@@ -719,7 +723,9 @@ func (s *RepositoryService) autoTriggerGitHubImport(ctx context.Context, repoID 
 	accessToken, err := s.githubService.DecryptToken(user.GitHubToken)
 	if err != nil {
 		log.Printf("❌ Failed to decrypt GitHub token for auto-import: %v", err)
-		s.UpdateRepositoryStatus(ctx, userID, repoID.Hex(), models.StatusError)
+		if errStatus := s.UpdateRepositoryStatus(ctx, userID, repoID.Hex(), models.StatusError); errStatus != nil {
+			log.Printf("Failed to set repository status to error: %v", errStatus)
+		}
 		return
 	}
 
@@ -727,7 +733,9 @@ func (s *RepositoryService) autoTriggerGitHubImport(ctx context.Context, repoID 
 	githubRepo, err := s.githubService.ValidateRepository(ctx, accessToken, owner, repoName)
 	if err != nil {
 		log.Printf("❌ Repository validation failed during auto-import: %v", err)
-		s.UpdateRepositoryStatus(ctx, userID, repoID.Hex(), models.StatusError)
+		if errStatus := s.UpdateRepositoryStatus(ctx, userID, repoID.Hex(), models.StatusError); errStatus != nil {
+			log.Printf("Failed to set repository status to error: %v", errStatus)
+		}
 		return
 	}
 

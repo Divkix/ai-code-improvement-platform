@@ -1,4 +1,4 @@
-// ABOUTME: Test utility to manually trigger repository import for stuck repositories  
+// ABOUTME: Test utility to manually trigger repository import for stuck repositories
 // ABOUTME: Used for debugging import issues and manually restarting failed imports
 
 package main
@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github-analyzer/internal/services"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -41,12 +42,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to MongoDB: %v", err)
 	}
-	defer client.Disconnect(context.Background())
+	defer func() {
+		if err := client.Disconnect(context.Background()); err != nil {
+			log.Printf("Failed to disconnect MongoDB client: %v", err)
+		}
+	}()
 
 	db := client.Database("github-analyzer")
 
 	// Create services
-	githubService := services.NewGitHubService(db, 
+	githubService := services.NewGitHubService(db,
 		os.Getenv("GITHUB_CLIENT_ID"),
 		os.Getenv("GITHUB_CLIENT_SECRET"),
 		os.Getenv("JWT_SECRET"))
