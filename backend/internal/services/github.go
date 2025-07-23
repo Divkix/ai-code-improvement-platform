@@ -33,17 +33,17 @@ type GitHubService struct {
 type GitHubRepository struct {
 	ID              int64     `json:"id"`
 	Name            string    `json:"name"`
-	FullName        string    `json:"full_name"`
+	FullName        string    `json:"fullName"`
 	Owner           string    `json:"owner"`
 	Description     *string   `json:"description"`
 	Private         bool      `json:"private"`
 	Language        *string   `json:"language"`
-	StargazersCount int       `json:"stargazers_count"`
-	ForksCount      int       `json:"forks_count"`
+	StargazersCount int       `json:"stargazersCount"`
+	ForksCount      int       `json:"forksCount"`
 	Size            int       `json:"size"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
-	PushedAt        *time.Time `json:"pushed_at,omitempty"`
+	CreatedAt       time.Time `json:"createdAt"`
+	UpdatedAt       time.Time `json:"updatedAt"`
+	PushedAt        *time.Time `json:"pushedAt,omitempty"`
 }
 
 // GitHubImportProgress represents the progress of importing a repository

@@ -388,7 +388,7 @@ func (s *RepositoryService) ImportRepositoryFromGitHub(ctx context.Context, user
 		Description:     githubRepo.Description,
 		GitHubRepoID:    &githubRepo.ID,
 		PrimaryLanguage: githubRepo.Language,
-		IsPrivate:       githubRepo.Private,
+		IsPrivate:       &githubRepo.Private,
 	}
 
 	// Create repository with pending status

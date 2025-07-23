@@ -49,7 +49,7 @@ type CreateRepositoryRequest struct {
 	Description     *string `json:"description,omitempty"`
 	GitHubRepoID    *int64  `json:"githubRepoId,omitempty"`
 	PrimaryLanguage *string `json:"primaryLanguage,omitempty"`
-	IsPrivate       bool    `json:"isPrivate"`
+	IsPrivate       *bool   `json:"isPrivate,omitempty"`
 }
 
 // UpdateRepositoryRequest represents the request payload for updating a repository
@@ -94,7 +94,7 @@ func NewRepository(userID primitive.ObjectID, req CreateRepositoryRequest) *Repo
 		FullName:        req.FullName,
 		Description:     req.Description,
 		PrimaryLanguage: req.PrimaryLanguage,
-		IsPrivate:       req.IsPrivate,
+		IsPrivate:       req.IsPrivate != nil && *req.IsPrivate,
 		Status:          StatusPending,
 		ImportProgress:  0,
 		CreatedAt:       now,
