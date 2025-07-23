@@ -64,9 +64,9 @@ func (m *MongoDB) EnsureIndexes() error {
 	defer cancel()
 
 	db := m.Database()
-	
+
 	// Code chunks text search index
-	codeChunksCollection := db.Collection("code_chunks")
+	codeChunksCollection := db.Collection("codechunks")
 	textIndexModel := mongo.IndexModel{
 		Keys: bson.D{
 			{Key: "content", Value: "text"},
@@ -92,23 +92,23 @@ func (m *MongoDB) EnsureIndexes() error {
 	codeChunkIndexes := []mongo.IndexModel{
 		textIndexModel,
 		{
-			Keys: bson.D{{Key: "repositoryId", Value: 1}},
+			Keys:    bson.D{{Key: "repositoryId", Value: 1}},
 			Options: options.Index().SetName("repositoryId_1"),
 		},
 		{
-			Keys: bson.D{{Key: "language", Value: 1}},
+			Keys:    bson.D{{Key: "language", Value: 1}},
 			Options: options.Index().SetName("language_1"),
 		},
 		{
-			Keys: bson.D{{Key: "fileName", Value: 1}},
+			Keys:    bson.D{{Key: "fileName", Value: 1}},
 			Options: options.Index().SetName("fileName_1"),
 		},
 		{
-			Keys: bson.D{{Key: "contentHash", Value: 1}},
+			Keys:    bson.D{{Key: "contentHash", Value: 1}},
 			Options: options.Index().SetName("contentHash_1").SetUnique(true),
 		},
 		{
-			Keys: bson.D{{Key: "createdAt", Value: 1}},
+			Keys:    bson.D{{Key: "createdAt", Value: 1}},
 			Options: options.Index().SetName("createdAt_1"),
 		},
 	}
@@ -125,11 +125,11 @@ func (m *MongoDB) EnsureIndexes() error {
 	usersCollection := db.Collection("users")
 	userIndexes := []mongo.IndexModel{
 		{
-			Keys: bson.D{{Key: "email", Value: 1}},
+			Keys:    bson.D{{Key: "email", Value: 1}},
 			Options: options.Index().SetName("email_1").SetUnique(true),
 		},
 		{
-			Keys: bson.D{{Key: "githubId", Value: 1}},
+			Keys:    bson.D{{Key: "githubId", Value: 1}},
 			Options: options.Index().SetName("githubId_1").SetSparse(true),
 		},
 	}
@@ -145,19 +145,19 @@ func (m *MongoDB) EnsureIndexes() error {
 	repositoriesCollection := db.Collection("repositories")
 	repoIndexes := []mongo.IndexModel{
 		{
-			Keys: bson.D{{Key: "userId", Value: 1}},
+			Keys:    bson.D{{Key: "userId", Value: 1}},
 			Options: options.Index().SetName("userId_1"),
 		},
 		{
-			Keys: bson.D{{Key: "fullName", Value: 1}},
+			Keys:    bson.D{{Key: "fullName", Value: 1}},
 			Options: options.Index().SetName("fullName_1"),
 		},
 		{
-			Keys: bson.D{{Key: "status", Value: 1}},
+			Keys:    bson.D{{Key: "status", Value: 1}},
 			Options: options.Index().SetName("status_1"),
 		},
 		{
-			Keys: bson.D{{Key: "githubRepoId", Value: 1}},
+			Keys:    bson.D{{Key: "githubRepoId", Value: 1}},
 			Options: options.Index().SetName("githubRepoId_1").SetSparse(true),
 		},
 	}
@@ -178,21 +178,21 @@ func (m *MongoDB) InitializeCollections() error {
 	defer cancel()
 
 	db := m.Database()
-	
+
 	// List of required collections
 	collections := []string{"users", "repositories", "code_chunks"}
-	
+
 	// Get existing collections
 	existingCollections, err := db.ListCollectionNames(ctx, bson.M{})
 	if err != nil {
 		return fmt.Errorf("failed to list collections: %w", err)
 	}
-	
+
 	existingSet := make(map[string]bool)
 	for _, name := range existingCollections {
 		existingSet[name] = true
 	}
-	
+
 	// Create missing collections
 	for _, collectionName := range collections {
 		if !existingSet[collectionName] {
@@ -204,6 +204,6 @@ func (m *MongoDB) InitializeCollections() error {
 			}
 		}
 	}
-	
+
 	return nil
 }
