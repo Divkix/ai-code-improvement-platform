@@ -164,6 +164,7 @@ func (s *SearchService) SearchCodeChunks(ctx context.Context, req models.SearchR
 			{Key: "vectorId", Value: 1},
 			{Key: "createdAt", Value: 1},
 			{Key: "updatedAt", Value: 1},
+			{Key: "_id", Value: 1},
 			{Key: "score", Value: bson.D{{Key: "$meta", Value: "textScore"}}},
 		}}},
 		bson.D{{Key: "$sort", Value: bson.D{{Key: "score", Value: bson.D{{Key: "$meta", Value: "textScore"}}}}}},
