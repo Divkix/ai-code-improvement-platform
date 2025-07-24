@@ -19,6 +19,7 @@ type Server struct {
 	github       *handlers.GitHubHandler
 	search       *handlers.SearchHandler
 	vectorSearch *handlers.VectorSearchHandler
+	chat         *handlers.ChatHandler
 	pipeline     *services.EmbeddingPipeline
 }
 
@@ -34,6 +35,7 @@ func NewServer(
 	github *handlers.GitHubHandler,
 	search *handlers.SearchHandler,
 	vectorSearch *handlers.VectorSearchHandler,
+	chat *handlers.ChatHandler,
 	pipeline *services.EmbeddingPipeline,
 ) *Server {
 	return &Server{
@@ -44,6 +46,7 @@ func NewServer(
 		github:       github,
 		search:       search,
 		vectorSearch: vectorSearch,
+		chat:         chat,
 		pipeline:     pipeline,
 	}
 }
@@ -194,4 +197,28 @@ func (s *Server) GetEmbeddingPipelineStats(c *gin.Context) {
 		return
 	}
 	c.JSON(200, stats)
+}
+
+// Chat endpoints
+func (s *Server) CreateChatSession(c *gin.Context) {
+	s.chat.CreateChatSession(c)
+}
+
+func (s *Server) ListChatSessions(c *gin.Context, params generated.ListChatSessionsParams) {
+	s.chat.ListChatSessions(c, params)
+}
+
+func (s *Server) GetChatSession(c *gin.Context, id string) {
+	c.Params = append(c.Params, gin.Param{Key: "id", Value: id})
+	s.chat.GetChatSession(c)
+}
+
+func (s *Server) DeleteChatSession(c *gin.Context, id string) {
+	c.Params = append(c.Params, gin.Param{Key: "id", Value: id})
+	s.chat.DeleteChatSession(c)
+}
+
+func (s *Server) SendChatMessage(c *gin.Context, id string) {
+	c.Params = append(c.Params, gin.Param{Key: "id", Value: id})
+	s.chat.SendChatMessage(c)
 }

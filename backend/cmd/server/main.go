@@ -96,6 +96,16 @@ func main() {
 	embeddingPipeline := services.NewEmbeddingPipeline(embeddingService, mongoDB, cfg)
 	searchService := services.NewSearchService(mongoDB.Database(), embeddingProvider, qdrant, cfg)
 
+	// Initialize LLM service
+	llmService, err := services.NewLLMService(cfg)
+	if err != nil {
+		log.Fatalf("Failed to initialize LLM service: %v", err)
+	}
+	log.Printf("🤖 LLM service initialized with model: %s", llmService.GetModel())
+
+	// Initialize chat RAG service
+	chatRAGService := services.NewChatRAGService(mongoDB.Database(), searchService, llmService)
+
 	// Initialize repository service with embedding pipeline
 	repositoryService := services.NewRepositoryService(mongoDB.Database(), githubService, userService, embeddingPipeline)
 
@@ -107,6 +117,7 @@ func main() {
 	githubHandler := handlers.NewGitHubHandler(githubService, userService)
 	searchHandler := handlers.NewSearchHandler(searchService)
 	vectorSearchHandler := handlers.NewVectorSearchHandler(searchService, embeddingService, embeddingPipeline)
+	chatHandler := handlers.NewChatHandler(mongoDB.Database(), chatRAGService)
 
 	// Create unified server implementing ServerInterface
 	unifiedServer := server.NewServer(
@@ -117,6 +128,7 @@ func main() {
 		githubHandler,
 		searchHandler,
 		vectorSearchHandler,
+		chatHandler,
 		embeddingPipeline,
 	)
 
