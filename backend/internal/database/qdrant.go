@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/qdrant/go-client/qdrant"
 )
 
@@ -136,12 +137,28 @@ func (q *Qdrant) UpsertPoints(ctx context.Context, collectionName string, points
 	// Convert our VectorPoint structs to Qdrant PointStruct
 	qdrantPoints := make([]*qdrant.PointStruct, len(points))
 	for i, point := range points {
-		// Create point ID from string
+		// Determine a valid point ID for Qdrant. Qdrant supports either
+		// UUIDs or numeric IDs. Many of our ObjectIDs coming from MongoDB
+		// are 24-hex strings (not UUID format) which cause the "Unable to
+		// parse UUID" error that you are seeing in the logs. We therefore:
+		//   1. Use the provided ID directly **only** if it already looks like
+		//      a UUID (checked by isUUID).
+		//   2. Otherwise generate a fresh random UUID so that each point gets
+		//      a valid identifier recognised by Qdrant.
+		//      This keeps the API simple – we don’t actually rely on the
+		//      original ID value inside Qdrant, it just has to be unique.
+
 		var pointID *qdrant.PointId
 		if point.ID != "" {
-			pointID = qdrant.NewIDUUID(point.ID)
+			if isUUID(point.ID) {
+				pointID = qdrant.NewIDUUID(point.ID)
+			} else {
+				pointID = qdrant.NewIDUUID(uuid.New().String())
+			}
 		} else {
-			pointID = qdrant.NewIDNum(uint64(i + 1)) // Fallback to numeric ID
+			// Fallback to numeric ID based on slice position – this is only
+			// used when the caller didn’t specify any ID at all.
+			pointID = qdrant.NewIDNum(uint64(i + 1))
 		}
 
 		// Create vectors

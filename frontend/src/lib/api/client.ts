@@ -164,11 +164,20 @@ export const vectorSearchAPI: {
 
 	// Get embedding pipeline stats
 	async getPipelineStats() {
-		const res = await fetch('/api/embedding/pipeline-stats');
+		const res = await fetch(`${API_BASE_URL}/api/embedding/pipeline-stats`, {
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		});
 		if (!res.ok) {
 			throw new Error(`Failed to fetch pipeline stats: ${res.status}`);
 		}
-		return res.json();
+		return (await res.json()) as {
+			pending: number;
+			processing: number;
+			completed: number;
+			failed: number;
+		};
 	},
 
 	// Manually trigger repository import for stuck/pending repositories
