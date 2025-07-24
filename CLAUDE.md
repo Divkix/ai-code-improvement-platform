@@ -18,25 +18,69 @@ This is an AI-powered code analysis platform that helps development teams onboar
 
 ## Development Commands
 
-Since this is a new project with detailed specifications but no implementation yet, the following commands are planned:
-
-**Backend (Go):**
+**Root Level (Make commands):**
 ```bash
+# Start all services in production mode
+make up
+
+# Start all services in development mode (with hot reload)
+make up env=dev
+
+# Stop all services and clean up
+make down
+make clean  # Also removes volumes
+
+# View logs (all services or specific: make logs service=backend)
+make logs
+
+# Get shell access to containers
+make sh service=backend
+
+# Generate Go code from OpenAPI spec
+make generate
+
+# Build backend binary
+make build
+
+# Run backend in development mode
+make backend-dev
+
+# Validate OpenAPI spec and run linting
+make validate
+
+# Run tests with coverage
+make test
+```
+
+**Backend (Go) - Direct Commands:**
+```bash
+# From backend/ directory:
+cd backend
+
+# Generate API code from OpenAPI spec
+go generate ./internal/generated/...
+
 # Run backend server
 go run cmd/server/main.go
 
 # Build backend
 go build -o bin/server cmd/server/main.go
 
-# Test backend
-go test ./...
+# Test backend with coverage
+go test -v -race -coverprofile=coverage.out ./...
 
 # Lint backend
 golangci-lint run
+
+# View test coverage
+go tool cover -html=coverage.out -o coverage.html
 ```
 
 **Frontend (SvelteKit):**
 ```bash
+# From frontend/ directory:
+cd frontend
+
 # Install dependencies
 bun install
 
@@ -48,21 +92,32 @@ bun run build
 
 # Preview production build
 bun run preview
+
+# Type checking
+bun run check
+
+# Linting and formatting
+bun run lint
+bun run format
+
+# Generate TypeScript types from OpenAPI
+bun run generate-api
+
+# Run tests
+bun run test
+bun run test:unit
+bun run test:e2e
 ```
 
 **Docker Environment:**
 ```bash
-# Start all services
-docker-compose up
-
-# Start in background
-docker-compose up -d
-
-# Stop all services
+# Production mode
+docker-compose up --build -d
 docker-compose down
 
-# Rebuild and start
-docker-compose up --build
+# Development mode (with hot reload)
+docker-compose -f docker-compose.dev.yml up --build -d
+docker-compose -f docker-compose.dev.yml down
 ```
 
 ## Architecture Overview
@@ -118,42 +173,71 @@ The project uses vertical slicing - each slice delivers a complete, testable fea
 
 ### OpenAPI-First Development
 This project uses oapi-codegen for type-safe API development:
-- Define endpoints in `api/openapi.yaml`
-- Generate server stubs and client types
-- Automatic request/response validation
-- Built-in Swagger UI documentation
+- Define endpoints in `backend/api/openapi.yaml`
+- Run `make generate` or `go generate ./internal/generated/...` to generate server stubs and client types
+- Server interface is implemented in `internal/server/server.go` which delegates to individual handlers
+- Frontend API types are generated with `bun run generate-api`
+- Built-in Swagger UI available at `/swagger/index.html`
 
-### Embedding Strategy
-Code chunks are optimized for retrieval:
-- 150 lines per chunk with 50-line overlap
-- Language-aware chunking respecting function boundaries
-- Metadata extraction (functions, classes, imports)
-- Content deduplication via SHA256 hashing
+### Code Architecture Patterns
+- **Handler Pattern**: Each API domain (auth, github, search, etc.) has dedicated handlers in `internal/handlers/`
+- **Service Layer**: Business logic is encapsulated in services (`internal/services/`)
+- **Repository Pattern**: Database operations are abstracted through repository interfaces
+- **Dependency Injection**: All components are wired together in `cmd/server/main.go`
+- **Generated Types**: API types and interfaces are generated from OpenAPI spec in `internal/generated/`
 
-### Performance Considerations
-- Batch processing for repository imports
-- Concurrent goroutines with semaphore limiting
-- Caching for unchanged file embeddings
-- Progress tracking for long-running operations
+### Embedding Pipeline Architecture
+The system uses a sophisticated background processing pipeline:
+- **EmbeddingPipeline** (`internal/services/embedding_pipeline.go`): Manages background job queue
+- **EmbeddingService** (`internal/services/embedding.go`): Handles vector generation and storage
+- **Multiple Providers**: Supports both Voyage AI and local embedding models
+- **Batch Processing**: Concurrent processing with configurable worker pools
+- **Progress Tracking**: Real-time status updates stored in MongoDB
 
-### Demo-Ready Features
-The application is designed for compelling demonstrations:
-- Strategic dashboard with cost savings calculations
-- Real-time import progress indicators
-- Conversational AI that references specific code
-- Professional UI with smooth animations
+### Code Chunking Strategy
+Files are processed into optimal chunks for retrieval:
+- 150 lines per chunk with 50-line overlap to preserve context
+- Language-aware chunking that respects function/class boundaries
+- Metadata extraction (functions, classes, imports, file paths)
+- Content deduplication via SHA256 hashing to avoid redundant embeddings
+- Stored in MongoDB with vector references in Qdrant
+
+### Configuration Management
+Environment-based configuration in `internal/config/config.go`:
+- Supports both Voyage AI (`EMBEDDING_PROVIDER=voyage`) and local models (`EMBEDDING_PROVIDER=local`)
+- Vector dimensions configurable via `VECTOR_DIMENSION` (256, 512, 1024, 2048 for Voyage)
+- Database connections, API keys, and server settings all configurable
 
 ## Environment Setup
 
 Required environment variables:
 ```bash
+# Core Configuration
 JWT_SECRET=your-secret-key
+MONGODB_URI=mongodb://localhost:27017/github-analyzer
+QDRANT_URL=http://localhost:6334
+
+# GitHub OAuth
 GITHUB_CLIENT_ID=your-github-client-id
 GITHUB_CLIENT_SECRET=your-github-client-secret
-VOYAGE_API_KEY=your-voyage-api-key
+
+# AI Services
 ANTHROPIC_API_KEY=your-anthropic-api-key
-MONGODB_URI=mongodb://localhost:27017/github-analyzer
-QDRANT_URL=http://localhost:6333
+
+# Embedding Provider (voyage or local)
+EMBEDDING_PROVIDER=voyage
+VOYAGE_API_KEY=your-voyage-api-key  # Required if EMBEDDING_PROVIDER=voyage
+LOCAL_EMBEDDING_URL=http://localhost:1234  # Required if EMBEDDING_PROVIDER=local
+LOCAL_EMBEDDING_MODEL=text-embedding-nomic-embed-text-v1.5  # For local provider
+
+# Vector Configuration
+VECTOR_DIMENSION=1024  # Must be 256, 512, 1024, or 2048 for Voyage
+QDRANT_COLLECTION_NAME=code_chunks
+
+# Server Configuration (Optional)
+PORT=8080
+HOST=0.0.0.0
+GIN_MODE=debug
 ```
 
 ## Demo User Access
@@ -166,8 +250,53 @@ A demo user is automatically created on application startup:
 
 No user registration is available - access is managed by administrators.
 
+## Testing and Quality
+
+**Backend Testing:**
+```bash
+# Run all tests with coverage from backend/ directory
+go test -v -race -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out -o coverage.html
+
+# Run specific test package
+go test -v ./internal/services/...
+
+# Run tests with verbose output
+go test -v -run TestEmbeddingService ./internal/services/
+```
+
+**Frontend Testing:**
+```bash
+# From frontend/ directory
+bun run test        # All tests (unit + e2e)
+bun run test:unit   # Vitest unit tests
+bun run test:e2e    # Playwright e2e tests
+```
+
+**Linting:**
+```bash
+# Backend linting
+cd backend && golangci-lint run
+
+# Frontend linting  
+cd frontend && bun run lint
+```
+
 ## Project Status
 
-This project is currently in the planning phase with comprehensive specifications completed. The next steps involve implementing the foundation slice with Docker environment setup, basic Go server, and SvelteKit frontend initialization.
+This is a fully implemented AI-powered code analysis platform with the following completed features:
 
-The implementation follows a 21-day timeline with each slice building incrementally toward a complete MVP demonstrating AI-powered code analysis capabilities.
+**✅ Completed:**
+- Docker containerization with development and production modes
+- Go backend with OpenAPI-first development using oapi-codegen
+- SvelteKit frontend with TypeScript and TailwindCSS
+- MongoDB for document storage, Qdrant for vector embeddings
+- GitHub OAuth integration for repository access
+- Background embedding pipeline with job queue management
+- Support for both Voyage AI and local embedding models
+- Vector-based semantic search and hybrid search capabilities
+- Real-time repository import with progress tracking
+- Dashboard with analytics and cost savings calculations
+- Full test coverage for critical components
+
+The platform demonstrates enterprise-ready AI-powered code analysis with sophisticated RAG (Retrieval-Augmented Generation) capabilities for conversational code exploration.
