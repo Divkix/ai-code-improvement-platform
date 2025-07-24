@@ -45,6 +45,11 @@ type GitHubConfig struct {
 type AIConfig struct {
 	VoyageAPIKey    string
 	AnthropicAPIKey string
+
+	// Provider selects which embedding backend to use: "voyage" (default) or "local".
+	EmbeddingProvider string
+	// Base URL for the local embedding server (used when provider==local)
+	LocalEmbeddingURL string
 }
 
 func Load() (*Config, error) {
@@ -73,8 +78,10 @@ func Load() (*Config, error) {
 			EncryptionKey: getEnv("GITHUB_ENCRYPTION_KEY", ""),
 		},
 		AI: AIConfig{
-			VoyageAPIKey:    getEnv("VOYAGE_API_KEY", ""),
-			AnthropicAPIKey: getEnv("ANTHROPIC_API_KEY", ""),
+			VoyageAPIKey:     getEnv("VOYAGE_API_KEY", ""),
+			AnthropicAPIKey:  getEnv("ANTHROPIC_API_KEY", ""),
+			EmbeddingProvider: getEnv("EMBEDDING_PROVIDER", "voyage"),
+			LocalEmbeddingURL: getEnv("LOCAL_EMBEDDING_URL", "http://localhost:1234"),
 		},
 	}
 
@@ -90,18 +97,29 @@ func (c *Config) validate() error {
 		return fmt.Errorf("JWT_SECRET is required")
 	}
 
-	// Validate Vector RAG requirements
-	if c.AI.VoyageAPIKey == "" {
-		return fmt.Errorf("VOYAGE_API_KEY is required for vector search functionality")
+	// Validate AI / embedding provider requirements
+	switch c.AI.EmbeddingProvider {
+	case "voyage":
+		if c.AI.VoyageAPIKey == "" {
+			return fmt.Errorf("VOYAGE_API_KEY is required when EMBEDDING_PROVIDER=voyage")
+		}
+	case "local":
+		if c.AI.LocalEmbeddingURL == "" {
+			return fmt.Errorf("LOCAL_EMBEDDING_URL is required when EMBEDDING_PROVIDER=local")
+		}
+	default:
+		return fmt.Errorf("invalid EMBEDDING_PROVIDER: %s", c.AI.EmbeddingProvider)
 	}
 
 	if c.AI.AnthropicAPIKey == "" {
 		return fmt.Errorf("ANTHROPIC_API_KEY is required for AI chat functionality")
 	}
 
-	// Validate vector dimension for Voyage AI compatibility (voyage-code-3 supports 1024, 512, 256 or 2048; we default to 1024)
-	if c.Database.VectorDimension != 1024 && c.Database.VectorDimension != 512 && c.Database.VectorDimension != 256 && c.Database.VectorDimension != 2048 {
-		return fmt.Errorf("VECTOR_DIMENSION must be one of 256, 512, 1024, or 2048 for Voyage AI voyage-code-3 model, got %d", c.Database.VectorDimension)
+	// Validate vector dimension only when using Voyage provider (model expects certain dims)
+	if c.AI.EmbeddingProvider == "voyage" {
+		if c.Database.VectorDimension != 1024 && c.Database.VectorDimension != 512 && c.Database.VectorDimension != 256 && c.Database.VectorDimension != 2048 {
+			return fmt.Errorf("VECTOR_DIMENSION must be one of 256, 512, 1024, or 2048 for Voyage AI voyage-code-3 model, got %d", c.Database.VectorDimension)
+		}
 	}
 
 	return nil

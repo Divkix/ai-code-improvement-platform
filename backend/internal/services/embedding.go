@@ -11,13 +11,14 @@ import (
 	"github-analyzer/internal/config"
 	"github-analyzer/internal/database"
 	"github-analyzer/internal/models"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type EmbeddingService struct {
-	voyageService *VoyageService
+	provider EmbeddingProvider
 	qdrantClient  *database.Qdrant
 	mongoDB       *database.MongoDB
 	config        *config.Config
@@ -42,9 +43,9 @@ type ProcessingStats struct {
 	EstimatedTimeRemaining *time.Duration
 }
 
-func NewEmbeddingService(voyageService *VoyageService, qdrant *database.Qdrant, mongoDB *database.MongoDB, config *config.Config) *EmbeddingService {
+func NewEmbeddingService(provider EmbeddingProvider, qdrant *database.Qdrant, mongoDB *database.MongoDB, config *config.Config) *EmbeddingService {
 	return &EmbeddingService{
-		voyageService: voyageService,
+		provider: provider,
 		qdrantClient:  qdrant,
 		mongoDB:       mongoDB,
 		config:        config,
@@ -155,7 +156,7 @@ func (es *EmbeddingService) ProcessCodeChunk(ctx context.Context, chunk *models.
 	}
 
 	// Generate embedding for the chunk content
-	embeddings, err := es.voyageService.GenerateEmbeddings(ctx, []string{chunk.Content})
+	embeddings, err := es.provider.GenerateEmbeddings(ctx, []string{chunk.Content})
 	if err != nil {
 		return fmt.Errorf("failed to generate embedding: %w", err)
 	}
@@ -209,7 +210,7 @@ func (es *EmbeddingService) processBatch(ctx context.Context, chunks []*models.C
 	}
 
 	// Generate embeddings for the batch
-	embeddings, err := es.voyageService.GenerateEmbeddings(ctx, contents)
+	embeddings, err := es.provider.GenerateEmbeddings(ctx, contents)
 	if err != nil {
 		stats.FailedChunks += len(chunks)
 		return fmt.Errorf("failed to generate embeddings for batch: %w", err)

@@ -81,11 +81,20 @@ func main() {
 	dashboardService := services.NewDashboardService()
 	githubService := services.NewGitHubService(mongoDB.Database(), cfg.GitHub.ClientID, cfg.GitHub.ClientSecret, cfg.GitHub.EncryptionKey)
 
-	// Initialize vector search services first (needed by repository service)
-	voyageService := services.NewVoyageService(cfg.AI.VoyageAPIKey)
-	embeddingService := services.NewEmbeddingService(voyageService, qdrant, mongoDB, cfg)
+	// Initialize embedding provider (Voyage or Local)
+	var embeddingProvider services.EmbeddingProvider
+	switch cfg.AI.EmbeddingProvider {
+	case "local":
+		embeddingProvider = services.NewLocalEmbeddingService(cfg.AI.LocalEmbeddingURL, "nomic-embed-text-v2")
+		log.Println("🚀 Using local embedding provider at", cfg.AI.LocalEmbeddingURL)
+	default:
+		embeddingProvider = services.NewVoyageService(cfg.AI.VoyageAPIKey)
+		log.Println("🚀 Using Voyage AI embedding provider")
+	}
+
+	embeddingService := services.NewEmbeddingService(embeddingProvider, qdrant, mongoDB, cfg)
 	embeddingPipeline := services.NewEmbeddingPipeline(embeddingService, mongoDB, cfg)
-	searchService := services.NewSearchService(mongoDB.Database(), voyageService, qdrant, cfg)
+	searchService := services.NewSearchService(mongoDB.Database(), embeddingProvider, qdrant, cfg)
 
 	// Initialize repository service with embedding pipeline
 	repositoryService := services.NewRepositoryService(mongoDB.Database(), githubService, userService, embeddingPipeline)

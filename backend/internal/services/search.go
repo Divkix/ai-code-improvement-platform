@@ -22,17 +22,17 @@ import (
 type SearchService struct {
 	db            *mongo.Database
 	codeChunks    *mongo.Collection
-	voyageService *VoyageService
+	embeddingProvider EmbeddingProvider
 	qdrantClient  *database.Qdrant
 	config        *config.Config
 }
 
 // NewSearchService creates a new search service
-func NewSearchService(db *mongo.Database, voyageService *VoyageService, qdrant *database.Qdrant, config *config.Config) *SearchService {
+func NewSearchService(db *mongo.Database, provider EmbeddingProvider, qdrant *database.Qdrant, config *config.Config) *SearchService {
 	return &SearchService{
 		db:            db,
 		codeChunks:    db.Collection("codechunks"),
-		voyageService: voyageService,
+		embeddingProvider: provider,
 		qdrantClient:  qdrant,
 		config:        config,
 	}
@@ -466,7 +466,7 @@ func (s *SearchService) VectorSearch(ctx context.Context, repositoryID primitive
 	}
 
 	// Generate embedding for the query
-	embeddings, err := s.voyageService.GenerateEmbeddings(ctx, []string{query})
+	embeddings, err := s.embeddingProvider.GenerateEmbeddings(ctx, []string{query})
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate query embedding: %w", err)
 	}
@@ -629,7 +629,7 @@ func (s *SearchService) FindSimilarChunks(ctx context.Context, chunkID primitive
 
 	// For now, we'll use the chunk content to generate a query vector
 	// In a more sophisticated implementation, we would store vectors separately
-	embeddings, err := s.voyageService.GenerateEmbeddings(ctx, []string{sourceChunk.Content})
+	embeddings, err := s.embeddingProvider.GenerateEmbeddings(ctx, []string{sourceChunk.Content})
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate query embedding: %w", err)
 	}
