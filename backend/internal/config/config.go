@@ -50,6 +50,8 @@ type AIConfig struct {
 	EmbeddingProvider string
 	// Base URL for the local embedding server (used when provider==local)
 	LocalEmbeddingURL string
+	// Model name to send to the local embedding endpoint
+	LocalEmbeddingModel string
 }
 
 func Load() (*Config, error) {
@@ -82,6 +84,7 @@ func Load() (*Config, error) {
 			AnthropicAPIKey:  getEnv("ANTHROPIC_API_KEY", ""),
 			EmbeddingProvider: getEnv("EMBEDDING_PROVIDER", "voyage"),
 			LocalEmbeddingURL: getEnv("LOCAL_EMBEDDING_URL", "http://localhost:1234"),
+			LocalEmbeddingModel: getEnv("LOCAL_EMBEDDING_MODEL", "text-embedding-nomic-embed-text-v1.5"),
 		},
 	}
 

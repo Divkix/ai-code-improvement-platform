@@ -85,7 +85,7 @@ func main() {
 	var embeddingProvider services.EmbeddingProvider
 	switch cfg.AI.EmbeddingProvider {
 	case "local":
-		embeddingProvider = services.NewLocalEmbeddingService(cfg.AI.LocalEmbeddingURL, "nomic-embed-text-v2")
+		embeddingProvider = services.NewLocalEmbeddingService(cfg.AI.LocalEmbeddingURL, cfg.AI.LocalEmbeddingModel)
 		log.Println("🚀 Using local embedding provider at", cfg.AI.LocalEmbeddingURL)
 	default:
 		embeddingProvider = services.NewVoyageService(cfg.AI.VoyageAPIKey)
