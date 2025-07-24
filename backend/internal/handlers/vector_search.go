@@ -10,6 +10,7 @@ import (
 
 	"github-analyzer/internal/models"
 	"github-analyzer/internal/services"
+
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -42,11 +43,15 @@ func (vsh *VectorSearchHandler) VectorSearch(c *gin.Context) {
 		return
 	}
 
-	// Parse repository ID
-	repositoryID, err := primitive.ObjectIDFromHex(req.RepositoryID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid repository ID"})
-		return
+	// Parse repository ID (optional)
+	var repositoryID primitive.ObjectID
+	if req.RepositoryID != "" {
+		var err error
+		repositoryID, err = primitive.ObjectIDFromHex(req.RepositoryID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid repository ID"})
+			return
+		}
 	}
 
 	ctx := context.Background()
@@ -79,11 +84,15 @@ func (vsh *VectorSearchHandler) HybridSearch(c *gin.Context) {
 		return
 	}
 
-	// Parse repository ID
-	repositoryID, err := primitive.ObjectIDFromHex(req.RepositoryID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid repository ID"})
-		return
+	// Parse repository ID (optional)
+	var repositoryID primitive.ObjectID
+	if req.RepositoryID != "" {
+		var err error
+		repositoryID, err = primitive.ObjectIDFromHex(req.RepositoryID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid repository ID"})
+			return
+		}
 	}
 
 	ctx := context.Background()

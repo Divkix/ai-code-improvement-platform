@@ -90,7 +90,7 @@ func (m *MongoDB) EnsureIndexes() error {
 			SetName("CodeSearchIndex"),
 	}
 
-	// Additional indexes for code_chunks
+	// Additional indexes for codechunks
 	codeChunkIndexes := []mongo.IndexModel{
 		textIndexModel,
 		{
@@ -115,12 +115,12 @@ func (m *MongoDB) EnsureIndexes() error {
 		},
 	}
 
-	// Create code_chunks indexes
+	// Create codechunks indexes
 	_, err := codeChunksCollection.Indexes().CreateMany(ctx, codeChunkIndexes)
 	if err != nil {
-		log.Printf("Warning: Failed to create code_chunks indexes: %v", err)
+		log.Printf("Warning: Failed to create codechunks indexes: %v", err)
 	} else {
-		log.Println("Successfully created code_chunks indexes")
+		log.Println("Successfully created codechunks indexes")
 	}
 
 	// Users collection indexes
@@ -182,7 +182,7 @@ func (m *MongoDB) InitializeCollections() error {
 	db := m.Database()
 
 	// List of required collections
-	collections := []string{"users", "repositories", "code_chunks"}
+	collections := []string{"users", "repositories", "codechunks"}
 
 	// Get existing collections
 	existingCollections, err := db.ListCollectionNames(ctx, bson.M{})

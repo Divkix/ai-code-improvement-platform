@@ -61,7 +61,7 @@ func Load() (*Config, error) {
 			MongoURI:             getEnv("MONGODB_URI", "mongodb://localhost:27017/github-analyzer"),
 			QdrantURL:            getEnv("QDRANT_URL", "http://localhost:6334"),
 			DBName:               getEnv("DB_NAME", "github-analyzer"),
-			QdrantCollectionName: getEnv("QDRANT_COLLECTION_NAME", "code_chunks"),
+			QdrantCollectionName: getEnv("QDRANT_COLLECTION_NAME", "codechunks"),
 			VectorDimension:      getEnvInt("VECTOR_DIMENSION", 1536),
 		},
 		JWT: JWTConfig{
