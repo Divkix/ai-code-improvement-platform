@@ -19,6 +19,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github-analyzer/internal/generated"
+	"github-analyzer/internal/middleware"
 	"github-analyzer/internal/models"
 	"github-analyzer/internal/services"
 )
@@ -39,13 +40,13 @@ func NewChatHandler(db *mongo.Database, chatService *services.ChatRAGService) *C
 
 // CreateChatSession handles POST /api/chat/sessions
 func (h *ChatHandler) CreateChatSession(c *gin.Context) {
-	userID, exists := c.Get("userID")
+	userID, exists := middleware.GetUserIDFromContext(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized", "message": "User not authenticated"})
 		return
 	}
 
-	userObjID, err := primitive.ObjectIDFromHex(userID.(string))
+	userObjID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_user_id", "message": "Invalid user ID format"})
 		return
@@ -72,13 +73,13 @@ func (h *ChatHandler) CreateChatSession(c *gin.Context) {
 
 // ListChatSessions handles GET /api/chat/sessions
 func (h *ChatHandler) ListChatSessions(c *gin.Context, params generated.ListChatSessionsParams) {
-	userID, exists := c.Get("userID")
+	userID, exists := middleware.GetUserIDFromContext(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized", "message": "User not authenticated"})
 		return
 	}
 
-	userObjID, err := primitive.ObjectIDFromHex(userID.(string))
+	userObjID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_user_id", "message": "Invalid user ID format"})
 		return
@@ -142,13 +143,13 @@ func (h *ChatHandler) ListChatSessions(c *gin.Context, params generated.ListChat
 
 // GetChatSession handles GET /api/chat/sessions/{id}
 func (h *ChatHandler) GetChatSession(c *gin.Context) {
-	userID, exists := c.Get("userID")
+	userID, exists := middleware.GetUserIDFromContext(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized", "message": "User not authenticated"})
 		return
 	}
 
-	userObjID, err := primitive.ObjectIDFromHex(userID.(string))
+	userObjID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_user_id", "message": "Invalid user ID format"})
 		return
@@ -183,13 +184,13 @@ func (h *ChatHandler) GetChatSession(c *gin.Context) {
 
 // DeleteChatSession handles DELETE /api/chat/sessions/{id}
 func (h *ChatHandler) DeleteChatSession(c *gin.Context) {
-	userID, exists := c.Get("userID")
+	userID, exists := middleware.GetUserIDFromContext(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized", "message": "User not authenticated"})
 		return
 	}
 
-	userObjID, err := primitive.ObjectIDFromHex(userID.(string))
+	userObjID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_user_id", "message": "Invalid user ID format"})
 		return
@@ -225,14 +226,14 @@ func (h *ChatHandler) DeleteChatSession(c *gin.Context) {
 // SendChatMessage handles POST /api/chat/sessions/{id}/message
 func (h *ChatHandler) SendChatMessage(c *gin.Context) {
 	startTime := time.Now()
-	
-	userID, exists := c.Get("userID")
+
+	userID, exists := middleware.GetUserIDFromContext(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized", "message": "User not authenticated"})
 		return
 	}
 
-	userObjID, err := primitive.ObjectIDFromHex(userID.(string))
+	userObjID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_user_id", "message": "Invalid user ID format"})
 		return
@@ -316,7 +317,7 @@ func (h *ChatHandler) handleStreamingMessage(c *gin.Context, userObjID, sessionO
 		log.Printf("[ERROR] Failed to write completion event to stream: %v", writeErr)
 	}
 	flusher.Flush()
-	
+
 	totalDuration := time.Since(startTime)
 	log.Printf("[HTTP] Streaming chat completed user=%s session=%s total_time=%v",
 		userObjID.Hex(), sessionObjID.Hex(), totalDuration)
@@ -341,7 +342,7 @@ func (h *ChatHandler) handleNonStreamingMessage(c *gin.Context, userObjID, sessi
 	totalDuration := time.Since(startTime)
 	log.Printf("[HTTP] Non-streaming chat completed user=%s session=%s total_time=%v",
 		userObjID.Hex(), sessionObjID.Hex(), totalDuration)
-	
+
 	c.JSON(http.StatusOK, updatedSession)
 }
 

@@ -10,7 +10,10 @@ type ChatSessionListResponse = components['schemas']['ChatSessionListResponse'];
 type CreateChatSessionRequest = components['schemas']['CreateChatSessionRequest'];
 type SendMessageRequest = components['schemas']['SendMessageRequest'];
 
-const API_BASE_URL = '/api';
+// Use the same base URL mechanism as the rest of the frontend so that requests
+// always target the backend instead of the SvelteKit dev server. We append
+// `/api` here so that all existing endpoint paths continue to work unchanged.
+const API_BASE_URL = `${(import.meta.env.VITE_API_URL || 'http://localhost:8080').replace(/\/$/, '')}/api`;
 
 class ChatAPIError extends Error {
 	constructor(
@@ -42,7 +45,9 @@ export class ChatClient {
 		limit?: number;
 		offset?: number;
 	}): Promise<ChatSessionListResponse> {
-		const url = new URL(`${API_BASE_URL}/chat/sessions`, window.location.origin);
+		// Build an absolute URL that points to the backend instead of relying on
+		// the current window origin.
+		const url = new URL(`${API_BASE_URL}/chat/sessions`);
 		if (params?.limit) url.searchParams.set('limit', params.limit.toString());
 		if (params?.offset) url.searchParams.set('offset', params.offset.toString());
 
