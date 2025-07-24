@@ -698,6 +698,139 @@ components:
           type: integer
           minimum: 0
 
+    CreateChatSessionRequest:
+      type: object
+      properties:
+        repositoryId:
+          type: string
+          description: Optional repository ID to associate with the chat session
+        title:
+          type: string
+          description: Optional custom title for the chat session
+
+    SendMessageRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          description: The user message content
+
+    RetrievedChunk:
+      type: object
+      required:
+        - chunkId
+        - filePath
+        - startLine
+        - endLine
+        - content
+      properties:
+        chunkId:
+          type: string
+          description: ID of the code chunk
+        filePath:
+          type: string
+          description: Path to the source file
+        startLine:
+          type: integer
+          description: Starting line number
+        endLine:
+          type: integer
+          description: Ending line number
+        content:
+          type: string
+          description: Code content
+        similarity:
+          type: number
+          format: float
+          description: Similarity score for retrieval
+        language:
+          type: string
+          description: Programming language
+
+    ChatMessage:
+      type: object
+      required:
+        - id
+        - role
+        - content
+        - timestamp
+      properties:
+        id:
+          type: string
+          description: Message ID
+        role:
+          type: string
+          enum: [user, assistant, system]
+          description: Message role
+        content:
+          type: string
+          description: Message content
+        retrievedChunks:
+          type: array
+          items:
+            $ref: "#/components/schemas/RetrievedChunk"
+          description: Code chunks retrieved for context
+        tokensUsed:
+          type: integer
+          description: Number of tokens used for this message
+        timestamp:
+          type: string
+          format: date-time
+          description: Message timestamp
+
+    ChatSession:
+      type: object
+      required:
+        - id
+        - userId
+        - title
+        - messages
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          description: Session ID
+        userId:
+          type: string
+          description: User ID who owns the session
+        repositoryId:
+          type: string
+          description: Optional associated repository ID
+        title:
+          type: string
+          description: Session title
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatMessage"
+          description: List of messages in the session
+        createdAt:
+          type: string
+          format: date-time
+          description: Session creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Session last update timestamp
+
+    ChatSessionListResponse:
+      type: object
+      required:
+        - sessions
+        - total
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatSession"
+          description: List of chat sessions
+        total:
+          type: integer
+          description: Total number of sessions
+
 paths:
   /health:
     get:
@@ -2086,3 +2219,218 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PipelineStats"
+
+  /api/chat/sessions:
+    post:
+      summary: Create a new chat session
+      description: Create a new chat session, optionally associated with a repository
+      operationId: createChatSession
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChatSessionRequest"
+      responses:
+        "201":
+          description: Chat session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatSession"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    get:
+      summary: List chat sessions
+      description: Get a list of chat sessions for the authenticated user
+      operationId: listChatSessions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of sessions to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Number of sessions to skip
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: List of chat sessions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatSessionListResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/chat/sessions/{id}:
+    get:
+      summary: Get chat session details
+      description: Retrieve a specific chat session with all messages
+      operationId: getChatSession
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Chat session ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Chat session details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatSession"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Chat session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      summary: Delete chat session
+      description: Delete a chat session and all its messages
+      operationId: deleteChatSession
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Chat session ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Chat session deleted successfully
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Chat session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/chat/sessions/{id}/message:
+    post:
+      summary: Send message to chat session
+      description: Send a user message and receive streaming AI response with retrieved code context
+      operationId: sendChatMessage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Chat session ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageRequest"
+      responses:
+        "200":
+          description: Streaming chat response
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: Server-sent events stream of chat completion chunks
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatSession"
+                description: Complete updated session (non-streaming response)
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized  
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Chat session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"

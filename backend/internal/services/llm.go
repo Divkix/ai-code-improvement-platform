@@ -105,7 +105,9 @@ func (s *LLMService) ChatStream(ctx context.Context, messages []openai.ChatCompl
 	// Start goroutine to read from stream and forward to channel
 	go func() {
 		defer close(responseChan)
-		defer stream.Close()
+		defer func() {
+			_ = stream.Close() // Ignore error on stream close
+		}()
 
 		for {
 			response, err := stream.Recv()

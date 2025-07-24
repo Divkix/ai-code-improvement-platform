@@ -29,6 +29,13 @@ const (
 	RepositoryImported ActivityItemType = "repository_imported"
 )
 
+// Defines values for ChatMessageRole.
+const (
+	ChatMessageRoleAssistant ChatMessageRole = "assistant"
+	ChatMessageRoleSystem    ChatMessageRole = "system"
+	ChatMessageRoleUser      ChatMessageRole = "user"
+)
+
 // Defines values for EmbeddingStatusResponseStatus.
 const (
 	EmbeddingStatusResponseStatusCompleted  EmbeddingStatusResponseStatus = "completed"
@@ -101,6 +108,63 @@ type AuthResponse struct {
 	User  User   `json:"user"`
 }
 
+// ChatMessage defines model for ChatMessage.
+type ChatMessage struct {
+	// Content Message content
+	Content string `json:"content"`
+
+	// Id Message ID
+	Id string `json:"id"`
+
+	// RetrievedChunks Code chunks retrieved for context
+	RetrievedChunks *[]RetrievedChunk `json:"retrievedChunks,omitempty"`
+
+	// Role Message role
+	Role ChatMessageRole `json:"role"`
+
+	// Timestamp Message timestamp
+	Timestamp time.Time `json:"timestamp"`
+
+	// TokensUsed Number of tokens used for this message
+	TokensUsed *int `json:"tokensUsed,omitempty"`
+}
+
+// ChatMessageRole Message role
+type ChatMessageRole string
+
+// ChatSession defines model for ChatSession.
+type ChatSession struct {
+	// CreatedAt Session creation timestamp
+	CreatedAt time.Time `json:"createdAt"`
+
+	// Id Session ID
+	Id string `json:"id"`
+
+	// Messages List of messages in the session
+	Messages []ChatMessage `json:"messages"`
+
+	// RepositoryId Optional associated repository ID
+	RepositoryId *string `json:"repositoryId,omitempty"`
+
+	// Title Session title
+	Title string `json:"title"`
+
+	// UpdatedAt Session last update timestamp
+	UpdatedAt time.Time `json:"updatedAt"`
+
+	// UserId User ID who owns the session
+	UserId string `json:"userId"`
+}
+
+// ChatSessionListResponse defines model for ChatSessionListResponse.
+type ChatSessionListResponse struct {
+	// Sessions List of chat sessions
+	Sessions []ChatSession `json:"sessions"`
+
+	// Total Total number of sessions
+	Total int `json:"total"`
+}
+
 // CodeChunk defines model for CodeChunk.
 type CodeChunk struct {
 	Content     string    `json:"content"`
@@ -123,6 +187,15 @@ type CodeChunk struct {
 	StartLine    int        `json:"startLine"`
 	UpdatedAt    *time.Time `json:"updatedAt,omitempty"`
 	VectorId     *string    `json:"vectorId,omitempty"`
+}
+
+// CreateChatSessionRequest defines model for CreateChatSessionRequest.
+type CreateChatSessionRequest struct {
+	// RepositoryId Optional repository ID to associate with the chat session
+	RepositoryId *string `json:"repositoryId,omitempty"`
+
+	// Title Optional custom title for the chat session
+	Title *string `json:"title,omitempty"`
 }
 
 // CreateRepositoryRequest defines model for CreateRepositoryRequest.
@@ -334,6 +407,30 @@ type RepositoryListResponse struct {
 	Total        int          `json:"total"`
 }
 
+// RetrievedChunk defines model for RetrievedChunk.
+type RetrievedChunk struct {
+	// ChunkId ID of the code chunk
+	ChunkId string `json:"chunkId"`
+
+	// Content Code content
+	Content string `json:"content"`
+
+	// EndLine Ending line number
+	EndLine int `json:"endLine"`
+
+	// FilePath Path to the source file
+	FilePath string `json:"filePath"`
+
+	// Language Programming language
+	Language *string `json:"language,omitempty"`
+
+	// Similarity Similarity score for retrieval
+	Similarity *float32 `json:"similarity,omitempty"`
+
+	// StartLine Starting line number
+	StartLine int `json:"startLine"`
+}
+
 // SearchRequest defines model for SearchRequest.
 type SearchRequest struct {
 	// FileType Optional file extension filter
@@ -404,6 +501,12 @@ type SearchStats struct {
 	Languages     []string `json:"languages"`
 	TotalChunks   int      `json:"totalChunks"`
 	TotalLines    int      `json:"totalLines"`
+}
+
+// SendMessageRequest defines model for SendMessageRequest.
+type SendMessageRequest struct {
+	// Content The user message content
+	Content string `json:"content"`
 }
 
 // SimilarityResult defines model for SimilarityResult.
@@ -496,6 +599,15 @@ type VectorSearchRequest struct {
 type GithubLoginParams struct {
 	// RedirectUri Redirect URI after OAuth completion
 	RedirectUri *string `form:"redirect_uri,omitempty" json:"redirect_uri,omitempty"`
+}
+
+// ListChatSessionsParams defines parameters for ListChatSessions.
+type ListChatSessionsParams struct {
+	// Limit Maximum number of sessions to return
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of sessions to skip
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
 // GetDashboardActivityParams defines parameters for GetDashboardActivity.
@@ -620,6 +732,12 @@ type GithubCallbackJSONRequestBody = GitHubOAuthRequest
 
 // LoginUserJSONRequestBody defines body for LoginUser for application/json ContentType.
 type LoginUserJSONRequestBody = LoginRequest
+
+// CreateChatSessionJSONRequestBody defines body for CreateChatSession for application/json ContentType.
+type CreateChatSessionJSONRequestBody = CreateChatSessionRequest
+
+// SendChatMessageJSONRequestBody defines body for SendChatMessage for application/json ContentType.
+type SendChatMessageJSONRequestBody = SendMessageRequest
 
 // CreateRepositoryJSONRequestBody defines body for CreateRepository for application/json ContentType.
 type CreateRepositoryJSONRequestBody = CreateRepositoryRequest

@@ -28,6 +28,21 @@ type ServerInterface interface {
 	// Get current user
 	// (GET /api/auth/me)
 	GetCurrentUser(c *gin.Context)
+	// List chat sessions
+	// (GET /api/chat/sessions)
+	ListChatSessions(c *gin.Context, params ListChatSessionsParams)
+	// Create a new chat session
+	// (POST /api/chat/sessions)
+	CreateChatSession(c *gin.Context)
+	// Delete chat session
+	// (DELETE /api/chat/sessions/{id})
+	DeleteChatSession(c *gin.Context, id string)
+	// Get chat session details
+	// (GET /api/chat/sessions/{id})
+	GetChatSession(c *gin.Context, id string)
+	// Send message to chat session
+	// (POST /api/chat/sessions/{id}/message)
+	SendChatMessage(c *gin.Context, id string)
 	// Get recent activity
 	// (GET /api/dashboard/activity)
 	GetDashboardActivity(c *gin.Context, params GetDashboardActivityParams)
@@ -204,6 +219,135 @@ func (siw *ServerInterfaceWrapper) GetCurrentUser(c *gin.Context) {
 	}
 
 	siw.Handler.GetCurrentUser(c)
+}
+
+// ListChatSessions operation middleware
+func (siw *ServerInterfaceWrapper) ListChatSessions(c *gin.Context) {
+
+	var err error
+
+	c.Set(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListChatSessionsParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", c.Request.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter limit: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", c.Request.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter offset: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListChatSessions(c, params)
+}
+
+// CreateChatSession operation middleware
+func (siw *ServerInterfaceWrapper) CreateChatSession(c *gin.Context) {
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CreateChatSession(c)
+}
+
+// DeleteChatSession operation middleware
+func (siw *ServerInterfaceWrapper) DeleteChatSession(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.DeleteChatSession(c, id)
+}
+
+// GetChatSession operation middleware
+func (siw *ServerInterfaceWrapper) GetChatSession(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetChatSession(c, id)
+}
+
+// SendChatMessage operation middleware
+func (siw *ServerInterfaceWrapper) SendChatMessage(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.SendChatMessage(c, id)
 }
 
 // GetDashboardActivity operation middleware
@@ -1034,6 +1178,11 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/api/auth/github/login", wrapper.GithubLogin)
 	router.POST(options.BaseURL+"/api/auth/login", wrapper.LoginUser)
 	router.GET(options.BaseURL+"/api/auth/me", wrapper.GetCurrentUser)
+	router.GET(options.BaseURL+"/api/chat/sessions", wrapper.ListChatSessions)
+	router.POST(options.BaseURL+"/api/chat/sessions", wrapper.CreateChatSession)
+	router.DELETE(options.BaseURL+"/api/chat/sessions/:id", wrapper.DeleteChatSession)
+	router.GET(options.BaseURL+"/api/chat/sessions/:id", wrapper.GetChatSession)
+	router.POST(options.BaseURL+"/api/chat/sessions/:id/message", wrapper.SendChatMessage)
 	router.GET(options.BaseURL+"/api/dashboard/activity", wrapper.GetDashboardActivity)
 	router.GET(options.BaseURL+"/api/dashboard/stats", wrapper.GetDashboardStats)
 	router.GET(options.BaseURL+"/api/dashboard/trends", wrapper.GetDashboardTrends)
