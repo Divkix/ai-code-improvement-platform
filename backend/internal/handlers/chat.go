@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -219,6 +220,8 @@ func (h *ChatHandler) DeleteChatSession(c *gin.Context) {
 
 // SendChatMessage handles POST /api/chat/sessions/{id}/message
 func (h *ChatHandler) SendChatMessage(c *gin.Context) {
+	startTime := time.Now()
+	
 	userID, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized", "message": "User not authenticated"})
@@ -238,6 +241,9 @@ func (h *ChatHandler) SendChatMessage(c *gin.Context) {
 		return
 	}
 
+	log.Printf("[HTTP] Chat message request user=%s session=%s client_ip=%s",
+		userObjID.Hex(), sessionObjID.Hex(), c.ClientIP())
+
 	var req models.SendMessageRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_request", "message": "Invalid request body"})
@@ -248,15 +254,18 @@ func (h *ChatHandler) SendChatMessage(c *gin.Context) {
 	acceptHeader := c.GetHeader("Accept")
 	isStreaming := acceptHeader == "text/event-stream"
 
+	log.Printf("[HTTP] Chat message processing user=%s session=%s streaming=%v message_length=%d",
+		userObjID.Hex(), sessionObjID.Hex(), isStreaming, len(req.Content))
+
 	if isStreaming {
-		h.handleStreamingMessage(c, userObjID, sessionObjID, req.Content)
+		h.handleStreamingMessage(c, userObjID, sessionObjID, req.Content, startTime)
 	} else {
-		h.handleNonStreamingMessage(c, userObjID, sessionObjID, req.Content)
+		h.handleNonStreamingMessage(c, userObjID, sessionObjID, req.Content, startTime)
 	}
 }
 
 // handleStreamingMessage handles streaming chat responses
-func (h *ChatHandler) handleStreamingMessage(c *gin.Context, userObjID, sessionObjID primitive.ObjectID, message string) {
+func (h *ChatHandler) handleStreamingMessage(c *gin.Context, userObjID, sessionObjID primitive.ObjectID, message string, startTime time.Time) {
 	// Set headers for Server-Sent Events
 	c.Header("Content-Type", "text/event-stream")
 	c.Header("Cache-Control", "no-cache")
@@ -297,10 +306,14 @@ func (h *ChatHandler) handleStreamingMessage(c *gin.Context, userObjID, sessionO
 	// Send final event to indicate completion
 	fmt.Fprintf(c.Writer, "event: done\ndata: {}\n\n")
 	flusher.Flush()
+	
+	totalDuration := time.Since(startTime)
+	log.Printf("[HTTP] Streaming chat completed user=%s session=%s total_time=%v",
+		userObjID.Hex(), sessionObjID.Hex(), totalDuration)
 }
 
 // handleNonStreamingMessage handles regular JSON chat responses
-func (h *ChatHandler) handleNonStreamingMessage(c *gin.Context, userObjID, sessionObjID primitive.ObjectID, message string) {
+func (h *ChatHandler) handleNonStreamingMessage(c *gin.Context, userObjID, sessionObjID primitive.ObjectID, message string, startTime time.Time) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Minute)
 	defer cancel()
 
@@ -315,6 +328,10 @@ func (h *ChatHandler) handleNonStreamingMessage(c *gin.Context, userObjID, sessi
 		return
 	}
 
+	totalDuration := time.Since(startTime)
+	log.Printf("[HTTP] Non-streaming chat completed user=%s session=%s total_time=%v",
+		userObjID.Hex(), sessionObjID.Hex(), totalDuration)
+	
 	c.JSON(http.StatusOK, updatedSession)
 }
 
