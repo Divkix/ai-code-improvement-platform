@@ -8,7 +8,7 @@ This is an AI-powered code analysis platform that helps development teams onboar
 
 **Technology Stack:**
 - Frontend: SvelteKit (Bun runtime)
-- Backend: Go 1.21+ with Gin framework + oapi-codegen
+- Backend: Go 1.24+ with Gin framework + oapi-codegen
 - API Documentation: OpenAPI 3.0 specification (auto-generated)
 - Database: MongoDB 8.0
 - Vector Database: Qdrant 1.7+
@@ -151,6 +151,14 @@ The core intelligence comes from a Retrieval-Augmented Generation (RAG) pipeline
 5. **Context Construction**: Relevant chunks are assembled into prompts for Claude
 6. **Response Generation**: Claude provides context-aware answers referencing specific code
 
+### Search Capabilities
+The platform provides sophisticated multi-modal search functionality:
+- **Text Search**: MongoDB full-text search with relevance scoring
+- **Vector Search**: Semantic similarity using Qdrant embeddings
+- **Hybrid Search**: Configurable text + vector weight combination
+- **Similar Code**: Code recommendation based on semantic similarity
+- **Advanced Filtering**: Language, file type, and repository scoping
+
 ### Frontend Architecture
 - **SvelteKit**: TypeScript-based reactive framework
 - **State Management**: Svelte stores for authentication and chat state
@@ -180,7 +188,7 @@ This project uses oapi-codegen for type-safe API development:
 - Run `make generate` or `go generate ./internal/generated/...` to generate server stubs and client types
 - Server interface is implemented in `internal/server/server.go` which delegates to individual handlers
 - Frontend API types are generated with `bun run generate-api`
-- Built-in Swagger UI available at `/swagger/index.html`
+- Built-in Swagger UI available at `/docs/`
 - **CRITICAL**: Always regenerate types after modifying the OpenAPI spec before running tests
 
 ### Development Workflow
