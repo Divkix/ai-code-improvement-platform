@@ -478,6 +478,11 @@ func (s *SearchService) VectorSearch(ctx context.Context, repositoryID primitive
 	// Search for similar vectors in Qdrant
 	results, err := s.qdrantClient.SearchSimilar(ctx, s.config.Database.QdrantCollectionName, embeddings[0], limit, true)
 	if err != nil {
+		// Gracefully handle "collection not found" or "not enough points" errors by returning empty result set
+		errMsg := strings.ToLower(err.Error())
+		if strings.Contains(errMsg, "not found") || strings.Contains(errMsg, "collection") {
+			return []models.SimilarityResult{}, nil
+		}
 		return nil, fmt.Errorf("vector search failed: %w", err)
 	}
 

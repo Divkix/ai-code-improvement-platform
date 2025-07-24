@@ -62,7 +62,7 @@ func Load() (*Config, error) {
 			QdrantURL:            getEnv("QDRANT_URL", "http://localhost:6334"),
 			DBName:               getEnv("DB_NAME", "github-analyzer"),
 			QdrantCollectionName: getEnv("QDRANT_COLLECTION_NAME", "codechunks"),
-			VectorDimension:      getEnvInt("VECTOR_DIMENSION", 1536),
+			VectorDimension:      getEnvInt("VECTOR_DIMENSION", 1024),
 		},
 		JWT: JWTConfig{
 			Secret: getEnv("JWT_SECRET", ""),
@@ -99,9 +99,9 @@ func (c *Config) validate() error {
 		return fmt.Errorf("ANTHROPIC_API_KEY is required for AI chat functionality")
 	}
 
-	// Validate vector dimension for Voyage AI compatibility
-	if c.Database.VectorDimension != 1536 {
-		return fmt.Errorf("VECTOR_DIMENSION must be 1536 for Voyage AI voyage-code-3 model, got %d", c.Database.VectorDimension)
+	// Validate vector dimension for Voyage AI compatibility (voyage-code-3 supports 1024, 512, 256 or 2048; we default to 1024)
+	if c.Database.VectorDimension != 1024 && c.Database.VectorDimension != 512 && c.Database.VectorDimension != 256 && c.Database.VectorDimension != 2048 {
+		return fmt.Errorf("VECTOR_DIMENSION must be one of 256, 512, 1024, or 2048 for Voyage AI voyage-code-3 model, got %d", c.Database.VectorDimension)
 	}
 
 	return nil

@@ -118,6 +118,9 @@ type ClientInterface interface {
 	// GetDashboardTrends request
 	GetDashboardTrends(ctx context.Context, params *GetDashboardTrendsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetEmbeddingPipelineStats request
+	GetEmbeddingPipelineStats(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetGitHubRepositories request
 	GetGitHubRepositories(ctx context.Context, params *GetGitHubRepositoriesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -310,6 +313,18 @@ func (c *Client) GetDashboardStats(ctx context.Context, reqEditors ...RequestEdi
 
 func (c *Client) GetDashboardTrends(ctx context.Context, params *GetDashboardTrendsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetDashboardTrendsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetEmbeddingPipelineStats(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetEmbeddingPipelineStatsRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -966,6 +981,33 @@ func NewGetDashboardTrendsRequest(server string, params *GetDashboardTrendsParam
 		}
 
 		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetEmbeddingPipelineStatsRequest generates requests for GetEmbeddingPipelineStats
+func NewGetEmbeddingPipelineStatsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/embedding/pipeline-stats")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -2259,6 +2301,9 @@ type ClientWithResponsesInterface interface {
 	// GetDashboardTrendsWithResponse request
 	GetDashboardTrendsWithResponse(ctx context.Context, params *GetDashboardTrendsParams, reqEditors ...RequestEditorFn) (*GetDashboardTrendsResponse, error)
 
+	// GetEmbeddingPipelineStatsWithResponse request
+	GetEmbeddingPipelineStatsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetEmbeddingPipelineStatsResponse, error)
+
 	// GetGitHubRepositoriesWithResponse request
 	GetGitHubRepositoriesWithResponse(ctx context.Context, params *GetGitHubRepositoriesParams, reqEditors ...RequestEditorFn) (*GetGitHubRepositoriesResponse, error)
 
@@ -2533,6 +2578,28 @@ func (r GetDashboardTrendsResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetDashboardTrendsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetEmbeddingPipelineStatsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *PipelineStats
+}
+
+// Status returns HTTPResponse.Status
+func (r GetEmbeddingPipelineStatsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetEmbeddingPipelineStatsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -3246,6 +3313,15 @@ func (c *ClientWithResponses) GetDashboardTrendsWithResponse(ctx context.Context
 	return ParseGetDashboardTrendsResponse(rsp)
 }
 
+// GetEmbeddingPipelineStatsWithResponse request returning *GetEmbeddingPipelineStatsResponse
+func (c *ClientWithResponses) GetEmbeddingPipelineStatsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetEmbeddingPipelineStatsResponse, error) {
+	rsp, err := c.GetEmbeddingPipelineStats(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetEmbeddingPipelineStatsResponse(rsp)
+}
+
 // GetGitHubRepositoriesWithResponse request returning *GetGitHubRepositoriesResponse
 func (c *ClientWithResponses) GetGitHubRepositoriesWithResponse(ctx context.Context, params *GetGitHubRepositoriesParams, reqEditors ...RequestEditorFn) (*GetGitHubRepositoriesResponse, error) {
 	rsp, err := c.GetGitHubRepositories(ctx, params, reqEditors...)
@@ -3821,6 +3897,32 @@ func ParseGetDashboardTrendsResponse(rsp *http.Response) (*GetDashboardTrendsRes
 			return nil, err
 		}
 		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetEmbeddingPipelineStatsResponse parses an HTTP response from a GetEmbeddingPipelineStatsWithResponse call
+func ParseGetEmbeddingPipelineStatsResponse(rsp *http.Response) (*GetEmbeddingPipelineStatsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetEmbeddingPipelineStatsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PipelineStats
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	}
 

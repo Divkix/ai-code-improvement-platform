@@ -495,13 +495,22 @@ Create intelligent code chunking system:
 - Create foundation for AI-powered responses
 
 ### Implementation Tasks
-- [ ] Integrate Voyage AI embedding API
-- [ ] Set up Qdrant collections and indexing
-- [ ] Implement vector storage for code chunks
-- [ ] Build semantic search functionality
-- [ ] Create embedding generation pipeline
-- [ ] Add vector search API endpoints
-- [ ] Implement similarity scoring
+- [x] Integrate Voyage AI embedding API ✅ (see `VoyageService`)
+- [x] Set up Qdrant collections and indexing ✅ (see `database.Qdrant.CreateCollection`)
+- [x] Implement vector storage for code chunks ✅ (`EmbeddingService.processBatch` ➜ `UpsertPoints`)
+- [x] Build semantic search functionality ✅ (`SearchService.VectorSearch`)
+- [x] Create embedding generation pipeline ✅ (`EmbeddingPipeline` workers)
+- [x] Add vector search API endpoints ✅ (`VectorSearchHandler` & OpenAPI)
+- [x] Implement similarity scoring ✅ (`SimilarityResult.CalculateRelevance`)
+
+### Remaining Follow-Up Tasks (Performance & Quality)
+1. **Voyage error resilience** – add exponential back-off + retry around `VoyageService.generateBatchEmbeddings`, surface full error message to caller.
+2. **Index & latency optimisation** – measure Qdrant query latency ≥ 1k embeddings; experiment with HNSW `ef_search`, `M` tuning.
+3. **Quality benchmark** – compare vector vs text vs hybrid search precision@10 on 3 sample repos, adjust `vectorWeight` default.
+4. **Scalability test harness** – load-test embedding pipeline with a 10k-chunk repository, capture throughput & memory.
+5. **Background monitoring & metrics** – Prometheus metrics for embedding backlog, queue time, query latency.
+6. **Caching layer** – cache Voyage embeddings for identical content hashes to cut API cost.
+7. **Documentation & API examples** – add README section and OpenAPI examples for semantic search endpoints.
 
 ### Code Generation Prompts
 
@@ -546,14 +555,26 @@ Build semantic search with OpenAPI specification:
 ```
 
 ### Acceptance Criteria
-- [ ] Code chunks are converted to embeddings successfully
-- [ ] Embeddings are stored in Qdrant with metadata
-- [ ] Semantic search returns relevant results
-- [ ] Search quality is better than text-only search
-- [ ] Vector search performance is acceptable
-- [ ] Embedding generation handles errors gracefully
-- [ ] Search results include similarity scores
-- [ ] System scales with repository size
+- [x] Code chunks are converted to embeddings successfully
+- [x] Embeddings are stored in Qdrant with metadata
+- [x] Semantic search returns relevant results (API verified)
+- [ ] Search quality is better than text-only search (needs benchmark)
+- [ ] Vector search performance is acceptable (needs profiling)
+- [ ] Embedding generation handles errors gracefully (add retries & logging)
+- [x] Search results include similarity scores
+- [ ] System scales with repository size (stress-test required)
+
+### Mini-Plan to Close Remaining Gaps (1½ days)
+
+| Time | Task |
+|------|------|
+| 0.5d | Implement retry/back-off & improved logging in `VoyageService`; add caching by content hash |
+| 0.25d | Add Prometheus metrics & Grafana dashboard for pipeline and search latency |
+| 0.25d | Create benchmarking script (Go) to compare vector, text, hybrid searches on sample repos; record precision/latency |
+| 0.25d | Optimise Qdrant HNSW params based on benchmark; expose `ef_search` env var |
+| 0.25d | Write docs & OpenAPI examples; update README |
+
+**Exit criteria**: performance P95 < 150 ms for 5k-chunk repo; vector search precision@10 ≥ text search; no unhandled errors after 1 hour stress test.
 
 ---
 

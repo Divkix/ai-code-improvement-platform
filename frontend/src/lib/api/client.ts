@@ -58,6 +58,14 @@ export const vectorSearchAPI: {
 	): Promise<
 		operations['getRepositoryEmbeddingStatus']['responses']['200']['content']['application/json']
 	>;
+
+	// Embedding pipeline stats (custom endpoint)
+	getPipelineStats(): Promise<{
+		pending: number;
+		processing: number;
+		completed: number;
+		failed: number;
+	}>;
 	importRepository(
 		repositoryId: string
 	): Promise<
@@ -152,6 +160,15 @@ export const vectorSearchAPI: {
 		}
 
 		return data;
+	},
+
+	// Get embedding pipeline stats
+	async getPipelineStats() {
+		const res = await fetch('/api/embedding/pipeline-stats');
+		if (!res.ok) {
+			throw new Error(`Failed to fetch pipeline stats: ${res.status}`);
+		}
+		return res.json();
 	},
 
 	// Manually trigger repository import for stuck/pending repositories

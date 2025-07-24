@@ -290,6 +290,14 @@ type LoginRequest struct {
 	Password string              `json:"password"`
 }
 
+// PipelineStats defines model for PipelineStats.
+type PipelineStats struct {
+	Completed  int `json:"completed"`
+	Failed     int `json:"failed"`
+	Pending    int `json:"pending"`
+	Processing int `json:"processing"`
+}
+
 // Repository defines model for Repository.
 type Repository struct {
 	CreatedAt   time.Time `json:"createdAt"`

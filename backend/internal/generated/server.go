@@ -37,6 +37,9 @@ type ServerInterface interface {
 	// Get trend data
 	// (GET /api/dashboard/trends)
 	GetDashboardTrends(c *gin.Context, params GetDashboardTrendsParams)
+	// Get embedding pipeline statistics
+	// (GET /api/embedding/pipeline-stats)
+	GetEmbeddingPipelineStats(c *gin.Context)
 	// Get user's GitHub repositories
 	// (GET /api/github/repositories)
 	GetGitHubRepositories(c *gin.Context, params GetGitHubRepositoriesParams)
@@ -272,6 +275,19 @@ func (siw *ServerInterfaceWrapper) GetDashboardTrends(c *gin.Context) {
 	}
 
 	siw.Handler.GetDashboardTrends(c, params)
+}
+
+// GetEmbeddingPipelineStats operation middleware
+func (siw *ServerInterfaceWrapper) GetEmbeddingPipelineStats(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetEmbeddingPipelineStats(c)
 }
 
 // GetGitHubRepositories operation middleware
@@ -1021,6 +1037,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/api/dashboard/activity", wrapper.GetDashboardActivity)
 	router.GET(options.BaseURL+"/api/dashboard/stats", wrapper.GetDashboardStats)
 	router.GET(options.BaseURL+"/api/dashboard/trends", wrapper.GetDashboardTrends)
+	router.GET(options.BaseURL+"/api/embedding/pipeline-stats", wrapper.GetEmbeddingPipelineStats)
 	router.GET(options.BaseURL+"/api/github/repositories", wrapper.GetGitHubRepositories)
 	router.GET(options.BaseURL+"/api/github/repositories/:owner/:repo/validate", wrapper.ValidateGitHubRepository)
 	router.GET(options.BaseURL+"/api/health", wrapper.GetApiHealth)

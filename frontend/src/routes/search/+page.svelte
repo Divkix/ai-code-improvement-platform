@@ -8,9 +8,36 @@
 	import SearchBox from '$lib/components/SearchBox.svelte';
 	import SearchResults from '$lib/components/SearchResults.svelte';
 	import SearchFilters from '$lib/components/SearchFilters.svelte';
-	import { apiClient } from '$lib/api/client';
+	import { apiClient, vectorSearchAPI } from '$lib/api/client';
 	import type { SearchResponse, SearchRequest } from '$lib/api/search-types';
 	import type { components } from '$lib/api/types';
+	import { onDestroy } from 'svelte';
+
+	// Pipeline stats polling
+	let pipelineStats: {
+		pending: number;
+		processing: number;
+		completed: number;
+		failed: number;
+	} | null = null;
+	let statsInterval: NodeJS.Timeout;
+
+	async function fetchPipelineStats() {
+		try {
+			pipelineStats = await vectorSearchAPI.getPipelineStats();
+		} catch (e) {
+			// ignore
+		}
+	}
+
+	onMount(() => {
+		fetchPipelineStats();
+		statsInterval = setInterval(fetchPipelineStats, 5000);
+	});
+
+	onDestroy(() => {
+		if (statsInterval) clearInterval(statsInterval);
+	});
 
 	type Repository = components['schemas']['Repository'];
 
@@ -221,6 +248,13 @@
 	</div>
 
 	<div class="search-container">
+		{#if pipelineStats && pipelineStats.pending + pipelineStats.processing > 0}
+			<div class="embedding-banner" role="status" aria-live="polite">
+				⚡ Vector embeddings are currently being generated for your repositories. Results may be
+				incomplete until processing finishes.
+			</div>
+		{/if}
+
 		<!-- Search Input -->
 		<SearchBox
 			placeholder="Search for functions, classes, variables, or any code pattern..."

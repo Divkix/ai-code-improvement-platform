@@ -678,6 +678,27 @@ components:
           type: string
           description: Estimated time remaining (duration, e.g., "1h2m3s")
 
+    PipelineStats:
+      type: object
+      required:
+        - pending
+        - processing
+        - completed
+        - failed
+      properties:
+        pending:
+          type: integer
+          minimum: 0
+        processing:
+          type: integer
+          minimum: 0
+        completed:
+          type: integer
+          minimum: 0
+        failed:
+          type: integer
+          minimum: 0
+
 paths:
   /health:
     get:
@@ -2053,3 +2074,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+
+  /api/embedding/pipeline-stats:
+    get:
+      summary: Get embedding pipeline statistics
+      description: Retrieve counts of pending, processing, completed, and failed embedding jobs.
+      operationId: getEmbeddingPipelineStats
+      responses:
+        "200":
+          description: Embedding pipeline statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PipelineStats"

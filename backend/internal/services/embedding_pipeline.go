@@ -11,6 +11,7 @@ import (
 
 	"github-analyzer/internal/config"
 	"github-analyzer/internal/database"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -211,7 +212,7 @@ func (ep *EmbeddingPipeline) GetJobStatus(ctx context.Context, repositoryID *pri
 
 // jobScheduler continuously schedules pending jobs to workers
 func (ep *EmbeddingPipeline) jobScheduler(ctx context.Context) {
-	ticker := time.NewTicker(10 * time.Second) // Check for new jobs every 10 seconds
+	ticker := time.NewTicker(3 * time.Second) // Check for new jobs every 3 seconds for faster responsiveness
 	defer ticker.Stop()
 	
 	for {

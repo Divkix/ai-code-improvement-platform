@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -109,6 +108,7 @@ func main() {
 		githubHandler,
 		searchHandler,
 		vectorSearchHandler,
+		embeddingPipeline,
 	)
 
 	// Create Gin router
@@ -198,11 +198,7 @@ func main() {
 
 	// Serve OpenAPI specification as JSON (if needed)
 	router.GET("/api/openapi.json", func(c *gin.Context) {
-		c.Header("Content-Type", "application/json")
-		c.Status(http.StatusNotImplemented)
-		c.JSON(http.StatusNotImplemented, gin.H{
-			"message": "OpenAPI JSON format not yet implemented - use /api/openapi.yaml",
-		})
+		c.File("api/openapi.json")
 	})
 
 	// Start server

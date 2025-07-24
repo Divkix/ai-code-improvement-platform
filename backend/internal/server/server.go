@@ -3,9 +3,11 @@
 package server
 
 import (
-	"github.com/gin-gonic/gin"
 	"github-analyzer/internal/generated"
 	"github-analyzer/internal/handlers"
+	"github-analyzer/internal/services"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Server implements generated.ServerInterface by delegating to individual handlers
@@ -17,6 +19,7 @@ type Server struct {
 	github       *handlers.GitHubHandler
 	search       *handlers.SearchHandler
 	vectorSearch *handlers.VectorSearchHandler
+	pipeline     *services.EmbeddingPipeline
 }
 
 // Ensure Server implements generated.ServerInterface
@@ -31,6 +34,7 @@ func NewServer(
 	github *handlers.GitHubHandler,
 	search *handlers.SearchHandler,
 	vectorSearch *handlers.VectorSearchHandler,
+	pipeline *services.EmbeddingPipeline,
 ) *Server {
 	return &Server{
 		health:       health,
@@ -40,6 +44,7 @@ func NewServer(
 		github:       github,
 		search:       search,
 		vectorSearch: vectorSearch,
+		pipeline:     pipeline,
 	}
 }
 
@@ -175,4 +180,18 @@ func (s *Server) TriggerRepositoryEmbedding(c *gin.Context, id string) {
 
 func (s *Server) GetRepositoryEmbeddingStatus(c *gin.Context, id string) {
 	s.vectorSearch.GetEmbeddingStatus(c)
+}
+
+// Embedding pipeline stats endpoint
+func (s *Server) GetEmbeddingPipelineStats(c *gin.Context) {
+	if s.pipeline == nil {
+		c.JSON(500, gin.H{"error": "pipeline not configured"})
+		return
+	}
+	stats, err := s.pipeline.GetPipelineStats(c.Request.Context())
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, stats)
 }
