@@ -3,15 +3,17 @@
 
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { writable } from 'svelte/store';
 	import { goto } from '$app/navigation';
 	import SearchBox from '$lib/components/SearchBox.svelte';
 	import SearchResults from '$lib/components/SearchResults.svelte';
 	import SearchFilters from '$lib/components/SearchFilters.svelte';
 	import { apiClient, vectorSearchAPI } from '$lib/api/client';
-	import type { SearchResponse, SearchRequest } from '$lib/api/search-types';
+	import type { SearchResponse } from '$lib/api/search-types';
 	import type { components } from '$lib/api/types';
 	import { onDestroy } from 'svelte';
+
+	// Generic response shape used for API client calls
+	type ApiResponse = { error?: { message?: string }; data?: unknown };
 
 	// Pipeline stats polling
 	let pipelineStats: {
@@ -25,7 +27,7 @@
 	async function fetchPipelineStats() {
 		try {
 			pipelineStats = await vectorSearchAPI.getPipelineStats();
-		} catch (e) {
+		} catch {
 			// ignore
 		}
 	}
@@ -98,7 +100,7 @@
 		error = null;
 
 		try {
-			let response: any;
+			let response: unknown;
 
 			if (mode === 'vector') {
 				// Vector search using apiClient
@@ -140,11 +142,12 @@
 				});
 			}
 
-			if (response.error) {
-				throw new Error(response.error.message || 'Search failed');
+			const apiRes = response as ApiResponse;
+			if (apiRes.error) {
+				throw new Error(apiRes.error.message || 'Search failed');
 			}
 
-			const data = response.data;
+			const data = apiRes.data as SearchResponse;
 
 			if (append && searchResults) {
 				// Append results for pagination

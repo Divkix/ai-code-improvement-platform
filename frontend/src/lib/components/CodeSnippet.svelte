@@ -152,10 +152,11 @@
 
 	<div class="code-content">
 		<pre class="code-block" class:line-numbers={showLineNumbers}><code class="language-{language}"
-				>{#each processedLines as line, index}
+				>{#each processedLines as line, index (index)}
 					<span class="code-line" data-line={startLine + index}>
-{@html highlightSearchTerm(line, searchTerm)}
-</span>
+						<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+						{@html highlightSearchTerm(line, searchTerm)}
+					</span>
 				{/each}</code
 			></pre>
 

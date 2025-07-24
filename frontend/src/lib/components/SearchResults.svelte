@@ -238,7 +238,7 @@
 						<div class="metadata">
 							<span class="metadata-label">Functions:</span>
 							<div class="metadata-items">
-								{#each result.metadata.functions.slice(0, 3) as func}
+								{#each result.metadata.functions.slice(0, 3) as func (func)}
 									<span class="metadata-item">{func}</span>
 								{/each}
 								{#if result.metadata.functions.length > 3}
@@ -254,7 +254,7 @@
 						<div class="metadata">
 							<span class="metadata-label">Classes:</span>
 							<div class="metadata-items">
-								{#each result.metadata.classes.slice(0, 3) as cls}
+								{#each result.metadata.classes.slice(0, 3) as cls (cls)}
 									<span class="metadata-item">{cls}</span>
 								{/each}
 								{#if result.metadata.classes.length > 3}

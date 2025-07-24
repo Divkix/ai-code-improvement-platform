@@ -274,7 +274,7 @@
 					<div class="language-breakdown">
 						<h4>Languages in this repository:</h4>
 						<div class="language-tags">
-							{#each Object.entries(repository.stats.languages) as [language, count]}
+							{#each Object.entries(repository.stats.languages) as [language, count] (language)}
 								<span class="language-tag">
 									{language}
 									<span class="language-count">({count})</span>

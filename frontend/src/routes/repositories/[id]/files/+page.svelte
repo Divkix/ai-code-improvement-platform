@@ -3,19 +3,18 @@
 	import { onMount } from 'svelte';
 	import CodeSnippet from '$lib/components/CodeSnippet.svelte';
 	import { apiClient } from '$lib/api/client';
-	import type { components } from '$lib/api/types';
-	import { get } from 'svelte/store';
 
 	let loading = true;
 	let error: string | null = null;
 	let content = '';
 	let language = '';
 
+	import { get } from 'svelte/store';
+
 	const currentPage = get(page);
 	const repoId = currentPage.params.id;
 	const filePath = currentPage.url.searchParams.get('path') ?? '';
 	const startLine = Number(currentPage.url.searchParams.get('line') ?? '1');
-	const endLine = Number(currentPage.url.searchParams.get('endLine') ?? startLine);
 	const searchTerm = currentPage.url.searchParams.get('q') ?? '';
 
 	onMount(async () => {

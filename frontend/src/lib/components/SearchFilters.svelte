@@ -96,7 +96,7 @@
 					class="filter-select"
 				>
 					<option value="">All Languages</option>
-					{#each languages as language}
+					{#each languages as language (language)}
 						<option value={language}>
 							{language.charAt(0).toUpperCase() + language.slice(1)}
 						</option>
@@ -128,7 +128,7 @@
 					class="filter-select"
 				>
 					<option value="">All File Types</option>
-					{#each commonFileTypes as fileType}
+					{#each commonFileTypes as fileType (fileType.value)}
 						<option value={fileType.value}>
 							{fileType.label}
 						</option>
@@ -161,7 +161,7 @@
 						class="filter-select"
 					>
 						<option value="">All Repositories</option>
-						{#each repositories as repo}
+						{#each repositories as repo (repo.id)}
 							<option value={repo.id}>
 								{repo.fullName}
 							</option>
