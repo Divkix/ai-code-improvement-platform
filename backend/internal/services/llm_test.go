@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github-analyzer/internal/config"
+
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -37,26 +38,6 @@ func TestNewLLMService(t *testing.T) {
 
 		if service.timeout != 30*time.Second {
 			t.Errorf("Expected timeout 30s, got %v", service.timeout)
-		}
-	})
-
-	t.Run("falls back to deprecated AnthropicAPIKey", func(t *testing.T) {
-		cfg := &config.Config{
-			AI: config.AIConfig{
-				LLMBaseURL:        "https://api.openai.com/v1",
-				LLMModel:          "gpt-4o-mini",
-				AnthropicAPIKey:   "deprecated-key",
-				LLMRequestTimeout: "30s",
-			},
-		}
-
-		service, err := NewLLMService(cfg)
-		if err != nil {
-			t.Fatalf("Expected no error, got %v", err)
-		}
-
-		if service == nil {
-			t.Fatal("Expected service to be created")
 		}
 	})
 

@@ -28,21 +28,21 @@ func TestLoad_WithDefaults(t *testing.T) {
 	originalValues := make(map[string]string)
 	for _, env := range envVars {
 		originalValues[env] = os.Getenv(env)
-		os.Unsetenv(env)
+		require.NoError(t, os.Unsetenv(env))
 	}
 	
 	// Set minimum required values
-	os.Setenv("JWT_SECRET", "test-secret")
-	os.Setenv("VOYAGE_API_KEY", "test-voyage-key")
-	os.Setenv("LLM_API_KEY", "test-llm-key")
+	require.NoError(t, os.Setenv("JWT_SECRET", "test-secret"))
+	require.NoError(t, os.Setenv("VOYAGE_API_KEY", "test-voyage-key"))
+	require.NoError(t, os.Setenv("LLM_API_KEY", "test-llm-key"))
 	
 	defer func() {
 		// Restore original values
 		for env, value := range originalValues {
 			if value == "" {
-				os.Unsetenv(env)
+				require.NoError(t, os.Unsetenv(env))
 			} else {
-				os.Setenv(env, value)
+				require.NoError(t, os.Setenv(env, value))
 			}
 		}
 	}()
@@ -69,7 +69,6 @@ func TestLoad_WithDefaults(t *testing.T) {
 	assert.Equal(t, "", config.GitHub.EncryptionKey)
 	
 	assert.Equal(t, "test-voyage-key", config.AI.VoyageAPIKey)
-	assert.Equal(t, "", config.AI.AnthropicAPIKey)
 	assert.Equal(t, "https://api.openai.com/v1", config.AI.LLMBaseURL)
 	assert.Equal(t, "gpt-4o-mini", config.AI.LLMModel)
 	assert.Equal(t, "test-llm-key", config.AI.LLMAPIKey)
@@ -97,7 +96,6 @@ func TestLoad_WithCustomValues(t *testing.T) {
 		"GITHUB_CLIENT_SECRET":     "github-secret",
 		"GITHUB_ENCRYPTION_KEY":    "encryption-key",
 		"VOYAGE_API_KEY":           "voyage-key",
-		"ANTHROPIC_API_KEY":        "anthropic-key",
 		"LLM_BASE_URL":             "https://custom-llm.com/v1",
 		"LLM_MODEL":                "custom-model",
 		"LLM_API_KEY":              "custom-llm-key",
@@ -111,16 +109,16 @@ func TestLoad_WithCustomValues(t *testing.T) {
 	originalValues := make(map[string]string)
 	for key, value := range envVars {
 		originalValues[key] = os.Getenv(key)
-		os.Setenv(key, value)
+		require.NoError(t, os.Setenv(key, value))
 	}
 	
 	defer func() {
 		// Restore original values
 		for key, originalValue := range originalValues {
 			if originalValue == "" {
-				os.Unsetenv(key)
+				_ = os.Unsetenv(key) // Ignore error in cleanup
 			} else {
-				os.Setenv(key, originalValue)
+				_ = os.Setenv(key, originalValue) // Ignore error in cleanup
 			}
 		}
 	}()
@@ -147,7 +145,6 @@ func TestLoad_WithCustomValues(t *testing.T) {
 	assert.Equal(t, "encryption-key", config.GitHub.EncryptionKey)
 	
 	assert.Equal(t, "voyage-key", config.AI.VoyageAPIKey)
-	assert.Equal(t, "anthropic-key", config.AI.AnthropicAPIKey)
 	assert.Equal(t, "https://custom-llm.com/v1", config.AI.LLMBaseURL)
 	assert.Equal(t, "custom-model", config.AI.LLMModel)
 	assert.Equal(t, "custom-llm-key", config.AI.LLMAPIKey)
@@ -178,10 +175,10 @@ func TestValidation_JWTSecretRequired(t *testing.T) {
 	}()
 	
 	// Clear JWT_SECRET but set other required values to ensure JWT validation is tested
-	os.Unsetenv("JWT_SECRET")
-	os.Setenv("VOYAGE_API_KEY", "test-voyage-key")
-	os.Setenv("LLM_API_KEY", "test-llm-key")
-	os.Setenv("EMBEDDING_PROVIDER", "voyage")
+	require.NoError(t, os.Unsetenv("JWT_SECRET"))
+	require.NoError(t, os.Setenv("VOYAGE_API_KEY", "test-voyage-key"))
+	require.NoError(t, os.Setenv("LLM_API_KEY", "test-llm-key"))
+	require.NoError(t, os.Setenv("EMBEDDING_PROVIDER", "voyage"))
 	
 	config, err := Load()
 	assert.Error(t, err)
@@ -255,7 +252,7 @@ func TestValidation_EmbeddingProvider(t *testing.T) {
 			originalProvider := os.Getenv("EMBEDDING_PROVIDER")
 			originalLLM := os.Getenv("LLM_API_KEY")
 			originalJWT := os.Getenv("JWT_SECRET")
-			originalAnthropic := os.Getenv("ANTHROPIC_API_KEY")
+			// Deprecated ANTHROPIC_API_KEY removed; no action needed
 			originalVector := os.Getenv("VECTOR_DIMENSION")
 			
 			defer func() {
@@ -264,33 +261,32 @@ func TestValidation_EmbeddingProvider(t *testing.T) {
 				restoreEnv("EMBEDDING_PROVIDER", originalProvider)
 				restoreEnv("LLM_API_KEY", originalLLM)
 				restoreEnv("JWT_SECRET", originalJWT)
-				restoreEnv("ANTHROPIC_API_KEY", originalAnthropic)
 				restoreEnv("VECTOR_DIMENSION", originalVector)
 			}()
 			
 			// Set test values - always set all relevant environment variables explicitly
-			os.Setenv("JWT_SECRET", "test-secret")
-			os.Setenv("EMBEDDING_PROVIDER", tt.provider)
+			require.NoError(t, os.Setenv("JWT_SECRET", "test-secret"))
+			require.NoError(t, os.Setenv("EMBEDDING_PROVIDER", tt.provider))
 			
 			// Always set VOYAGE_API_KEY explicitly (empty string if not needed)
 			if tt.voyageKey == "" {
-				os.Unsetenv("VOYAGE_API_KEY")
+				require.NoError(t, os.Unsetenv("VOYAGE_API_KEY"))
 			} else {
-				os.Setenv("VOYAGE_API_KEY", tt.voyageKey)
+				require.NoError(t, os.Setenv("VOYAGE_API_KEY", tt.voyageKey))
 			}
 			
 			// Handle LOCAL_EMBEDDING_URL: unset if empty, otherwise set
 			if tt.localURL == "" {
-				os.Unsetenv("LOCAL_EMBEDDING_URL")
+				require.NoError(t, os.Unsetenv("LOCAL_EMBEDDING_URL"))
 			} else {
-				os.Setenv("LOCAL_EMBEDDING_URL", tt.localURL)
+				require.NoError(t, os.Setenv("LOCAL_EMBEDDING_URL", tt.localURL))
 			}
 			
-			os.Setenv("LLM_API_KEY", tt.llmKey)
+			require.NoError(t, os.Setenv("LLM_API_KEY", tt.llmKey))
 			
 			// Clear other environment variables that might interfere
-			os.Unsetenv("ANTHROPIC_API_KEY")
-			os.Unsetenv("VECTOR_DIMENSION")
+			require.NoError(t, os.Unsetenv("ANTHROPIC_API_KEY"))
+			require.NoError(t, os.Unsetenv("VECTOR_DIMENSION"))
 			
 			config, err := Load()
 			
@@ -314,7 +310,6 @@ func TestValidation_LLMAPIKey(t *testing.T) {
 	tests := []struct {
 		name            string
 		llmKey          string
-		anthropicKey    string
 		expectError     bool
 		errorContains   string
 	}{
@@ -322,11 +317,6 @@ func TestValidation_LLMAPIKey(t *testing.T) {
 			name:        "LLM key provided",
 			llmKey:      "llm-key",
 			expectError: false,
-		},
-		{
-			name:         "Anthropic key provided (fallback)",
-			anthropicKey: "anthropic-key",
-			expectError:  false,
 		},
 		{
 			name:          "No API keys provided",
@@ -342,22 +332,19 @@ func TestValidation_LLMAPIKey(t *testing.T) {
 			
 			// Store original values
 			originalLLM := os.Getenv("LLM_API_KEY")
-			originalAnthropic := os.Getenv("ANTHROPIC_API_KEY")
 			originalJWT := os.Getenv("JWT_SECRET")
 			originalVoyage := os.Getenv("VOYAGE_API_KEY")
 			
 			defer func() {
 				restoreEnv("LLM_API_KEY", originalLLM)
-				restoreEnv("ANTHROPIC_API_KEY", originalAnthropic)
 				restoreEnv("JWT_SECRET", originalJWT)
 				restoreEnv("VOYAGE_API_KEY", originalVoyage)
 			}()
 			
 			// Set required values
-			os.Setenv("JWT_SECRET", "test-secret")
-			os.Setenv("VOYAGE_API_KEY", "test-voyage-key")
-			os.Setenv("LLM_API_KEY", tt.llmKey)
-			os.Setenv("ANTHROPIC_API_KEY", tt.anthropicKey)
+			require.NoError(t, os.Setenv("JWT_SECRET", "test-secret"))
+			require.NoError(t, os.Setenv("VOYAGE_API_KEY", "test-voyage-key"))
+			require.NoError(t, os.Setenv("LLM_API_KEY", tt.llmKey))
 			
 			config, err := Load()
 			
@@ -438,12 +425,12 @@ func TestValidation_VectorDimension(t *testing.T) {
 			}()
 			
 			// Set required values
-			os.Setenv("JWT_SECRET", "test-secret")
-			os.Setenv("VOYAGE_API_KEY", "test-voyage-key")
-			os.Setenv("LLM_API_KEY", "test-llm-key")
-			os.Setenv("EMBEDDING_PROVIDER", "voyage") // Only validate for voyage provider
-			os.Unsetenv("LOCAL_EMBEDDING_URL") // Clear any previous local URL
-			os.Setenv("VECTOR_DIMENSION", tt.dimension)
+			require.NoError(t, os.Setenv("JWT_SECRET", "test-secret"))
+			require.NoError(t, os.Setenv("VOYAGE_API_KEY", "test-voyage-key"))
+			require.NoError(t, os.Setenv("LLM_API_KEY", "test-llm-key"))
+			require.NoError(t, os.Setenv("EMBEDDING_PROVIDER", "voyage")) // Only validate for voyage provider
+			require.NoError(t, os.Unsetenv("LOCAL_EMBEDDING_URL")) // Clear any previous local URL
+			require.NoError(t, os.Setenv("VECTOR_DIMENSION", tt.dimension))
 			
 			config, err := Load()
 			
@@ -513,9 +500,9 @@ func TestGetEnvInt(t *testing.T) {
 			defer restoreEnv(testEnvKey, originalValue)
 			
 			if tt.envValue == "" {
-				os.Unsetenv(testEnvKey)
+				require.NoError(t, os.Unsetenv(testEnvKey))
 			} else {
-				os.Setenv(testEnvKey, tt.envValue)
+				require.NoError(t, os.Setenv(testEnvKey, tt.envValue))
 			}
 			
 			result := getEnvInt(testEnvKey, tt.defaultValue)
@@ -527,8 +514,8 @@ func TestGetEnvInt(t *testing.T) {
 // Helper function to restore environment variable
 func restoreEnv(key, value string) {
 	if value == "" {
-		os.Unsetenv(key)
+		_ = os.Unsetenv(key) // Ignore error in cleanup
 	} else {
-		os.Setenv(key, value)
+		_ = os.Setenv(key, value) // Ignore error in cleanup
 	}
 }

@@ -43,8 +43,7 @@ type GitHubConfig struct {
 }
 
 type AIConfig struct {
-	VoyageAPIKey    string
-	AnthropicAPIKey string // Deprecated: use LLM config instead
+	VoyageAPIKey string
 
 	// LLM Configuration (OpenAI-compatible API)
 	LLMBaseURL        string
@@ -86,14 +85,13 @@ func Load() (*Config, error) {
 			EncryptionKey: getEnv("GITHUB_ENCRYPTION_KEY", ""),
 		},
 		AI: AIConfig{
-			VoyageAPIKey:      getEnv("VOYAGE_API_KEY", ""),
-			AnthropicAPIKey:   getEnv("ANTHROPIC_API_KEY", ""), // Deprecated
-			LLMBaseURL:        getEnv("LLM_BASE_URL", "https://api.openai.com/v1"),
-			LLMModel:          getEnv("LLM_MODEL", "gpt-4o-mini"),
-			LLMAPIKey:         getEnv("LLM_API_KEY", ""),
-			LLMRequestTimeout: getEnv("LLM_REQUEST_TIMEOUT", "30s"),
-			EmbeddingProvider: getEnv("EMBEDDING_PROVIDER", "voyage"),
-			LocalEmbeddingURL: getEnv("LOCAL_EMBEDDING_URL", "http://localhost:1234"),
+			VoyageAPIKey:        getEnv("VOYAGE_API_KEY", ""),
+			LLMBaseURL:          getEnv("LLM_BASE_URL", "https://api.openai.com/v1"),
+			LLMModel:            getEnv("LLM_MODEL", "gpt-4o-mini"),
+			LLMAPIKey:           getEnv("LLM_API_KEY", ""),
+			LLMRequestTimeout:   getEnv("LLM_REQUEST_TIMEOUT", "30s"),
+			EmbeddingProvider:   getEnv("EMBEDDING_PROVIDER", "voyage"),
+			LocalEmbeddingURL:   getEnv("LOCAL_EMBEDDING_URL", "http://localhost:1234"),
 			LocalEmbeddingModel: getEnv("LOCAL_EMBEDDING_MODEL", "text-embedding-nomic-embed-text-v1.5"),
 		},
 	}
@@ -126,10 +124,7 @@ func (c *Config) validate() error {
 
 	// Validate LLM configuration
 	if c.AI.LLMAPIKey == "" {
-		// Fallback to deprecated AnthropicAPIKey for backward compatibility
-		if c.AI.AnthropicAPIKey == "" {
-			return fmt.Errorf("LLM_API_KEY is required for AI chat functionality")
-		}
+		return fmt.Errorf("LLM_API_KEY is required for AI chat functionality")
 	}
 
 	// Validate vector dimension only when using Voyage provider (model expects certain dims)

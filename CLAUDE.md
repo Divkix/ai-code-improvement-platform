@@ -249,7 +249,7 @@ LLM_API_KEY=your-llm-api-key
 LLM_REQUEST_TIMEOUT=30s
 
 # Legacy Anthropic support (optional)
-ANTHROPIC_API_KEY=your-anthropic-api-key
+LLM_API_KEY=your-llm-api-key
 
 # Embedding Provider (voyage or local)
 EMBEDDING_PROVIDER=voyage

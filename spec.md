@@ -77,7 +77,7 @@ services:
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
       - VOYAGE_API_KEY=${VOYAGE_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - LLM_API_KEY=${LLM_API_KEY}
     depends_on:
       - mongodb
       - qdrant
@@ -791,7 +791,7 @@ GITHUB_CLIENT_SECRET=your-github-client-secret
 VOYAGE_API_KEY=your-voyage-api-key
 
 # Anthropic
-ANTHROPIC_API_KEY=your-anthropic-api-key
+LLM_API_KEY=your-llm-api-key
 
 # MongoDB (if not using default)
 MONGODB_URI=mongodb://localhost:27017/github-analyzer

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github-analyzer/internal/config"
+
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -42,10 +43,10 @@ func NewLLMService(cfg *config.Config) (*LLMService, error) {
 		return nil, fmt.Errorf("invalid LLM_REQUEST_TIMEOUT: %w", err)
 	}
 
-	// Determine API key (new or deprecated)
+	// Ensure API key is provided
 	apiKey := cfg.AI.LLMAPIKey
 	if apiKey == "" {
-		apiKey = cfg.AI.AnthropicAPIKey // Fallback for backward compatibility
+		return nil, fmt.Errorf("LLM_API_KEY is required for LLM service")
 	}
 
 	// Create OpenAI client configuration
