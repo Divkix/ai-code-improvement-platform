@@ -13,7 +13,7 @@ This is an AI-powered code analysis platform that helps development teams onboar
 - Database: MongoDB 8.0
 - Vector Database: Qdrant 1.7+
 - Embedding Model: Voyage AI (voyage-code-3)
-- LLM: Claude 4 sonnet
+- LLM: OpenAI-compatible (GPT-4o-mini default) or Claude 4 sonnet
 - Containerization: Docker Compose
 
 ## Development Commands
@@ -131,7 +131,7 @@ The system follows a microservices architecture with the following core componen
 - **API Layer**: Gin framework with oapi-codegen for type-safe OpenAPI implementation
 - **Authentication**: JWT-based authentication with bcrypt password hashing
 - **Database Layer**: MongoDB for document storage, Qdrant for vector embeddings
-- **External APIs**: GitHub API for repository access, Voyage AI for embeddings, Claude for chat responses
+- **External APIs**: GitHub API for repository access, Voyage AI for embeddings, OpenAI-compatible LLM or Claude for chat responses
 - **Processing Pipeline**: Async repository import with code chunking and embedding generation
 
 ### Key Data Models
@@ -148,8 +148,8 @@ The core intelligence comes from a Retrieval-Augmented Generation (RAG) pipeline
 2. **Embedding Generation**: Chunks are converted to vectors using Voyage AI's voyage-code-3 model
 3. **Vector Storage**: Embeddings stored in Qdrant with metadata
 4. **Query Processing**: User questions are embedded and matched against code chunks
-5. **Context Construction**: Relevant chunks are assembled into prompts for Claude
-6. **Response Generation**: Claude provides context-aware answers referencing specific code
+5. **Context Construction**: Relevant chunks are assembled into prompts for the LLM
+6. **Response Generation**: LLM provides context-aware answers referencing specific code
 
 ### Search Capabilities
 The platform provides sophisticated multi-modal search functionality:
@@ -177,7 +177,7 @@ The project uses vertical slicing - each slice delivers a complete, testable fea
 5. **Code Processing**: File fetching, chunking, and metadata extraction
 6. **Search Foundation**: Basic text search through code chunks
 7. **Vector RAG**: Semantic search with embeddings and vector storage
-8. **AI Chat**: Complete conversational interface with Claude integration
+8. **AI Chat**: Complete conversational interface with LLM integration
 9. **Polish**: Error handling, performance optimization, demo preparation
 
 ## Key Implementation Notes
@@ -240,8 +240,15 @@ QDRANT_URL=http://localhost:6334
 # GitHub OAuth
 GITHUB_CLIENT_ID=your-github-client-id
 GITHUB_CLIENT_SECRET=your-github-client-secret
+GITHUB_ENCRYPTION_KEY=your-16-24-32-byte-aes-key
 
-# AI Services
+# AI Services - LLM (OpenAI-compatible)
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_MODEL=gpt-4o-mini
+LLM_API_KEY=your-llm-api-key
+LLM_REQUEST_TIMEOUT=30s
+
+# Legacy Anthropic support (optional)
 ANTHROPIC_API_KEY=your-anthropic-api-key
 
 # Embedding Provider (voyage or local)
@@ -258,6 +265,9 @@ QDRANT_COLLECTION_NAME=code_chunks
 PORT=8080
 HOST=0.0.0.0
 GIN_MODE=debug
+
+# Frontend Configuration (.env in frontend/)
+VITE_API_URL=http://localhost:8080
 ```
 
 ## Demo User Access
@@ -288,7 +298,7 @@ go test -v -run TestEmbeddingService ./internal/services/
 **Frontend Testing:**
 ```bash
 # From frontend/ directory
-bun run test        # All tests (unit + e2e)
+bun run test        # All tests (unit + e2e) - uses npm run internally
 bun run test:unit   # Vitest unit tests
 bun run test:e2e    # Playwright e2e tests
 ```
