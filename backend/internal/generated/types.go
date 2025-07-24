@@ -138,11 +138,11 @@ type CreateRepositoryRequest struct {
 
 // DashboardStats defines model for DashboardStats.
 type DashboardStats struct {
-	AvgResponseTime         float32 `json:"avgResponseTime"`
 	CodeChunksProcessed     int     `json:"codeChunksProcessed"`
 	CostSavingsMonthly      float32 `json:"costSavingsMonthly"`
 	DeveloperHoursReclaimed float32 `json:"developerHoursReclaimed"`
 	IssuesPreventedMonthly  int     `json:"issuesPreventedMonthly"`
+	KnowledgeRadius         int     `json:"knowledgeRadius"`
 	TotalRepositories       int     `json:"totalRepositories"`
 }
 

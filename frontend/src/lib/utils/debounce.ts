@@ -1,4 +1,5 @@
 // ABOUTME: Debounce utility function for delaying execution until after a period of inactivity
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // ABOUTME: Commonly used for search inputs to avoid making too many API calls
 
 /**
@@ -9,7 +10,7 @@
  * @param wait The number of milliseconds to delay
  * @returns The debounced function
  */
-export function debounce<T extends (...args: unknown[]) => unknown>(
+export function debounce<T extends (...args: any[]) => unknown>(
 	func: T,
 	wait: number
 ): (...args: Parameters<T>) => void {

@@ -182,7 +182,7 @@ components:
       required:
         - totalRepositories
         - codeChunksProcessed
-        - avgResponseTime
+        - knowledgeRadius
         - costSavingsMonthly
         - issuesPreventedMonthly
         - developerHoursReclaimed
@@ -193,9 +193,8 @@ components:
         codeChunksProcessed:
           type: integer
           minimum: 0
-        avgResponseTime:
-          type: number
-          format: float
+        knowledgeRadius:
+          type: integer
           minimum: 0
         costSavingsMonthly:
           type: number

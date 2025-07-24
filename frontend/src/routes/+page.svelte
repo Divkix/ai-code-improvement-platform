@@ -226,9 +226,9 @@
 						</dd>
 					</div>
 					<div class="text-center">
-						<dt class="truncate text-sm font-medium text-blue-100">Avg Response</dt>
+						<dt class="truncate text-sm font-medium text-blue-100">Knowledge Radius</dt>
 						<dd class="mt-2 text-4xl font-bold text-white">
-							{stats.avgResponseTime.toFixed(1)}s
+							{formatMetric(stats.knowledgeRadius ?? 0)}
 						</dd>
 					</div>
 				</div>
@@ -369,7 +369,7 @@
 						href="/repositories"
 						class="inline-flex items-center rounded-lg bg-indigo-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700"
 					>
-						<svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<svg class="mr-2 -ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path
 								stroke-linecap="round"
 								stroke-linejoin="round"

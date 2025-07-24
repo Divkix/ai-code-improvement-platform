@@ -682,8 +682,7 @@ export interface components {
 		DashboardStats: {
 			totalRepositories: number;
 			codeChunksProcessed: number;
-			/** Format: float */
-			avgResponseTime: number;
+			knowledgeRadius: number;
 			/** Format: float */
 			costSavingsMonthly: number;
 			issuesPreventedMonthly: number;

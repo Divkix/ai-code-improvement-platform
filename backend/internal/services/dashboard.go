@@ -65,11 +65,18 @@ func (s *DashboardService) GetStats(ctx context.Context, userID string) (*models
 	_ = cursor.Close(ctx)
 
 	var chunksCount int64
+	var knowledgeRadius int64
 	if len(repoIDs) > 0 {
+		// 2a. Count total chunks
 		chunksCount, err = s.chunksCollection.CountDocuments(ctx, bson.M{"repositoryId": bson.M{"$in": repoIDs}})
 		if err != nil {
 			chunksCount = 0
 		}
+
+		// 2b. Distinct functions & classes → knowledge radius
+		distinctFuncs, _ := s.chunksCollection.Distinct(ctx, "metadata.functions", bson.M{"repositoryId": bson.M{"$in": repoIDs}})
+		distinctClasses, _ := s.chunksCollection.Distinct(ctx, "metadata.classes", bson.M{"repositoryId": bson.M{"$in": repoIDs}})
+		knowledgeRadius = int64(len(distinctFuncs) + len(distinctClasses))
 	}
 
 	// Calculate cost savings and other business metrics (still formula-based)
@@ -81,7 +88,7 @@ func (s *DashboardService) GetStats(ctx context.Context, userID string) (*models
 	stats := &models.DashboardStats{
 		TotalRepositories:       int(repoCount),
 		CodeChunksProcessed:     int(chunksCount),
-		AvgResponseTime:         1.2 + rand.Float64()*0.8, // Keep synthetic until we capture real latency
+		KnowledgeRadius:         int(knowledgeRadius),
 		CostSavingsMonthly:      monthlySavings,
 		IssuesPreventedMonthly:  15 + rand.Intn(20), // Still demo
 		DeveloperHoursReclaimed: float64(queriesPerMonth) * hoursPerQuery,
@@ -104,7 +111,7 @@ func (s *DashboardService) generateDemoStats() *models.DashboardStats {
 	return &models.DashboardStats{
 		TotalRepositories:       baseRepos,
 		CodeChunksProcessed:     totalChunks,
-		AvgResponseTime:         1.2 + rand.Float64()*0.8,
+		KnowledgeRadius:         totalChunks / 10, // rough demo radius
 		CostSavingsMonthly:      monthlySavings,
 		IssuesPreventedMonthly:  15 + rand.Intn(20),
 		DeveloperHoursReclaimed: float64(queriesPerMonth) * hoursPerQuery,

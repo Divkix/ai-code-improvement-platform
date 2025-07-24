@@ -9,12 +9,12 @@ import (
 
 // DashboardStats represents key metrics for the dashboard
 type DashboardStats struct {
-	TotalRepositories        int     `json:"totalRepositories"`
-	CodeChunksProcessed      int     `json:"codeChunksProcessed"`
-	AvgResponseTime          float64 `json:"avgResponseTime"`
-	CostSavingsMonthly       float64 `json:"costSavingsMonthly"`
-	IssuesPreventedMonthly   int     `json:"issuesPreventedMonthly"`
-	DeveloperHoursReclaimed  float64 `json:"developerHoursReclaimed"`
+	TotalRepositories       int     `json:"totalRepositories"`
+	CodeChunksProcessed     int     `json:"codeChunksProcessed"`
+	KnowledgeRadius         int     `json:"knowledgeRadius"`
+	CostSavingsMonthly      float64 `json:"costSavingsMonthly"`
+	IssuesPreventedMonthly  int     `json:"issuesPreventedMonthly"`
+	DeveloperHoursReclaimed float64 `json:"developerHoursReclaimed"`
 }
 
 // ActivityType represents different types of activity
