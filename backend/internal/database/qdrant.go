@@ -209,7 +209,7 @@ func (q *Qdrant) SearchSimilar(ctx context.Context, collectionName string, query
 	if err != nil {
 		return nil, fmt.Errorf("failed to search similar vectors in collection %s: %w", collectionName, err)
 	}
-	
+
 	// Convert results to our format
 	similarityResults := make([]SimilarityResult, len(result))
 	for i, point := range result {

@@ -117,7 +117,7 @@ func (c *Config) validate() error {
 			return fmt.Errorf("VOYAGE_API_KEY is required when EMBEDDING_PROVIDER=voyage")
 		}
 	case "local":
-		if c.AI.LocalEmbeddingURL == "" {
+		if os.Getenv("LOCAL_EMBEDDING_URL") == "" {
 			return fmt.Errorf("LOCAL_EMBEDDING_URL is required when EMBEDDING_PROVIDER=local")
 		}
 	default:
