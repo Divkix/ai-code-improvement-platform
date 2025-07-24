@@ -162,16 +162,29 @@ export const vectorSearchAPI: {
 		return data;
 	},
 
-	// Get embedding pipeline stats
+	// Get embedding pipeline stats. This endpoint is protected, so we attach
+	// the JWT from localStorage if it exists. We use fetch() here because the
+	// generated openapi-fetch types currently mis-handle this specific path.
 	async getPipelineStats() {
-		const res = await fetch(`${API_BASE_URL}/api/embedding/pipeline-stats`, {
-			headers: {
-				'Content-Type': 'application/json'
+		const headers: Record<string, string> = {
+			'Content-Type': 'application/json'
+		};
+
+		if (typeof localStorage !== 'undefined') {
+			const token = localStorage.getItem('auth_token');
+			if (token) {
+				headers['Authorization'] = `Bearer ${token}`;
 			}
+		}
+
+		const res = await fetch(`${API_BASE_URL}/api/embedding/pipeline-stats`, {
+			headers
 		});
+
 		if (!res.ok) {
 			throw new Error(`Failed to fetch pipeline stats: ${res.status}`);
 		}
+
 		return (await res.json()) as {
 			pending: number;
 			processing: number;
