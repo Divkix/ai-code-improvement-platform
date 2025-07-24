@@ -8,6 +8,17 @@
 	Chart.register(...registerables);
 
 	let stats = $state<DashboardStats | null>(null);
+
+	// Format large numbers: <1k -> exact, 1k-999,999 -> #.#K, >=1M -> #.#M
+	function formatMetric(n: number): string {
+		if (n < 1000) return n.toLocaleString();
+		if (n < 1_000_000) {
+			const k = n / 1000;
+			return `${k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)}K`;
+		}
+		const m = n / 1_000_000;
+		return `${m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)}M`;
+	}
 	let activities = $state<ActivityItem[]>([]);
 	let trends = $state<TrendDataPoint[]>([]);
 	let loading = $state(true);
@@ -193,7 +204,7 @@
 					<div class="text-center">
 						<dt class="truncate text-sm font-medium text-blue-100">Code Chunks</dt>
 						<dd class="mt-2 text-4xl font-bold text-white">
-							{(stats.codeChunksProcessed / 1000).toFixed(1)}K
+							{formatMetric(stats.codeChunksProcessed)}
 						</dd>
 					</div>
 					<div class="text-center">
@@ -358,7 +369,7 @@
 						href="/repositories"
 						class="inline-flex items-center rounded-lg bg-indigo-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700"
 					>
-						<svg class="mr-2 -ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path
 								stroke-linecap="round"
 								stroke-linejoin="round"

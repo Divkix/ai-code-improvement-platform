@@ -78,7 +78,7 @@ func main() {
 	// Initialize services
 	userService := services.NewUserService(mongoDB.Database())
 	authService := auth.NewAuthService(cfg.JWT.Secret)
-	dashboardService := services.NewDashboardService()
+	dashboardService := services.NewDashboardService(mongoDB.Database())
 	githubService := services.NewGitHubService(mongoDB.Database(), cfg.GitHub.ClientID, cfg.GitHub.ClientSecret, cfg.GitHub.EncryptionKey)
 
 	// Initialize embedding provider (Voyage or Local)
