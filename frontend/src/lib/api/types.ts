@@ -596,6 +596,74 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/api/chat/sessions': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * List chat sessions
+		 * @description Get a list of chat sessions for the authenticated user
+		 */
+		get: operations['listChatSessions'];
+		put?: never;
+		/**
+		 * Create a new chat session
+		 * @description Create a new chat session, optionally associated with a repository
+		 */
+		post: operations['createChatSession'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/api/chat/sessions/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Get chat session details
+		 * @description Retrieve a specific chat session with all messages
+		 */
+		get: operations['getChatSession'];
+		put?: never;
+		post?: never;
+		/**
+		 * Delete chat session
+		 * @description Delete a chat session and all its messages
+		 */
+		delete: operations['deleteChatSession'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/api/chat/sessions/{id}/message': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/**
+		 * Send message to chat session
+		 * @description Send a user message and receive streaming AI response with retrieved code context
+		 */
+		post: operations['sendChatMessage'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -933,6 +1001,83 @@ export interface components {
 			processing: number;
 			completed: number;
 			failed: number;
+		};
+		CreateChatSessionRequest: {
+			/** @description Optional repository ID to associate with the chat session */
+			repositoryId?: string;
+			/** @description Optional custom title for the chat session */
+			title?: string;
+		};
+		SendMessageRequest: {
+			/** @description The user message content */
+			content: string;
+		};
+		RetrievedChunk: {
+			/** @description ID of the code chunk */
+			chunkId: string;
+			/** @description Path to the source file */
+			filePath: string;
+			/** @description Starting line number */
+			startLine: number;
+			/** @description Ending line number */
+			endLine: number;
+			/** @description Code content */
+			content: string;
+			/**
+			 * Format: float
+			 * @description Similarity score for retrieval
+			 */
+			similarity?: number;
+			/** @description Programming language */
+			language?: string;
+		};
+		ChatMessage: {
+			/** @description Message ID */
+			id: string;
+			/**
+			 * @description Message role
+			 * @enum {string}
+			 */
+			role: 'user' | 'assistant' | 'system';
+			/** @description Message content */
+			content: string;
+			/** @description Code chunks retrieved for context */
+			retrievedChunks?: components['schemas']['RetrievedChunk'][];
+			/** @description Number of tokens used for this message */
+			tokensUsed?: number;
+			/**
+			 * Format: date-time
+			 * @description Message timestamp
+			 */
+			timestamp: string;
+		};
+		ChatSession: {
+			/** @description Session ID */
+			id: string;
+			/** @description User ID who owns the session */
+			userId: string;
+			/** @description Optional associated repository ID */
+			repositoryId?: string;
+			/** @description Session title */
+			title: string;
+			/** @description List of messages in the session */
+			messages: components['schemas']['ChatMessage'][];
+			/**
+			 * Format: date-time
+			 * @description Session creation timestamp
+			 */
+			createdAt: string;
+			/**
+			 * Format: date-time
+			 * @description Session last update timestamp
+			 */
+			updatedAt: string;
+		};
+		ChatSessionListResponse: {
+			/** @description List of chat sessions */
+			sessions: components['schemas']['ChatSession'][];
+			/** @description Total number of sessions */
+			total: number;
 		};
 	};
 	responses: never;
@@ -2514,6 +2659,262 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['PipelineStats'];
+				};
+			};
+		};
+	};
+	listChatSessions: {
+		parameters: {
+			query?: {
+				/** @description Maximum number of sessions to return */
+				limit?: number;
+				/** @description Number of sessions to skip */
+				offset?: number;
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description List of chat sessions */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ChatSessionListResponse'];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+			/** @description Internal server error */
+			500: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+		};
+	};
+	createChatSession: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['CreateChatSessionRequest'];
+			};
+		};
+		responses: {
+			/** @description Chat session created successfully */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ChatSession'];
+				};
+			};
+			/** @description Bad request */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+			/** @description Internal server error */
+			500: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+		};
+	};
+	getChatSession: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Chat session ID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Chat session details */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ChatSession'];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+			/** @description Chat session not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+			/** @description Internal server error */
+			500: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+		};
+	};
+	deleteChatSession: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Chat session ID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Chat session deleted successfully */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+			/** @description Chat session not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+			/** @description Internal server error */
+			500: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+		};
+	};
+	sendChatMessage: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Chat session ID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['SendMessageRequest'];
+			};
+		};
+		responses: {
+			/** @description Streaming chat response */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'text/event-stream': string;
+					'application/json': components['schemas']['ChatSession'];
+				};
+			};
+			/** @description Bad request */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+			/** @description Chat session not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+			/** @description Internal server error */
+			500: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
 				};
 			};
 		};

@@ -19,7 +19,7 @@
 
 	// Subscribe to chat store
 	let chatState = $state($chatStore);
-	chatStore.subscribe(value => chatState = value);
+	chatStore.subscribe((value) => (chatState = value));
 
 	// Suggested questions
 	const suggestedQuestions = [
@@ -32,10 +32,7 @@
 
 	// Load data when component mounts
 	onMount(async () => {
-		await Promise.all([
-			loadRepositories(),
-			loadChatSessions()
-		]);
+		await Promise.all([loadRepositories(), loadChatSessions()]);
 	});
 
 	onDestroy(() => {
@@ -86,7 +83,9 @@
 			showSessionSidebar = false;
 		} catch (error) {
 			console.error('Failed to create session:', error);
-			chatActions.setError(error instanceof ChatAPIError ? error.message : 'Failed to create session');
+			chatActions.setError(
+				error instanceof ChatAPIError ? error.message : 'Failed to create session'
+			);
 		} finally {
 			chatActions.setLoading(false);
 		}
@@ -100,7 +99,9 @@
 			showSessionSidebar = false;
 		} catch (error) {
 			console.error('Failed to load session:', error);
-			chatActions.setError(error instanceof ChatAPIError ? error.message : 'Failed to load session');
+			chatActions.setError(
+				error instanceof ChatAPIError ? error.message : 'Failed to load session'
+			);
 		} finally {
 			chatActions.setLoading(false);
 		}
@@ -112,7 +113,9 @@
 			chatActions.removeSession(sessionId);
 		} catch (error) {
 			console.error('Failed to delete session:', error);
-			chatActions.setError(error instanceof ChatAPIError ? error.message : 'Failed to delete session');
+			chatActions.setError(
+				error instanceof ChatAPIError ? error.message : 'Failed to delete session'
+			);
 		}
 	}
 
@@ -157,8 +160,8 @@
 					chatActions.updateLastMessage(sessionId, { content: fullContent });
 					scrollToBottom();
 				} else if (chunk.type === 'error') {
-					chatActions.updateLastMessage(sessionId, { 
-						content: `Error: ${chunk.content}` 
+					chatActions.updateLastMessage(sessionId, {
+						content: `Error: ${chunk.content}`
 					});
 				} else if (chunk.type === 'done') {
 					// Update with final content and proper ID
@@ -218,11 +221,16 @@
 				<div class="flex items-center justify-between">
 					<h3 class="text-lg font-medium text-gray-900">Chat Sessions</h3>
 					<button
-						onclick={() => showSessionSidebar = false}
+						onclick={() => (showSessionSidebar = false)}
 						class="text-gray-400 hover:text-gray-600"
 					>
 						<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M6 18L18 6M6 6l12 12"
+							/>
 						</svg>
 					</button>
 				</div>
@@ -244,15 +252,17 @@
 						<div class="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600"></div>
 					</div>
 				{:else if chatState.sessions.length === 0}
-					<p class="text-center text-gray-500 py-8">No chat sessions yet</p>
+					<p class="py-8 text-center text-gray-500">No chat sessions yet</p>
 				{:else}
 					<div class="space-y-2">
 						{#each chatState.sessions as session (session.id)}
-							<div class="flex items-center justify-between rounded-lg border p-3 hover:bg-gray-50 {chatState.currentSession?.id === session.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}">
-								<button
-									onclick={() => selectSession(session)}
-									class="flex-1 text-left"
-								>
+							<div
+								class="flex items-center justify-between rounded-lg border p-3 hover:bg-gray-50 {chatState
+									.currentSession?.id === session.id
+									? 'border-blue-500 bg-blue-50'
+									: 'border-gray-200'}"
+							>
+								<button onclick={() => selectSession(session)} class="flex-1 text-left">
 									<div class="truncate text-sm font-medium text-gray-900">{session.title}</div>
 									<div class="text-xs text-gray-500">{formatTime(session.updatedAt)}</div>
 								</button>
@@ -261,7 +271,12 @@
 									class="ml-2 text-gray-400 hover:text-red-600"
 								>
 									<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+										/>
 									</svg>
 								</button>
 							</div>
@@ -277,14 +292,21 @@
 		<div class="flex items-center justify-between border-b border-gray-200 p-4">
 			<div class="flex items-center space-x-3">
 				<button
-					onclick={() => showSessionSidebar = !showSessionSidebar}
+					onclick={() => (showSessionSidebar = !showSessionSidebar)}
 					class="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
 				>
 					<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M4 6h16M4 12h16M4 18h16"
+						/>
 					</svg>
 				</button>
-				<div class="h-3 w-3 rounded-full {chatState.streaming ? 'bg-orange-500' : 'bg-green-500'}"></div>
+				<div
+					class="h-3 w-3 rounded-full {chatState.streaming ? 'bg-orange-500' : 'bg-green-500'}"
+				></div>
 				<h2 class="text-lg font-medium text-gray-900">
 					{chatState.currentSession?.title || 'AI Code Assistant'}
 				</h2>
@@ -315,16 +337,21 @@
 
 		<div bind:this={messagesContainer} class="flex-1 space-y-4 overflow-y-auto p-4">
 			{#if chatState.error}
-				<div class="rounded-lg bg-red-50 border border-red-200 p-4">
+				<div class="rounded-lg border border-red-200 bg-red-50 p-4">
 					<div class="flex">
 						<svg class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+							/>
 						</svg>
 						<div class="ml-3">
 							<p class="text-sm text-red-800">{chatState.error}</p>
 							<button
 								onclick={() => chatActions.setError(null)}
-								class="mt-1 text-xs text-red-600 hover:text-red-800 underline"
+								class="mt-1 text-xs text-red-600 underline hover:text-red-800"
 							>
 								Dismiss
 							</button>
@@ -334,10 +361,20 @@
 			{/if}
 
 			{#if currentMessages.length === 0 && !chatState.loading}
-				<div class="flex items-center justify-center h-full">
+				<div class="flex h-full items-center justify-center">
 					<div class="text-center">
-						<svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.126-.98L3 20l1.98-5.126A8.955 8.955 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z" />
+						<svg
+							class="mx-auto h-12 w-12 text-gray-400"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.126-.98L3 20l1.98-5.126A8.955 8.955 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z"
+							/>
 						</svg>
 						<h3 class="mt-2 text-sm font-medium text-gray-900">Start a conversation</h3>
 						<p class="mt-1 text-sm text-gray-500">Ask me anything about your code!</p>
