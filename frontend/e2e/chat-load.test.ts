@@ -22,7 +22,7 @@ test.describe('Chat Load Testing', () => {
 		try {
 			// Login all users
 			await Promise.all(
-				pages.map(async (page, index) => {
+				pages.map(async (page) => {
 					await page.goto('/auth/login');
 					await page.fill('input[name="email"]', 'demo@github-analyzer.com');
 					await page.fill('input[name="password"]', 'demo123456');

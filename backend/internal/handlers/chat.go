@@ -116,7 +116,11 @@ func (h *ChatHandler) ListChatSessions(c *gin.Context, params generated.ListChat
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "database_error", "message": "Failed to fetch chat sessions"})
 		return
 	}
-	defer cursor.Close(c.Request.Context())
+	defer func() {
+		if err := cursor.Close(c.Request.Context()); err != nil {
+			log.Printf("[ERROR] Failed to close cursor: %v", err)
+		}
+	}()
 
 	var sessions []models.ChatSession
 	if err := cursor.All(c.Request.Context(), &sessions); err != nil {
@@ -279,7 +283,9 @@ func (h *ChatHandler) handleStreamingMessage(c *gin.Context, userObjID, sessionO
 	responseStream, err := h.chatService.ProcessMessageStreaming(ctx, userObjID, sessionObjID, message)
 	if err != nil {
 		// Send error as SSE event
-		fmt.Fprintf(c.Writer, "event: error\ndata: %s\n\n", err.Error())
+		if _, writeErr := fmt.Fprintf(c.Writer, "event: error\ndata: %s\n\n", err.Error()); writeErr != nil {
+			log.Printf("[ERROR] Failed to write error to stream: %v", writeErr)
+		}
 		c.Writer.Flush()
 		return
 	}
@@ -298,13 +304,17 @@ func (h *ChatHandler) handleStreamingMessage(c *gin.Context, userObjID, sessionO
 		default:
 			// Send chunk as SSE event
 			data, _ := json.Marshal(chunk)
-			fmt.Fprintf(c.Writer, "data: %s\n\n", data)
+			if _, writeErr := fmt.Fprintf(c.Writer, "data: %s\n\n", data); writeErr != nil {
+				log.Printf("[ERROR] Failed to write chunk to stream: %v", writeErr)
+			}
 			flusher.Flush()
 		}
 	}
 
 	// Send final event to indicate completion
-	fmt.Fprintf(c.Writer, "event: done\ndata: {}\n\n")
+	if _, writeErr := fmt.Fprintf(c.Writer, "event: done\ndata: {}\n\n"); writeErr != nil {
+		log.Printf("[ERROR] Failed to write completion event to stream: %v", writeErr)
+	}
 	flusher.Flush()
 	
 	totalDuration := time.Since(startTime)

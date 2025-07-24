@@ -1,0 +1,12 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"target": "ES2018",
+		"lib": ["ES2018", "DOM"],
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"types": ["@playwright/test"]
+	},
+	"include": ["e2e/**/*"],
+	"exclude": []
+}

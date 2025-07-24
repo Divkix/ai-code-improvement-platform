@@ -183,7 +183,7 @@ export class ChatClient {
 						try {
 							const parsed = JSON.parse(data) as ChatStreamChunk;
 							onChunk(parsed);
-						} catch (e) {
+						} catch {
 							console.warn('Failed to parse SSE data:', data);
 						}
 					} else if (line.startsWith('event: ')) {

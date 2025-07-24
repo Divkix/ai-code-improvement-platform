@@ -223,6 +223,7 @@
 					<button
 						onclick={() => (showSessionSidebar = false)}
 						class="text-gray-400 hover:text-gray-600"
+						aria-label="Close session sidebar"
 					>
 						<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path
@@ -269,6 +270,7 @@
 								<button
 									onclick={() => deleteSession(session.id)}
 									class="ml-2 text-gray-400 hover:text-red-600"
+									aria-label="Delete session"
 								>
 									<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 										<path
@@ -294,6 +296,7 @@
 				<button
 					onclick={() => (showSessionSidebar = !showSessionSidebar)}
 					class="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+					aria-label="Toggle session sidebar"
 				>
 					<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path
