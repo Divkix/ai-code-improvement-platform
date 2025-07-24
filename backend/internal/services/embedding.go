@@ -179,6 +179,7 @@ func (es *EmbeddingService) ProcessCodeChunk(ctx context.Context, chunk *models.
 			"functions":    chunk.Metadata.Functions,
 			"classes":      chunk.Metadata.Classes,
 			"contentHash":  chunk.ContentHash,
+			"chunkId":      chunk.ID.Hex(),
 		},
 	}
 
@@ -237,6 +238,7 @@ func (es *EmbeddingService) processBatch(ctx context.Context, chunks []*models.C
 				"functions":    chunk.Metadata.Functions,
 				"classes":      chunk.Metadata.Classes,
 				"contentHash":  chunk.ContentHash,
+				"chunkId":      chunk.ID.Hex(),
 			},
 		}
 	}

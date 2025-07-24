@@ -486,7 +486,7 @@ Create intelligent code chunking system:
 
 ---
 
-## Slice 8: Vector RAG Pipeline (Days 10-13)
+## Slice 8: Vector RAG Pipeline (Days 10-13) ✅
 
 ### Objectives
 - Integrate Voyage AI for code embeddings
@@ -502,6 +502,9 @@ Create intelligent code chunking system:
 - [x] Create embedding generation pipeline ✅ (`EmbeddingPipeline` workers)
 - [x] Add vector search API endpoints ✅ (`VectorSearchHandler` & OpenAPI)
 - [x] Implement similarity scoring ✅ (`SimilarityResult.CalculateRelevance`)
+- [x] Fix Qdrant version compatibility (v1.7.4 → latest) ✅
+- [x] Debug and resolve semantic search frontend integration ✅
+- [x] Ensure semantic search displays results with similarity percentages ✅
 
 ### Remaining Follow-Up Tasks (Performance & Quality)
 1. **Voyage error resilience** – add exponential back-off + retry around `VoyageService.generateBatchEmbeddings`, surface full error message to caller.
@@ -558,10 +561,14 @@ Build semantic search with OpenAPI specification:
 - [x] Code chunks are converted to embeddings successfully
 - [x] Embeddings are stored in Qdrant with metadata
 - [x] Semantic search returns relevant results (API verified)
+- [x] Semantic search fully operational in frontend with similarity scores
+- [x] Vector search compatibility issue resolved (Qdrant v1.7.4 → latest)
+- [x] Global and repository-specific semantic search working
+- [x] Frontend displays semantic search results with proper formatting
+- [x] Search results include similarity scores
 - [ ] Search quality is better than text-only search (needs benchmark)
 - [ ] Vector search performance is acceptable (needs profiling)
 - [ ] Embedding generation handles errors gracefully (add retries & logging)
-- [x] Search results include similarity scores
 - [ ] System scales with repository size (stress-test required)
 
 ### Mini-Plan to Close Remaining Gaps (1½ days)

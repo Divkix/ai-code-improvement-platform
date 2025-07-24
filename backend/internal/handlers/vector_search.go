@@ -63,11 +63,25 @@ func (vsh *VectorSearchHandler) VectorSearch(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"results": results,
-		"total":   len(results),
-		"query":   req.Query,
-	})
+	// Convert SimilarityResult to SearchResult for consistent API response
+	searchResults := make([]models.SearchResult, len(results))
+	for i, result := range results {
+		searchResults[i] = models.SearchResult{
+			CodeChunk: result.CodeChunk,
+			Score:     float64(result.Score), // Convert float32 to float64
+			Highlight: result.Highlight,
+		}
+	}
+
+	// Create proper SearchResponse structure
+	response := models.SearchResponse{
+		Results: searchResults,
+		Total:   int64(len(results)),
+		HasMore: len(results) == req.Limit, // If we got the full limit, there might be more
+		Query:   req.Query,
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 // HybridSearch combines text and vector search for better results
@@ -104,12 +118,25 @@ func (vsh *VectorSearchHandler) HybridSearch(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"results": results,
-		"total":   len(results),
-		"query":   req.Query,
-		"vectorWeight": req.VectorWeight,
-	})
+	// Convert SimilarityResult to SearchResult for consistent API response
+	searchResults := make([]models.SearchResult, len(results))
+	for i, result := range results {
+		searchResults[i] = models.SearchResult{
+			CodeChunk: result.CodeChunk,
+			Score:     float64(result.Score), // Convert float32 to float64
+			Highlight: result.Highlight,
+		}
+	}
+
+	// Create proper SearchResponse structure
+	response := models.SearchResponse{
+		Results: searchResults,
+		Total:   int64(len(results)),
+		HasMore: len(results) == req.Limit, // If we got the full limit, there might be more
+		Query:   req.Query,
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 // FindSimilar finds code chunks similar to a specific chunk

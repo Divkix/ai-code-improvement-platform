@@ -48,8 +48,11 @@ make backend-dev
 # Validate OpenAPI spec and run linting
 make validate
 
-# Run tests with coverage
+# Run all tests with coverage
 make test
+
+# Run tests for a specific service
+cd backend && go test -v ./internal/services/...
 ```
 
 **Backend (Go) - Direct Commands:**
@@ -178,6 +181,13 @@ This project uses oapi-codegen for type-safe API development:
 - Server interface is implemented in `internal/server/server.go` which delegates to individual handlers
 - Frontend API types are generated with `bun run generate-api`
 - Built-in Swagger UI available at `/swagger/index.html`
+- **CRITICAL**: Always regenerate types after modifying the OpenAPI spec before running tests
+
+### Development Workflow
+- All code files should start with 2-line ABOUTME comments explaining the file's purpose
+- Use `golangci-lint run` for Go linting (never skip this step)
+- Services are stateless and follow dependency injection patterns
+- Database operations use MongoDB transactions where data consistency is critical
 
 ### Code Architecture Patterns
 - **Handler Pattern**: Each API domain (auth, github, search, etc.) has dedicated handlers in `internal/handlers/`
@@ -193,6 +203,8 @@ The system uses a sophisticated background processing pipeline:
 - **Multiple Providers**: Supports both Voyage AI and local embedding models
 - **Batch Processing**: Concurrent processing with configurable worker pools
 - **Progress Tracking**: Real-time status updates stored in MongoDB
+- **Status Management**: Uses EmbeddingStatus enum (pending, processing, completed, failed)
+- **Error Recovery**: Failed chunks can be reprocessed without affecting completed ones
 
 ### Code Chunking Strategy
 Files are processed into optimal chunks for retrieval:

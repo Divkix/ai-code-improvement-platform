@@ -20,21 +20,21 @@ import (
 
 // SearchService handles code search operations
 type SearchService struct {
-	db            *mongo.Database
-	codeChunks    *mongo.Collection
+	db                *mongo.Database
+	codeChunks        *mongo.Collection
 	embeddingProvider EmbeddingProvider
-	qdrantClient  *database.Qdrant
-	config        *config.Config
+	qdrantClient      *database.Qdrant
+	config            *config.Config
 }
 
 // NewSearchService creates a new search service
 func NewSearchService(db *mongo.Database, provider EmbeddingProvider, qdrant *database.Qdrant, config *config.Config) *SearchService {
 	return &SearchService{
-		db:            db,
-		codeChunks:    db.Collection("codechunks"),
+		db:                db,
+		codeChunks:        db.Collection("codechunks"),
 		embeddingProvider: provider,
-		qdrantClient:  qdrant,
-		config:        config,
+		qdrantClient:      qdrant,
+		config:            config,
 	}
 }
 
@@ -489,16 +489,32 @@ func (s *SearchService) VectorSearch(ctx context.Context, repositoryID primitive
 	// Convert Qdrant results to similarity results
 	similarityResults := make([]models.SimilarityResult, 0, len(results))
 	for _, result := range results {
+		// Qdrant point IDs are UUIDs when the original Mongo ObjectID is not a valid UUID.
+		// Attempt to use the point ID first; if that fails fall back to the chunkId we stored in payload.
 		chunkID, err := primitive.ObjectIDFromHex(result.ID)
 		if err != nil {
-			continue // Skip invalid IDs
+			if cidRaw, ok := result.Payload["chunkId"]; ok {
+				if cidStr, ok := cidRaw.(string); ok {
+					chunkID, err = primitive.ObjectIDFromHex(cidStr)
+				}
+			}
+		}
+		if err != nil {
+			continue // Skip if we still can't map the ID
 		}
 
-		// Get the full chunk data from MongoDB
+		// Get the full chunk data from MongoDB with optional repository filtering
 		var chunk models.CodeChunk
-		err = s.codeChunks.FindOne(ctx, bson.M{"_id": chunkID}).Decode(&chunk)
+		filter := bson.M{"_id": chunkID}
+		
+		// Add repository filter if specified
+		if !repositoryID.IsZero() {
+			filter["repositoryId"] = repositoryID
+		}
+		
+		err = s.codeChunks.FindOne(ctx, filter).Decode(&chunk)
 		if err != nil {
-			continue // Skip chunks that can't be found
+			continue // Skip chunks that can't be found or don't match repository filter
 		}
 
 		similarityResult := models.NewSimilarityResult(chunk, result.Score)
@@ -656,11 +672,17 @@ func (s *SearchService) FindSimilarChunks(ctx context.Context, chunkID primitive
 			continue
 		}
 
-		// Get full chunk data
+		// Try to fetch the chunk document (only from same repository as source)
 		var chunk models.CodeChunk
-		err = s.codeChunks.FindOne(ctx, bson.M{"_id": resultChunkID}).Decode(&chunk)
+		filter := bson.M{"_id": resultChunkID, "repositoryId": sourceChunk.RepositoryID}
+		err = s.codeChunks.FindOne(ctx, filter).Decode(&chunk)
 		if err != nil {
-			continue
+			// Fallback: lookup by vectorId matching the Qdrant point ID (legacy data)
+			fallbackFilter := bson.M{"vectorId": result.ID, "repositoryId": sourceChunk.RepositoryID}
+			err = s.codeChunks.FindOne(ctx, fallbackFilter).Decode(&chunk)
+			if err != nil {
+				continue // Skip chunks that can't be found or are from different repository
+			}
 		}
 
 		similarityResult := models.NewSimilarityResult(chunk, result.Score)
