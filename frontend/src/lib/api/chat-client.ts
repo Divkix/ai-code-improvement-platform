@@ -1,0 +1,225 @@
+// ABOUTME: Chat API client with Server-Sent Events streaming support
+// ABOUTME: Handles chat sessions, messages, and real-time streaming responses
+
+import { authStore } from '$lib/stores/auth';
+import type { components } from './types';
+import { get } from 'svelte/store';
+
+type ChatSession = components['schemas']['ChatSession'];
+type ChatSessionListResponse = components['schemas']['ChatSessionListResponse'];
+type CreateChatSessionRequest = components['schemas']['CreateChatSessionRequest'];
+type SendMessageRequest = components['schemas']['SendMessageRequest'];
+
+const API_BASE_URL = '/api';
+
+class ChatAPIError extends Error {
+    constructor(
+        message: string,
+        public status?: number,
+        public code?: string
+    ) {
+        super(message);
+        this.name = 'ChatAPIError';
+    }
+}
+
+function getAuthHeaders(): Record<string, string> {
+    const auth = get(authStore);
+    return {
+        'Content-Type': 'application/json',
+        ...(auth.token ? { Authorization: `Bearer ${auth.token}` } : {})
+    };
+}
+
+export interface ChatStreamChunk {
+    type: 'content' | 'done' | 'error';
+    content: string;
+    delta?: string;
+}
+
+export class ChatClient {
+    async listSessions(params?: { limit?: number; offset?: number }): Promise<ChatSessionListResponse> {
+        const url = new URL(`${API_BASE_URL}/chat/sessions`, window.location.origin);
+        if (params?.limit) url.searchParams.set('limit', params.limit.toString());
+        if (params?.offset) url.searchParams.set('offset', params.offset.toString());
+
+        const response = await fetch(url.toString(), {
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ message: 'Failed to fetch sessions' }));
+            throw new ChatAPIError(error.message || 'Failed to fetch chat sessions', response.status, error.error);
+        }
+
+        return response.json();
+    }
+
+    async createSession(request?: CreateChatSessionRequest): Promise<ChatSession> {
+        const response = await fetch(`${API_BASE_URL}/chat/sessions`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(request || {})
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ message: 'Failed to create session' }));
+            throw new ChatAPIError(error.message || 'Failed to create chat session', response.status, error.error);
+        }
+
+        return response.json();
+    }
+
+    async getSession(sessionId: string): Promise<ChatSession> {
+        const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}`, {
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ message: 'Failed to fetch session' }));
+            throw new ChatAPIError(error.message || 'Failed to fetch chat session', response.status, error.error);
+        }
+
+        return response.json();
+    }
+
+    async deleteSession(sessionId: string): Promise<void> {
+        const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ message: 'Failed to delete session' }));
+            throw new ChatAPIError(error.message || 'Failed to delete chat session', response.status, error.error);
+        }
+    }
+
+    async sendMessage(sessionId: string, content: string): Promise<ChatSession> {
+        const request: SendMessageRequest = { content };
+
+        const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/message`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(request)
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ message: 'Failed to send message' }));
+            throw new ChatAPIError(error.message || 'Failed to send message', response.status, error.error);
+        }
+
+        return response.json();
+    }
+
+    async sendMessageStream(
+        sessionId: string,
+        content: string,
+        onChunk: (chunk: ChatStreamChunk) => void
+    ): Promise<void> {
+        const request: SendMessageRequest = { content };
+
+        const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/message`, {
+            method: 'POST',
+            headers: {
+                ...getAuthHeaders(),
+                'Accept': 'text/event-stream'
+            },
+            body: JSON.stringify(request)
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ message: 'Failed to send message' }));
+            throw new ChatAPIError(error.message || 'Failed to send message', response.status, error.error);
+        }
+
+        if (!response.body) {
+            throw new ChatAPIError('No response body received');
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, { stream: true });
+                const lines = chunk.split('\n');
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const data = line.slice(6);
+                        if (data.trim() === '') continue;
+
+                        try {
+                            const parsed = JSON.parse(data) as ChatStreamChunk;
+                            onChunk(parsed);
+                        } catch (e) {
+                            console.warn('Failed to parse SSE data:', data);
+                        }
+                    } else if (line.startsWith('event: ')) {
+                        const event = line.slice(7);
+                        if (event === 'done') {
+                            onChunk({ type: 'done', content: '' });
+                            return;
+                        } else if (event === 'error') {
+                            onChunk({ type: 'error', content: 'Stream error occurred' });
+                            return;
+                        }
+                    }
+                }
+            }
+        } finally {
+            reader.releaseLock();
+        }
+    }
+
+    async sendMessageWithEventSource(
+        sessionId: string,
+        content: string,
+        onChunk: (chunk: ChatStreamChunk) => void,
+        onError: (error: Error) => void
+    ): Promise<void> {
+        const request: SendMessageRequest = { content };
+
+        // Create a form data for sending the request
+        const formData = new FormData();
+        formData.append('data', JSON.stringify(request));
+
+        const auth = get(authStore);
+        const eventSourceUrl = new URL(`${API_BASE_URL}/chat/sessions/${sessionId}/message`, window.location.origin);
+        
+        // For EventSource, we need to handle the authentication differently
+        // We'll send the auth token as a query parameter since EventSource doesn't support custom headers
+        if (auth.token) {
+            eventSourceUrl.searchParams.set('token', auth.token);
+        }
+
+        try {
+            // First send the message via POST
+            const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/message`, {
+                method: 'POST',
+                headers: {
+                    ...getAuthHeaders(),
+                    'Accept': 'text/event-stream'
+                },
+                body: JSON.stringify(request)
+            });
+
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({ message: 'Failed to send message' }));
+                throw new ChatAPIError(error.message || 'Failed to send message', response.status, error.error);
+            }
+
+            // Handle streaming response
+            return this.sendMessageStream(sessionId, content, onChunk);
+        } catch (error) {
+            onError(error instanceof Error ? error : new Error('Unknown error occurred'));
+        }
+    }
+}
+
+export const chatClient = new ChatClient();
+export { ChatAPIError };
