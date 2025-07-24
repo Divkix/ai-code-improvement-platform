@@ -19,9 +19,9 @@ type Qdrant struct {
 }
 
 type SimilarityResult struct {
-	ID       string             `json:"id"`
-	Score    float32            `json:"score"`
-	Payload  map[string]any     `json:"payload,omitempty"`
+	ID      string         `json:"id"`
+	Score   float32        `json:"score"`
+	Payload map[string]any `json:"payload,omitempty"`
 }
 
 type VectorPoint struct {
@@ -61,7 +61,7 @@ func NewQdrant(qdrantURL string) (*Qdrant, error) {
 	if parsedURL.Scheme == "https" || port == 443 {
 		config.UseTLS = true
 	}
-	
+
 	// For Docker development, explicitly disable TLS for gRPC ports with http scheme
 	if parsedURL.Scheme == "http" {
 		config.UseTLS = false
@@ -86,7 +86,7 @@ func NewQdrant(qdrantURL string) (*Qdrant, error) {
 
 func (q *Qdrant) Ping() error {
 	ctx := context.Background()
-	
+
 	// Try to get a list of collections as a health check
 	_, err := q.client.ListCollections(ctx)
 	if err != nil {
@@ -104,7 +104,7 @@ func (q *Qdrant) CreateCollection(ctx context.Context, collectionName string, ve
 			Distance: qdrant.Distance_Cosine, // Using cosine distance for code similarity
 		}),
 	})
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to create collection %s: %w", collectionName, err)
 	}
@@ -150,7 +150,11 @@ func (q *Qdrant) UpsertPoints(ctx context.Context, collectionName string, points
 		// Create payload if provided
 		var payload map[string]*qdrant.Value
 		if len(point.Payload) > 0 {
-			payload = qdrant.NewValueMap(point.Payload)
+			// Sanitize payload to avoid unsupported types (e.g., []string) that cause panics in
+			// qdrant.NewValueMap. We convert slices of concrete types (like []string) into []any so the
+			// Qdrant helper recognises them as list values instead of panicking.
+			sanitized := sanitizePayloadMap(point.Payload)
+			payload = qdrant.NewValueMap(sanitized)
 		}
 
 		qdrantPoints[i] = &qdrant.PointStruct{
@@ -246,7 +250,7 @@ func (q *Qdrant) DeletePoints(ctx context.Context, collectionName string, pointI
 	// Delete the points using Delete method instead of DeletePoints
 	_, err := q.client.Delete(ctx, &qdrant.DeletePoints{
 		CollectionName: collectionName,
-		Points:         &qdrant.PointsSelector{
+		Points: &qdrant.PointsSelector{
 			PointsSelectorOneOf: &qdrant.PointsSelector_Points{
 				Points: &qdrant.PointsIdsList{
 					Ids: qdrantIDs,
@@ -344,12 +348,12 @@ func isUUID(s string) bool {
 	if len(s) != 36 {
 		return false
 	}
-	
+
 	parts := strings.Split(s, "-")
 	if len(parts) != 5 {
 		return false
 	}
-	
+
 	expectedLengths := []int{8, 4, 4, 4, 12}
 	for i, part := range parts {
 		if len(part) != expectedLengths[i] {
@@ -362,6 +366,58 @@ func isUUID(s string) bool {
 			}
 		}
 	}
-	
+
 	return true
+}
+
+// sanitizePayloadMap walks through a payload map recursively and converts any slice with a concrete
+// element type (e.g., []string) into a slice of interface{} (i.e., []any). The Qdrant Go client only
+// supports []any for list values; passing an untyped concrete slice causes it to panic with
+// "invalid type: []T".
+func sanitizePayloadMap(input map[string]any) map[string]any {
+	if input == nil {
+		return nil
+	}
+
+	sanitized := make(map[string]any, len(input))
+	for k, v := range input {
+		sanitized[k] = sanitizePayloadValue(v)
+	}
+	return sanitized
+}
+
+// sanitizePayloadValue converts unsupported value types to forms accepted by qdrant.NewValueMap.
+// Currently this handles slices of strings (and other primitives) by converting them to []any and
+// processes nested maps recursively.
+func sanitizePayloadValue(v any) any {
+	switch vv := v.(type) {
+	case []string:
+		out := make([]any, len(vv))
+		for i, s := range vv {
+			out[i] = s
+		}
+		return out
+	case []int:
+		out := make([]any, len(vv))
+		for i, n := range vv {
+			out[i] = n
+		}
+		return out
+	case []float64:
+		out := make([]any, len(vv))
+		for i, n := range vv {
+			out[i] = n
+		}
+		return out
+	case []any:
+		// Recursively sanitize each element
+		for i, elem := range vv {
+			vv[i] = sanitizePayloadValue(elem)
+		}
+		return vv
+	case map[string]any:
+		return sanitizePayloadMap(vv)
+	default:
+		return v
+	}
 }
