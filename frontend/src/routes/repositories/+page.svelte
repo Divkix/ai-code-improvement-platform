@@ -491,7 +491,7 @@
 	<div class="fixed inset-0 z-50 overflow-y-auto">
 		<div class="flex min-h-screen items-center justify-center p-4">
 			<div
-				class="fixed inset-0 bg-black bg-opacity-50"
+				class="fixed inset-0 bg-black bg-opacity-10"
 				onclick={closeAddModal}
 				onkeydown={closeAddModal}
 				role="button"
@@ -595,7 +595,7 @@
 	<div class="fixed inset-0 z-50 overflow-y-auto">
 		<div class="flex min-h-screen items-center justify-center p-4">
 			<div
-				class="fixed inset-0 bg-black bg-opacity-50"
+				class="fixed inset-0 bg-black bg-opacity-10"
 				onclick={closeGitHubBrowser}
 				onkeydown={closeGitHubBrowser}
 				role="button"
