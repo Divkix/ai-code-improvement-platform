@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { replaceState } from '$app/navigation';
 	import {
 		handleGitHubCallback,
 		disconnectGitHub as disconnectGitHubAPI,
@@ -43,7 +44,7 @@
 				success = 'GitHub account connected successfully!';
 
 				// Clean up the URL
-				window.history.replaceState({}, document.title, window.location.pathname);
+				replaceState(window.location.pathname, {});
 			} catch (err) {
 				error = err instanceof Error ? err.message : 'Failed to connect GitHub account';
 			} finally {
