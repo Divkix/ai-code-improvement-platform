@@ -18,6 +18,7 @@
 	let messagesContainer: HTMLElement;
 	let renamingSessionId = $state<string | null>(null);
 	let renameInputValue = $state('');
+	let activeDropdownId = $state<string | null>(null);
 
 	// Subscribe to chat store
 	let chatState = $state($chatStore);
@@ -130,6 +131,14 @@
 	function cancelRenaming() {
 		renamingSessionId = null;
 		renameInputValue = '';
+	}
+
+	function toggleDropdown(sessionId: string) {
+		activeDropdownId = activeDropdownId === sessionId ? null : sessionId;
+	}
+
+	function closeDropdown() {
+		activeDropdownId = null;
 	}
 
 	async function saveRename(sessionId: string) {
@@ -354,40 +363,81 @@
 									</div>
 								{:else}
 									<!-- Normal mode -->
-									<div class="flex items-center justify-between">
-										<button onclick={() => selectSession(session)} class="flex-1 text-left">
+									<div class="flex items-center">
+										<button
+											onclick={() => selectSession(session)}
+											class="min-w-0 flex-1 pr-2 text-left"
+										>
 											<div class="truncate text-sm font-medium text-gray-900">{session.title}</div>
 											<div class="text-xs text-gray-500">{formatTime(session.updatedAt)}</div>
 										</button>
-										<div class="flex space-x-1">
+										<div class="relative flex-shrink-0">
 											<button
-												onclick={() => startRenaming(session.id, session.title)}
-												class="text-gray-400 hover:text-blue-600"
-												aria-label="Rename session"
+												onclick={() => toggleDropdown(session.id)}
+												class="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+												aria-label="More options"
 											>
-												<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+												<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
 													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+														d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
 													/>
 												</svg>
 											</button>
-											<button
-												onclick={() => deleteSession(session.id)}
-												class="text-gray-400 hover:text-red-600"
-												aria-label="Delete session"
-											>
-												<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-													/>
-												</svg>
-											</button>
+											{#if activeDropdownId === session.id}
+												<!-- svelte-ignore a11y_click_events_have_key_events -->
+												<!-- svelte-ignore a11y_no_static_element_interactions -->
+												<div class="fixed inset-0 z-10" onclick={closeDropdown}></div>
+												<div
+													class="absolute right-0 z-20 mt-1 w-32 rounded-md border border-gray-200 bg-white shadow-lg"
+												>
+													<div class="py-1">
+														<button
+															onclick={() => {
+																startRenaming(session.id, session.title);
+																closeDropdown();
+															}}
+															class="flex w-full items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+														>
+															<svg
+																class="mr-2 h-4 w-4"
+																fill="none"
+																viewBox="0 0 24 24"
+																stroke="currentColor"
+															>
+																<path
+																	stroke-linecap="round"
+																	stroke-linejoin="round"
+																	stroke-width="2"
+																	d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+																/>
+															</svg>
+															Edit
+														</button>
+														<button
+															onclick={() => {
+																deleteSession(session.id);
+																closeDropdown();
+															}}
+															class="flex w-full items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+														>
+															<svg
+																class="mr-2 h-4 w-4"
+																fill="none"
+																viewBox="0 0 24 24"
+																stroke="currentColor"
+															>
+																<path
+																	stroke-linecap="round"
+																	stroke-linejoin="round"
+																	stroke-width="2"
+																	d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+																/>
+															</svg>
+															Delete
+														</button>
+													</div>
+												</div>
+											{/if}
 										</div>
 									</div>
 								{/if}
