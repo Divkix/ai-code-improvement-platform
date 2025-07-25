@@ -3,6 +3,9 @@
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { authStore } from '$lib/stores/auth';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import * as Sheet from '$lib/components/ui/sheet/index.js';
+	import { Menu, Loader2 } from '@lucide/svelte';
 	import '../app.css';
 	let { children } = $props();
 
@@ -42,119 +45,74 @@
 						<a href="/" class="text-xl font-semibold text-gray-900">GitHub Analyzer</a>
 					</div>
 					{#if $authStore.isAuthenticated}
-						<div class="hidden md:ml-10 md:flex md:space-x-8">
-							<a href="/" class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
-								>Dashboard</a
-							>
-							<a
-								href="/repositories"
-								class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
-								>Repositories</a
-							>
-							<a
-								href="/search"
-								class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700">Search</a
-							>
-							<a
-								href="/chat"
-								class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700">Chat</a
-							>
+						<div class="hidden md:ml-10 md:flex md:space-x-2">
+							<Button variant="ghost" size="sm" href="/">Dashboard</Button>
+							<Button variant="ghost" size="sm" href="/repositories">Repositories</Button>
+							<Button variant="ghost" size="sm" href="/search">Search</Button>
+							<Button variant="ghost" size="sm" href="/chat">Chat</Button>
 						</div>
 					{/if}
 				</div>
 				<div class="flex items-center space-x-4">
 					{#if $authStore.isAuthenticated}
-						<!-- Mobile menu button -->
-						<button
-							onclick={() => (mobileMenuOpen = !mobileMenuOpen)}
-							class="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none md:hidden"
-							aria-expanded={mobileMenuOpen}
-							aria-controls="mobile-menu"
-						>
-							<span class="sr-only">Open main menu</span>
-							<!-- Hamburger icon -->
-							<svg
-								class="h-6 w-6"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke-width="1.5"
-								stroke="currentColor"
+						<Sheet.Root bind:open={mobileMenuOpen}>
+							<Sheet.Trigger
+								class="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none md:hidden"
 							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-								/>
-							</svg>
-						</button>
+								<Menu class="h-6 w-6" />
+								<span class="sr-only">Open main menu</span>
+							</Sheet.Trigger>
+							<Sheet.Content side="left">
+								<Sheet.Header>
+									<Sheet.Title>Navigation</Sheet.Title>
+								</Sheet.Header>
+								<div class="mt-4 flex flex-col space-y-2">
+									<Button variant="ghost" href="/" onclick={() => (mobileMenuOpen = false)}>
+										Dashboard
+									</Button>
+									<Button
+										variant="ghost"
+										href="/repositories"
+										onclick={() => (mobileMenuOpen = false)}
+									>
+										Repositories
+									</Button>
+									<Button variant="ghost" href="/search" onclick={() => (mobileMenuOpen = false)}>
+										Search
+									</Button>
+									<Button variant="ghost" href="/chat" onclick={() => (mobileMenuOpen = false)}>
+										Chat
+									</Button>
+								</div>
+							</Sheet.Content>
+						</Sheet.Root>
 
 						<span class="hidden text-sm text-gray-700 sm:block"
 							>Welcome, {$authStore.user?.name}</span
 						>
-						<button
+						<Button
+							variant="ghost"
+							size="sm"
 							onclick={() => {
 								authStore.logout();
 							}}
-							class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
 						>
 							Logout
-						</button>
+						</Button>
 					{:else if !$authStore.isLoading && $page.url.pathname !== '/auth/login'}
-						<a
-							href="/auth/login"
-							class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-							>Login</a
-						>
+						<Button href="/auth/login">Login</Button>
 					{/if}
 				</div>
 			</div>
 		</div>
-
-		<!-- Mobile menu -->
-		{#if $authStore.isAuthenticated && mobileMenuOpen}
-			<div class="md:hidden" id="mobile-menu">
-				<div class="space-y-1 border-t border-gray-200 bg-white px-2 pt-2 pb-3 sm:px-3">
-					<a
-						href="/"
-						class="block px-3 py-2 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-						onclick={() => (mobileMenuOpen = false)}
-					>
-						Dashboard
-					</a>
-					<a
-						href="/repositories"
-						class="block px-3 py-2 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-						onclick={() => (mobileMenuOpen = false)}
-					>
-						Repositories
-					</a>
-					<a
-						href="/search"
-						class="block px-3 py-2 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-						onclick={() => (mobileMenuOpen = false)}
-					>
-						Search
-					</a>
-					<a
-						href="/chat"
-						class="block px-3 py-2 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-						onclick={() => (mobileMenuOpen = false)}
-					>
-						Chat
-					</a>
-				</div>
-			</div>
-		{/if}
 	</nav>
 
 	<main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
 		{#if $authStore.isLoading}
 			<div class="flex h-96 items-center justify-center">
-				<div class="text-center">
-					<div
-						class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"
-					></div>
-					<p class="mt-4 text-gray-600">Authenticating...</p>
+				<div class="flex items-center justify-center">
+					<Loader2 class="h-8 w-8 animate-spin" />
+					<span class="ml-2">Authenticating...</span>
 				</div>
 			</div>
 		{:else}
