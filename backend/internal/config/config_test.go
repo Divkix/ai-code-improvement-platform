@@ -274,6 +274,11 @@ func TestValidation_VectorDimension(t *testing.T) {
 			dimension:   "4096",
 			expectError: true,
 		},
+		{
+			name:        "valid dimension 768",
+			dimension:   "768",
+			expectError: false,
+		},
 	}
 
 	for _, tt := range tests {

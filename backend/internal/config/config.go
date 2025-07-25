@@ -25,11 +25,11 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	MongoURI             string
-	QdrantURL            string
-	DBName               string
-	QdrantCollectionName string
-	VectorDimension      int
+	MongoURI               string
+	QdrantURL              string
+	DBName                 string
+	QdrantCollectionName   string
+	VectorDimension        int
 	EnableQdrantRepoFilter bool // if true, attach repositoryId payload filter in Qdrant queries
 }
 
@@ -72,11 +72,11 @@ func Load() (*Config, error) {
 			Mode: getEnv("GIN_MODE", "debug"),
 		},
 		Database: DatabaseConfig{
-			MongoURI:             getEnv("MONGODB_URI", "mongodb://localhost:27017/github-analyzer"),
-			QdrantURL:            getEnv("QDRANT_URL", "http://localhost:6334"),
-			DBName:               getEnv("DB_NAME", "github-analyzer"),
-			QdrantCollectionName: getEnv("QDRANT_COLLECTION_NAME", "codechunks"),
-			VectorDimension:      getEnvInt("VECTOR_DIMENSION", 1024),
+			MongoURI:               getEnv("MONGODB_URI", "mongodb://localhost:27017/github-analyzer"),
+			QdrantURL:              getEnv("QDRANT_URL", "http://localhost:6334"),
+			DBName:                 getEnv("DB_NAME", "github-analyzer"),
+			QdrantCollectionName:   getEnv("QDRANT_COLLECTION_NAME", "codechunks"),
+			VectorDimension:        getEnvInt("VECTOR_DIMENSION", 1024),
 			EnableQdrantRepoFilter: getEnv("ENABLE_QDRANT_REPO_FILTER", "true") != "false",
 		},
 		JWT: JWTConfig{
@@ -123,9 +123,9 @@ func (c *Config) validate() error {
 		return fmt.Errorf("LLM_API_KEY is required for AI chat functionality")
 	}
 
-	// Optional sanity check: common Voyage models expect 256/512/1024/2048 dims.
-	if c.Database.VectorDimension != 256 && c.Database.VectorDimension != 512 && c.Database.VectorDimension != 1024 && c.Database.VectorDimension != 2048 {
-		return fmt.Errorf("VECTOR_DIMENSION must be one of 256, 512, 1024, or 2048, got %d", c.Database.VectorDimension)
+	// Optional sanity check: common Voyage models expect 256/512/768/1024/2048 dims.
+	if c.Database.VectorDimension != 256 && c.Database.VectorDimension != 512 && c.Database.VectorDimension != 768 && c.Database.VectorDimension != 1024 && c.Database.VectorDimension != 2048 {
+		return fmt.Errorf("VECTOR_DIMENSION must be one of 256, 512, 768, 1024, or 2048, got %d", c.Database.VectorDimension)
 	}
 
 	return nil
