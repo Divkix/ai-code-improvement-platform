@@ -57,7 +57,7 @@
 		"vitest-browser-svelte": "^0.1.0"
 	},
 	"dependencies": {
-		"@lucide/svelte": "^0.515.0",
+		"@lucide/svelte": "^0.525.0",
 		"bits-ui": "^2.8.12",
 		"chart.js": "^4.5.0",
 		"clsx": "^2.1.1",
