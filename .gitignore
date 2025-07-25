@@ -1,2 +1,4 @@
 .env
 .env.local
+# Generated API spec
+backend/api/openapi.json

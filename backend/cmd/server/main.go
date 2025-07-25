@@ -151,7 +151,10 @@ func main() {
 			"/health":           true,
 			"/api/health":       true,
 			"/api/auth/login":   true,
+			"/docs":             true,
 			"/docs/*any":        true,
+			"/api/docs":         true,
+			"/api/docs/*any":    true,
 			"/api/openapi.yaml": true,
 			"/api/openapi.json": true,
 		}
@@ -208,8 +211,16 @@ func main() {
 		}
 	}()
 
-	// Add Swagger UI endpoint (serves the OpenAPI spec)
-	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	// Swagger UI will fetch the latest OpenAPI spec directly from /api/openapi.yaml every time the page loads.
+	router.GET("/docs/*any", ginSwagger.WrapHandler(
+		swaggerFiles.Handler,
+		ginSwagger.URL("/api/openapi.yaml"), // use YAML spec served by the backend
+	))
+
+	// Convenience redirects so /docs and /api/docs open the UI without needing /index.html
+	router.GET("/docs", func(c *gin.Context) {
+		c.Redirect(302, "/docs/index.html")
+	})
 
 	// Serve OpenAPI specification directly
 	router.GET("/api/openapi.yaml", func(c *gin.Context) {

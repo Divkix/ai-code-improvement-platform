@@ -12,3 +12,8 @@ lint:
 
 generate:
 	go generate ./...
+
+openapi-json:
+	@echo "Generating OpenAPI JSON from YAML..."
+	@command -v yq >/dev/null 2>&1 || { echo >&2 "yq is required but not installed. Install from https://github.com/mikefarah/yq"; exit 1; }
+	@yq -o=json ../api/openapi.yaml > ../api/openapi.json
