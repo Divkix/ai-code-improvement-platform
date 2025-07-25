@@ -30,6 +30,7 @@ type DatabaseConfig struct {
 	DBName               string
 	QdrantCollectionName string
 	VectorDimension      int
+	EnableQdrantRepoFilter bool // if true, attach repositoryId payload filter in Qdrant queries
 }
 
 type JWTConfig struct {
@@ -76,6 +77,7 @@ func Load() (*Config, error) {
 			DBName:               getEnv("DB_NAME", "github-analyzer"),
 			QdrantCollectionName: getEnv("QDRANT_COLLECTION_NAME", "codechunks"),
 			VectorDimension:      getEnvInt("VECTOR_DIMENSION", 1024),
+			EnableQdrantRepoFilter: getEnv("ENABLE_QDRANT_REPO_FILTER", "true") != "false",
 		},
 		JWT: JWTConfig{
 			Secret: getEnv("JWT_SECRET", ""),

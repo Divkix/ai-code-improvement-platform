@@ -60,6 +60,7 @@ func TestLoad_WithDefaults(t *testing.T) {
 	assert.Equal(t, "github-analyzer", config.Database.DBName)
 	assert.Equal(t, "codechunks", config.Database.QdrantCollectionName)
 	assert.Equal(t, 1024, config.Database.VectorDimension)
+	assert.True(t, config.Database.EnableQdrantRepoFilter)
 
 	assert.Equal(t, "test-secret", config.JWT.Secret)
 
@@ -134,6 +135,7 @@ func TestLoad_WithCustomValues(t *testing.T) {
 	assert.Equal(t, "test-db", config.Database.DBName)
 	assert.Equal(t, "test-chunks", config.Database.QdrantCollectionName)
 	assert.Equal(t, 512, config.Database.VectorDimension)
+	assert.True(t, config.Database.EnableQdrantRepoFilter)
 
 	assert.Equal(t, "custom-secret", config.JWT.Secret)
 

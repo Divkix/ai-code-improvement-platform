@@ -475,8 +475,14 @@ func (s *SearchService) VectorSearch(ctx context.Context, repositoryID primitive
 		return nil, fmt.Errorf("no embeddings generated for query")
 	}
 
-	// Search for similar vectors in Qdrant
-	results, err := s.qdrantClient.SearchSimilar(ctx, s.config.Database.QdrantCollectionName, embeddings[0], limit, true)
+	// Prepare optional repository filter
+	repoFilter := ""
+	if s.config.Database.EnableQdrantRepoFilter && !repositoryID.IsZero() {
+		repoFilter = repositoryID.Hex()
+	}
+
+	// Search for similar vectors in Qdrant with optional repo payload filter
+	results, err := s.qdrantClient.SearchSimilar(ctx, s.config.Database.QdrantCollectionName, embeddings[0], limit, true, repoFilter)
 	if err != nil {
 		// Gracefully handle "collection not found" or "not enough points" errors by returning empty result set
 		errMsg := strings.ToLower(err.Error())
@@ -506,12 +512,12 @@ func (s *SearchService) VectorSearch(ctx context.Context, repositoryID primitive
 		// Get the full chunk data from MongoDB with optional repository filtering
 		var chunk models.CodeChunk
 		filter := bson.M{"_id": chunkID}
-		
+
 		// Add repository filter if specified
 		if !repositoryID.IsZero() {
 			filter["repositoryId"] = repositoryID
 		}
-		
+
 		err = s.codeChunks.FindOne(ctx, filter).Decode(&chunk)
 		if err != nil {
 			continue // Skip chunks that can't be found or don't match repository filter
@@ -655,7 +661,12 @@ func (s *SearchService) FindSimilarChunks(ctx context.Context, chunkID primitive
 	}
 
 	// Search for similar vectors
-	results, err := s.qdrantClient.SearchSimilar(ctx, s.config.Database.QdrantCollectionName, embeddings[0], limit+1, true)
+	repoFilter := ""
+	if s.config.Database.EnableQdrantRepoFilter {
+		repoFilter = sourceChunk.RepositoryID.Hex()
+	}
+
+	results, err := s.qdrantClient.SearchSimilar(ctx, s.config.Database.QdrantCollectionName, embeddings[0], limit+1, true, repoFilter)
 	if err != nil {
 		return nil, fmt.Errorf("similarity search failed: %w", err)
 	}

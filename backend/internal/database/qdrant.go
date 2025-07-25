@@ -195,13 +195,22 @@ func (q *Qdrant) UpsertPoints(ctx context.Context, collectionName string, points
 	return nil
 }
 
-func (q *Qdrant) SearchSimilar(ctx context.Context, collectionName string, queryVector []float32, limit int, withPayload bool) ([]SimilarityResult, error) {
+func (q *Qdrant) SearchSimilar(ctx context.Context, collectionName string, queryVector []float32, limit int, withPayload bool, repositoryID string) ([]SimilarityResult, error) {
 	// Prepare the query request
 	queryRequest := &qdrant.QueryPoints{
 		CollectionName: collectionName,
 		Query:          qdrant.NewQuery(queryVector...),
 		Limit:          &[]uint64{uint64(limit)}[0],
 		WithPayload:    qdrant.NewWithPayload(withPayload),
+	}
+
+	// Attach repositoryId payload filter when provided
+	if repositoryID != "" {
+		queryRequest.Filter = &qdrant.Filter{
+			Must: []*qdrant.Condition{
+				qdrant.NewMatch("repositoryId", repositoryID),
+			},
+		}
 	}
 
 	// Execute the search
