@@ -45,7 +45,7 @@ func main() {
 	}()
 
 	// Initialize Qdrant
-	qdrant, err := database.NewQdrant(cfg.Database.QdrantURL)
+	qdrant, err := database.NewQdrant(cfg.Database.QdrantURL, cfg.Database.QdrantAPIKey)
 	if err != nil {
 		log.Fatalf("Failed to connect to Qdrant: %v", err)
 	}
@@ -103,7 +103,7 @@ func main() {
 	log.Printf("🤖 LLM service initialized with model: %s", llmService.GetModel())
 
 	// Initialize chat RAG service
-	chatRAGService := services.NewChatRAGService(mongoDB.Database(), searchService, llmService)
+	chatRAGService := services.NewChatRAGService(mongoDB.Database(), searchService, llmService, cfg)
 
 	// Initialize repository service with embedding pipeline
 	repositoryService := services.NewRepositoryService(mongoDB.Database(), githubService, userService, embeddingPipeline, cfg)

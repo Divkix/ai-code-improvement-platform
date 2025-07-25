@@ -29,10 +29,12 @@ type ChatOptions struct {
 }
 
 // DefaultChatOptions provides sensible defaults for chat requests
-var DefaultChatOptions = ChatOptions{
-	MaxTokens:   1000,
-	Temperature: 0.7,
-	Stream:      true,
+func DefaultChatOptions(cfg *config.Config) ChatOptions {
+	return ChatOptions{
+		MaxTokens:   cfg.AI.LLMContextLength,
+		Temperature: 0.7,
+		Stream:      true,
+	}
 }
 
 // NewLLMService creates a new LLM service instance

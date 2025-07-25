@@ -15,6 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 
+	"github-analyzer/internal/config"
 	"github-analyzer/internal/models"
 	"github-analyzer/internal/prompts"
 )
@@ -24,6 +25,7 @@ type ChatRAGService struct {
 	db            *mongo.Database
 	searchService *SearchService
 	llmService    *LLMService
+	config        *config.Config
 }
 
 // ChatStreamChunk represents a streaming chat response chunk
@@ -37,11 +39,12 @@ type ChatStreamChunk struct {
 var ErrSessionNotFound = errors.New("chat session not found")
 
 // NewChatRAGService creates a new chat RAG service
-func NewChatRAGService(db *mongo.Database, searchService *SearchService, llmService *LLMService) *ChatRAGService {
+func NewChatRAGService(db *mongo.Database, searchService *SearchService, llmService *LLMService, config *config.Config) *ChatRAGService {
 	return &ChatRAGService{
 		db:            db,
 		searchService: searchService,
 		llmService:    llmService,
+		config:        config,
 	}
 }
 
@@ -92,7 +95,7 @@ func (s *ChatRAGService) ProcessMessage(ctx context.Context, userID, sessionID p
 	// Generate response using LLM
 	llmStart := time.Now()
 	messages := s.llmService.BuildMessages(systemPrompt, fullPrompt)
-	response, err := s.llmService.ChatCompletion(ctx, messages, DefaultChatOptions)
+	response, err := s.llmService.ChatCompletion(ctx, messages, DefaultChatOptions(s.config))
 	llmDuration := time.Since(llmStart)
 	
 	if err != nil {
@@ -191,7 +194,7 @@ func (s *ChatRAGService) ProcessMessageStreaming(ctx context.Context, userID, se
 		// Generate streaming response using LLM
 		llmStart := time.Now()
 		messages := s.llmService.BuildMessages(systemPrompt, fullPrompt)
-		stream, err := s.llmService.ChatStream(ctx, messages, DefaultChatOptions)
+		stream, err := s.llmService.ChatStream(ctx, messages, DefaultChatOptions(s.config))
 		
 		if err != nil {
 			llmDuration := time.Since(llmStart)

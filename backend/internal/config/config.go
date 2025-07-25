@@ -11,12 +11,12 @@ import (
 )
 
 type Config struct {
-	Server        ServerConfig
-	Database      DatabaseConfig
+	Server         ServerConfig
+	Database       DatabaseConfig
 	CodeProcessing CodeProcessingConfig
-	JWT           JWTConfig
-	GitHub        GitHubConfig
-	AI            AIConfig
+	JWT            JWTConfig
+	GitHub         GitHubConfig
+	AI             AIConfig
 }
 
 type ServerConfig struct {
@@ -28,6 +28,7 @@ type ServerConfig struct {
 type DatabaseConfig struct {
 	MongoURI               string
 	QdrantURL              string
+	QdrantAPIKey           string
 	DBName                 string
 	QdrantCollectionName   string
 	VectorDimension        int
@@ -55,6 +56,7 @@ type AIConfig struct {
 	LLMModel          string
 	LLMAPIKey         string
 	LLMRequestTimeout string
+	LLMContextLength  int
 
 	// Universal embedding endpoint (OpenAI-compatible)
 	EmbeddingBaseURL string
@@ -80,6 +82,7 @@ func Load() (*Config, error) {
 		Database: DatabaseConfig{
 			MongoURI:               getEnv("MONGODB_URI", "mongodb://localhost:27017/github-analyzer"),
 			QdrantURL:              getEnv("QDRANT_URL", "http://localhost:6334"),
+			QdrantAPIKey:           getEnv("QDRANT_API_KEY", ""),
 			DBName:                 getEnv("DB_NAME", "github-analyzer"),
 			QdrantCollectionName:   getEnv("QDRANT_COLLECTION_NAME", "codechunks"),
 			VectorDimension:        getEnvInt("VECTOR_DIMENSION", 1024),
@@ -102,6 +105,7 @@ func Load() (*Config, error) {
 			LLMModel:          getEnv("LLM_MODEL", "gpt-4o-mini"),
 			LLMAPIKey:         getEnv("LLM_API_KEY", ""),
 			LLMRequestTimeout: getEnv("LLM_REQUEST_TIMEOUT", "30s"),
+			LLMContextLength:  getEnvInt("LLM_CONTEXT_LENGTH", 2048),
 			EmbeddingBaseURL:  getEnv("EMBEDDING_BASE_URL", "https://api.openai.com/v1"),
 			EmbeddingModel:    getEnv("EMBEDDING_MODEL", "text-embedding-nomic-embed-text-v1.5"),
 			EmbeddingAPIKey:   getEnv("EMBEDDING_API_KEY", ""),

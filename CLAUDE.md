@@ -239,6 +239,8 @@ Required environment variables:
 JWT_SECRET=your-secret-key
 MONGODB_URI=mongodb://localhost:27017/github-analyzer
 QDRANT_URL=http://localhost:6334
+QDRANT_API_KEY=your-qdrant-api-key  # Optional: for managed Qdrant instances
+LLM_CONTEXT_LENGTH=32000    # Max tokens for LLM context
 
 # GitHub OAuth
 GITHUB_CLIENT_ID=your-github-client-id

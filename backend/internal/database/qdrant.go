@@ -31,8 +31,8 @@ type VectorPoint struct {
 	Payload map[string]any `json:"payload,omitempty"`
 }
 
-// NewQdrant creates a new Qdrant client from a URL string
-func NewQdrant(qdrantURL string) (*Qdrant, error) {
+// NewQdrant creates a new Qdrant client from a URL string and optional API key
+func NewQdrant(qdrantURL string, apiKey string) (*Qdrant, error) {
 	// Parse the URL to extract host, port, and other connection details
 	parsedURL, err := url.Parse(qdrantURL)
 	if err != nil {
@@ -68,9 +68,11 @@ func NewQdrant(qdrantURL string) (*Qdrant, error) {
 		config.UseTLS = false
 	}
 
-	// Extract API key from query parameters if present
-	if apiKey := parsedURL.Query().Get("api_key"); apiKey != "" {
+	// Use API key from parameter if provided, otherwise check query parameters
+	if apiKey != "" {
 		config.APIKey = apiKey
+	} else if queryAPIKey := parsedURL.Query().Get("api_key"); queryAPIKey != "" {
+		config.APIKey = queryAPIKey
 	}
 
 	// Create the client

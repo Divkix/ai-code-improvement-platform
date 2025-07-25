@@ -214,7 +214,12 @@ func TestLLMService_GetModel(t *testing.T) {
 }
 
 func TestDefaultChatOptions(t *testing.T) {
-	opts := DefaultChatOptions
+	cfg := &config.Config{
+		AI: config.AIConfig{
+			LLMContextLength: 1000,
+		},
+	}
+	opts := DefaultChatOptions(cfg)
 
 	if opts.MaxTokens != 1000 {
 		t.Errorf("Expected MaxTokens 1000, got %v", opts.MaxTokens)
