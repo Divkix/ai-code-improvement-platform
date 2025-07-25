@@ -23,7 +23,10 @@
 
 	// Subscribe to auth store to get current user
 	authStore.subscribe((auth) => {
-		if (auth.user && (!user || user.id !== auth.user.id)) {
+		if (
+			auth.user &&
+			(!user || user.id !== auth.user.id || user.githubConnected !== auth.user.githubConnected)
+		) {
 			user = auth.user;
 		}
 	});
