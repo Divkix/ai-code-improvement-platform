@@ -3,6 +3,7 @@
 	import { getRepositories } from '$lib/api/hooks';
 	import { chatStore, chatActions } from '$lib/stores/chat';
 	import { chatClient, ChatAPIError } from '$lib/api/chat-client';
+	import { parseMarkdown, hasMarkdownFormatting } from '$lib/utils/markdown';
 	import type { Repository } from '$lib/api';
 	import type { components } from '$lib/api/types';
 
@@ -394,7 +395,18 @@
 						>
 							<div class="prose prose-sm max-w-none">
 								{#if message.content}
-									<div class="text-sm whitespace-pre-wrap">{message.content}</div>
+									{#if hasMarkdownFormatting(message.content)}
+										{#await parseMarkdown(message.content)}
+											<div class="text-sm whitespace-pre-wrap">{message.content}</div>
+										{:then parsedContent}
+											<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+											<div class="markdown-content text-sm">{@html parsedContent}</div>
+										{:catch}
+											<div class="text-sm whitespace-pre-wrap">{message.content}</div>
+										{/await}
+									{:else}
+										<div class="text-sm whitespace-pre-wrap">{message.content}</div>
+									{/if}
 								{:else if message.role === 'assistant'}
 									<div class="flex items-center space-x-2">
 										<div class="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>

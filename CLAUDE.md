@@ -216,7 +216,9 @@ The system uses a sophisticated background processing pipeline:
 
 ### Code Chunking Strategy
 Files are processed into optimal chunks for retrieval:
-- 150 lines per chunk with 50-line overlap to preserve context
+- Configurable chunk sizes via environment variables (CHUNK_SIZE, CHUNK_OVERLAP_SIZE)
+- Default: 30 lines per chunk with 10-line overlap (optimized for local embedding models)
+- For Voyage AI: Recommend 150 lines per chunk with 50-line overlap
 - Language-aware chunking that respects function/class boundaries
 - Metadata extraction (functions, classes, imports, file paths)
 - Content deduplication via SHA256 hashing to avoid redundant embeddings
@@ -260,6 +262,10 @@ LOCAL_EMBEDDING_MODEL=text-embedding-nomic-embed-text-v1.5  # For local provider
 # Vector Configuration
 VECTOR_DIMENSION=1024  # Must be 256, 512, 1024, or 2048 for Voyage
 QDRANT_COLLECTION_NAME=codechunks
+
+# Code Processing Configuration
+CHUNK_SIZE=30          # Lines per chunk (default: 30 for local models, 150 for Voyage)
+CHUNK_OVERLAP_SIZE=10  # Lines of overlap between chunks (default: 10 for local, 50 for Voyage)
 
 # Server Configuration (Optional)
 PORT=8080

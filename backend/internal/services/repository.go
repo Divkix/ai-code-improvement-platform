@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github-analyzer/internal/config"
 	"github-analyzer/internal/models"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -33,15 +34,17 @@ type RepositoryService struct {
 	githubService     *GitHubService
 	userService       *UserService
 	embeddingPipeline *EmbeddingPipeline
+	config            *config.Config
 }
 
 // NewRepositoryService creates a new repository service
-func NewRepositoryService(db *mongo.Database, githubService *GitHubService, userService *UserService, embeddingPipeline *EmbeddingPipeline) *RepositoryService {
+func NewRepositoryService(db *mongo.Database, githubService *GitHubService, userService *UserService, embeddingPipeline *EmbeddingPipeline, config *config.Config) *RepositoryService {
 	return &RepositoryService{
 		collection:        db.Collection(RepositoryCollection),
 		githubService:     githubService,
 		userService:       userService,
 		embeddingPipeline: embeddingPipeline,
+		config:            config,
 	}
 }
 
@@ -476,7 +479,7 @@ func (s *RepositoryService) processRepositoryImport(ctx context.Context, repoID 
 		log.Printf("Failed to update progress: %v", err)
 	}
 	
-	processor := NewCodeProcessor()
+	processor := NewCodeProcessor(s.config)
 	chunks, err := processor.ProcessAndChunkFiles(files, repoID)
 	if err != nil {
 		log.Printf("Failed to process and chunk files: %v", err)

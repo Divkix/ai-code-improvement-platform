@@ -1,5 +1,5 @@
 // ABOUTME: Code processing service for chunking files and extracting metadata
-// ABOUTME: Implements 75-line chunks with overlap and language-aware processing
+// ABOUTME: Implements configurable chunk sizes with overlap and language-aware processing
 
 package services
 
@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github-analyzer/internal/config"
 	"github-analyzer/internal/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -19,11 +20,11 @@ type CodeProcessor struct {
 	overlapSize  int // Lines to overlap between chunks
 }
 
-// NewCodeProcessor creates a new code processor with default settings
-func NewCodeProcessor() *CodeProcessor {
+// NewCodeProcessor creates a new code processor with configurable settings
+func NewCodeProcessor(cfg *config.Config) *CodeProcessor {
 	return &CodeProcessor{
-		chunkSize:   75, // 75 lines per chunk
-		overlapSize: 25,  // 25 lines overlap
+		chunkSize:   cfg.CodeProcessing.ChunkSize,
+		overlapSize: cfg.CodeProcessing.OverlapSize,
 	}
 }
 

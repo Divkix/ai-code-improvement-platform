@@ -11,11 +11,12 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	JWT      JWTConfig
-	GitHub   GitHubConfig
-	AI       AIConfig
+	Server        ServerConfig
+	Database      DatabaseConfig
+	CodeProcessing CodeProcessingConfig
+	JWT           JWTConfig
+	GitHub        GitHubConfig
+	AI            AIConfig
 }
 
 type ServerConfig struct {
@@ -31,6 +32,11 @@ type DatabaseConfig struct {
 	QdrantCollectionName   string
 	VectorDimension        int
 	EnableQdrantRepoFilter bool // if true, attach repositoryId payload filter in Qdrant queries
+}
+
+type CodeProcessingConfig struct {
+	ChunkSize   int // Lines per chunk
+	OverlapSize int // Lines to overlap between chunks
 }
 
 type JWTConfig struct {
@@ -78,6 +84,10 @@ func Load() (*Config, error) {
 			QdrantCollectionName:   getEnv("QDRANT_COLLECTION_NAME", "codechunks"),
 			VectorDimension:        getEnvInt("VECTOR_DIMENSION", 1024),
 			EnableQdrantRepoFilter: getEnv("ENABLE_QDRANT_REPO_FILTER", "true") != "false",
+		},
+		CodeProcessing: CodeProcessingConfig{
+			ChunkSize:   getEnvInt("CHUNK_SIZE", 30),
+			OverlapSize: getEnvInt("CHUNK_OVERLAP_SIZE", 10),
 		},
 		JWT: JWTConfig{
 			Secret: getEnv("JWT_SECRET", ""),

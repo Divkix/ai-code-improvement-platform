@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 
+	"github-analyzer/internal/config"
 	"github-analyzer/internal/services"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -50,6 +51,12 @@ func main() {
 
 	db := client.Database("github-analyzer")
 
+	// Load configuration
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
+	}
+
 	// Create services
 	githubService := services.NewGitHubService(db,
 		os.Getenv("GITHUB_CLIENT_ID"),
@@ -59,7 +66,7 @@ func main() {
 	userService := services.NewUserService(db)
 
 	// Use nil for embedding pipeline since we only need file import
-	repositoryService := services.NewRepositoryService(db, githubService, userService, nil)
+	repositoryService := services.NewRepositoryService(db, githubService, userService, nil, cfg)
 
 	// Get repository info first
 	repo, err := repositoryService.GetRepository(context.Background(), userID, repoIDStr)

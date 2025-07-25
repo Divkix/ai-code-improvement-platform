@@ -106,7 +106,7 @@ func main() {
 	chatRAGService := services.NewChatRAGService(mongoDB.Database(), searchService, llmService)
 
 	// Initialize repository service with embedding pipeline
-	repositoryService := services.NewRepositoryService(mongoDB.Database(), githubService, userService, embeddingPipeline)
+	repositoryService := services.NewRepositoryService(mongoDB.Database(), githubService, userService, embeddingPipeline, cfg)
 
 	// Initialize handlers
 	healthHandler := handlers.NewHealthHandler(mongoDB, qdrant)
