@@ -172,5 +172,23 @@ export const chatActions = {
 
 	reset: () => {
 		chatStore.set(initialState);
+	},
+
+	renameSession: (sessionId: string, newTitle: string) => {
+		chatStore.update((state) => {
+			const updatedSessions = state.sessions.map((session) =>
+				session.id === sessionId ? { ...session, title: newTitle } : session
+			);
+			const updatedCurrentSession =
+				state.currentSession?.id === sessionId
+					? { ...state.currentSession, title: newTitle }
+					: state.currentSession;
+
+			return {
+				...state,
+				sessions: updatedSessions,
+				currentSession: updatedCurrentSession
+			};
+		});
 	}
 };

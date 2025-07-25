@@ -40,6 +40,9 @@ type ServerInterface interface {
 	// Get chat session details
 	// (GET /api/chat/sessions/{id})
 	GetChatSession(c *gin.Context, id string)
+	// Update chat session
+	// (PATCH /api/chat/sessions/{id})
+	UpdateChatSession(c *gin.Context, id string)
 	// Send message to chat session
 	// (POST /api/chat/sessions/{id}/message)
 	SendChatMessage(c *gin.Context, id string)
@@ -322,6 +325,32 @@ func (siw *ServerInterfaceWrapper) GetChatSession(c *gin.Context) {
 	}
 
 	siw.Handler.GetChatSession(c, id)
+}
+
+// UpdateChatSession operation middleware
+func (siw *ServerInterfaceWrapper) UpdateChatSession(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdateChatSession(c, id)
 }
 
 // SendChatMessage operation middleware
@@ -1182,6 +1211,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/api/chat/sessions", wrapper.CreateChatSession)
 	router.DELETE(options.BaseURL+"/api/chat/sessions/:id", wrapper.DeleteChatSession)
 	router.GET(options.BaseURL+"/api/chat/sessions/:id", wrapper.GetChatSession)
+	router.PATCH(options.BaseURL+"/api/chat/sessions/:id", wrapper.UpdateChatSession)
 	router.POST(options.BaseURL+"/api/chat/sessions/:id/message", wrapper.SendChatMessage)
 	router.GET(options.BaseURL+"/api/dashboard/activity", wrapper.GetDashboardActivity)
 	router.GET(options.BaseURL+"/api/dashboard/stats", wrapper.GetDashboardStats)

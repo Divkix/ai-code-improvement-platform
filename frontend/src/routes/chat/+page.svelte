@@ -2,7 +2,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { getRepositories } from '$lib/api/hooks';
 	import { chatStore, chatActions } from '$lib/stores/chat';
-	import { chatClient, ChatAPIError } from '$lib/api/chat-client';
+	import { chatClient, ChatAPIError, type ChatStreamChunk } from '$lib/api/chat-client';
 	import { parseMarkdown, hasMarkdownFormatting } from '$lib/utils/markdown';
 	import type { Repository } from '$lib/api';
 	import type { components } from '$lib/api/types';
@@ -17,6 +17,8 @@
 	let repositoriesLoading = $state(true);
 	let showSessionSidebar = $state(false);
 	let messagesContainer: HTMLElement;
+	let renamingSessionId = $state<string | null>(null);
+	let renameInputValue = $state('');
 
 	// Subscribe to chat store
 	let chatState = $state($chatStore);
@@ -121,6 +123,46 @@
 		}
 	}
 
+	function startRenaming(sessionId: string, currentTitle: string) {
+		renamingSessionId = sessionId;
+		renameInputValue = currentTitle;
+	}
+
+	function cancelRenaming() {
+		renamingSessionId = null;
+		renameInputValue = '';
+	}
+
+	async function saveRename(sessionId: string) {
+		if (!renameInputValue.trim()) {
+			cancelRenaming();
+			return;
+		}
+
+		try {
+			const updatedSession = await chatClient.updateSession(sessionId, {
+				title: renameInputValue.trim()
+			});
+			chatActions.updateSession(sessionId, { title: updatedSession.title });
+			cancelRenaming();
+		} catch (error) {
+			console.error('Failed to rename session:', error);
+			chatActions.setError(
+				error instanceof ChatAPIError ? error.message : 'Failed to rename session'
+			);
+		}
+	}
+
+	function handleRenameKeydown(event: KeyboardEvent, sessionId: string) {
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			saveRename(sessionId);
+		} else if (event.key === 'Escape') {
+			event.preventDefault();
+			cancelRenaming();
+		}
+	}
+
 	async function sendMessage(event: Event) {
 		event.preventDefault();
 		if (!inputText.trim()) return;
@@ -156,7 +198,7 @@
 
 		try {
 			let fullContent = '';
-			await chatClient.sendMessageStream(sessionId, messageContent, (chunk) => {
+			await chatClient.sendMessageStream(sessionId, messageContent, (chunk: ChatStreamChunk) => {
 				if (chunk.type === 'content') {
 					fullContent = chunk.content;
 					chatActions.updateLastMessage(sessionId, { content: fullContent });
@@ -260,29 +302,74 @@
 					<div class="space-y-2">
 						{#each chatState.sessions as session (session.id)}
 							<div
-								class="flex items-center justify-between rounded-lg border p-3 hover:bg-gray-50 {chatState
-									.currentSession?.id === session.id
+								class="rounded-lg border p-3 hover:bg-gray-50 {chatState.currentSession?.id ===
+								session.id
 									? 'border-blue-500 bg-blue-50'
 									: 'border-gray-200'}"
 							>
-								<button onclick={() => selectSession(session)} class="flex-1 text-left">
-									<div class="truncate text-sm font-medium text-gray-900">{session.title}</div>
-									<div class="text-xs text-gray-500">{formatTime(session.updatedAt)}</div>
-								</button>
-								<button
-									onclick={() => deleteSession(session.id)}
-									class="ml-2 text-gray-400 hover:text-red-600"
-									aria-label="Delete session"
-								>
-									<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+								{#if renamingSessionId === session.id}
+									<!-- Rename mode -->
+									<div class="space-y-2">
+										<input
+											bind:value={renameInputValue}
+											onkeydown={(e) => handleRenameKeydown(e, session.id)}
+											class="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
+											placeholder="Enter new name..."
 										/>
-									</svg>
-								</button>
+										<div class="flex justify-end space-x-2">
+											<button
+												onclick={cancelRenaming}
+												class="text-xs text-gray-500 hover:text-gray-700"
+											>
+												Cancel
+											</button>
+											<button
+												onclick={() => saveRename(session.id)}
+												class="text-xs text-blue-600 hover:text-blue-800"
+											>
+												Save
+											</button>
+										</div>
+									</div>
+								{:else}
+									<!-- Normal mode -->
+									<div class="flex items-center justify-between">
+										<button onclick={() => selectSession(session)} class="flex-1 text-left">
+											<div class="truncate text-sm font-medium text-gray-900">{session.title}</div>
+											<div class="text-xs text-gray-500">{formatTime(session.updatedAt)}</div>
+										</button>
+										<div class="flex space-x-1">
+											<button
+												onclick={() => startRenaming(session.id, session.title)}
+												class="text-gray-400 hover:text-blue-600"
+												aria-label="Rename session"
+											>
+												<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="2"
+														d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+													/>
+												</svg>
+											</button>
+											<button
+												onclick={() => deleteSession(session.id)}
+												class="text-gray-400 hover:text-red-600"
+												aria-label="Delete session"
+											>
+												<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="2"
+														d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+													/>
+												</svg>
+											</button>
+										</div>
+									</div>
+								{/if}
 							</div>
 						{/each}
 					</div>
@@ -428,7 +515,6 @@
 						</div>
 					</div>
 				{/each}
-
 			{/if}
 		</div>
 

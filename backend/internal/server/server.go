@@ -218,6 +218,10 @@ func (s *Server) DeleteChatSession(c *gin.Context, id string) {
 	s.chat.DeleteChatSession(c)
 }
 
+func (s *Server) UpdateChatSession(c *gin.Context, id string) {
+	s.chat.UpdateChatSession(c, id)
+}
+
 func (s *Server) SendChatMessage(c *gin.Context, id string) {
 	c.Params = append(c.Params, gin.Param{Key: "id", Value: id})
 	s.chat.SendChatMessage(c)

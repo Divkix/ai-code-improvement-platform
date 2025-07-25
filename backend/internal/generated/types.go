@@ -555,6 +555,12 @@ type TrendDataPoint struct {
 	PerformanceScore float32            `json:"performanceScore"`
 }
 
+// UpdateChatSessionRequest defines model for UpdateChatSessionRequest.
+type UpdateChatSessionRequest struct {
+	// Title New title for the chat session
+	Title *string `json:"title,omitempty"`
+}
+
 // UpdateRepositoryRequest defines model for UpdateRepositoryRequest.
 type UpdateRepositoryRequest struct {
 	Description     *string `json:"description,omitempty"`
@@ -737,6 +743,9 @@ type LoginUserJSONRequestBody = LoginRequest
 
 // CreateChatSessionJSONRequestBody defines body for CreateChatSession for application/json ContentType.
 type CreateChatSessionJSONRequestBody = CreateChatSessionRequest
+
+// UpdateChatSessionJSONRequestBody defines body for UpdateChatSession for application/json ContentType.
+type UpdateChatSessionJSONRequestBody = UpdateChatSessionRequest
 
 // SendChatMessageJSONRequestBody defines body for SendChatMessage for application/json ContentType.
 type SendChatMessageJSONRequestBody = SendMessageRequest

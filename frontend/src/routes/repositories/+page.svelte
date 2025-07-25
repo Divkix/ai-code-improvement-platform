@@ -423,7 +423,14 @@
 									</div>
 								</div>
 								<div class="ml-3">
-									<h3 class="text-lg font-medium text-gray-900">{repo.name}</h3>
+									<a 
+										href="https://github.com/{repo.fullName}" 
+										target="_blank" 
+										rel="noopener noreferrer"
+										class="block text-lg font-medium text-gray-900 hover:text-blue-600 transition-colors"
+									>
+										{repo.name}
+									</a>
 									<p class="text-sm text-gray-500">{repo.fullName}</p>
 								</div>
 							</div>

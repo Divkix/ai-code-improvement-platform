@@ -123,6 +123,11 @@ type ClientInterface interface {
 	// GetChatSession request
 	GetChatSession(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// UpdateChatSessionWithBody request with any body
+	UpdateChatSessionWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateChatSession(ctx context.Context, id string, body UpdateChatSessionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// SendChatMessageWithBody request with any body
 	SendChatMessageWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -356,6 +361,30 @@ func (c *Client) DeleteChatSession(ctx context.Context, id string, reqEditors ..
 
 func (c *Client) GetChatSession(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetChatSessionRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateChatSessionWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateChatSessionRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateChatSession(ctx context.Context, id string, body UpdateChatSessionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateChatSessionRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1138,6 +1167,53 @@ func NewGetChatSessionRequest(server string, id string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewUpdateChatSessionRequest calls the generic UpdateChatSession builder with application/json body
+func NewUpdateChatSessionRequest(server string, id string, body UpdateChatSessionJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateChatSessionRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewUpdateChatSessionRequestWithBody generates requests for UpdateChatSession with any type of body
+func NewUpdateChatSessionRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/chat/sessions/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -2629,6 +2705,11 @@ type ClientWithResponsesInterface interface {
 	// GetChatSessionWithResponse request
 	GetChatSessionWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetChatSessionResponse, error)
 
+	// UpdateChatSessionWithBodyWithResponse request with any body
+	UpdateChatSessionWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateChatSessionResponse, error)
+
+	UpdateChatSessionWithResponse(ctx context.Context, id string, body UpdateChatSessionJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateChatSessionResponse, error)
+
 	// SendChatMessageWithBodyWithResponse request with any body
 	SendChatMessageWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SendChatMessageResponse, error)
 
@@ -2946,6 +3027,31 @@ func (r GetChatSessionResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetChatSessionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateChatSessionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ChatSession
+	JSON401      *Error
+	JSON404      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateChatSessionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateChatSessionResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -3796,6 +3902,23 @@ func (c *ClientWithResponses) GetChatSessionWithResponse(ctx context.Context, id
 	return ParseGetChatSessionResponse(rsp)
 }
 
+// UpdateChatSessionWithBodyWithResponse request with arbitrary body returning *UpdateChatSessionResponse
+func (c *ClientWithResponses) UpdateChatSessionWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateChatSessionResponse, error) {
+	rsp, err := c.UpdateChatSessionWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateChatSessionResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdateChatSessionWithResponse(ctx context.Context, id string, body UpdateChatSessionJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateChatSessionResponse, error) {
+	rsp, err := c.UpdateChatSession(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateChatSessionResponse(rsp)
+}
+
 // SendChatMessageWithBodyWithResponse request with arbitrary body returning *SendChatMessageResponse
 func (c *ClientWithResponses) SendChatMessageWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SendChatMessageResponse, error) {
 	rsp, err := c.SendChatMessageWithBody(ctx, id, contentType, body, reqEditors...)
@@ -4446,6 +4569,53 @@ func ParseGetChatSessionResponse(rsp *http.Response) (*GetChatSessionResponse, e
 	}
 
 	response := &GetChatSessionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ChatSession
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateChatSessionResponse parses an HTTP response from a UpdateChatSessionWithResponse call
+func ParseUpdateChatSessionResponse(rsp *http.Response) (*UpdateChatSessionResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateChatSessionResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

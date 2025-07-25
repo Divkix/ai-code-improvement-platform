@@ -717,6 +717,13 @@ components:
           type: string
           description: The user message content
 
+    UpdateChatSessionRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          description: New title for the chat session
+
     RetrievedChunk:
       type: object
       required:
@@ -2359,6 +2366,51 @@ paths:
       responses:
         "204":
           description: Chat session deleted successfully
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Chat session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    patch:
+      summary: Update chat session
+      description: Update chat session properties like title
+      operationId: updateChatSession
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Chat session ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateChatSessionRequest"
+      responses:
+        "200":
+          description: Chat session updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatSession"
         "401":
           description: Unauthorized
           content:

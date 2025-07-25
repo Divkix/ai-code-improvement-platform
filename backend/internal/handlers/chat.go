@@ -223,6 +223,65 @@ func (h *ChatHandler) DeleteChatSession(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+// UpdateChatSession handles PATCH /api/chat/sessions/{id}
+func (h *ChatHandler) UpdateChatSession(c *gin.Context, id string) {
+	userID, exists := middleware.GetUserIDFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized", "message": "User not authenticated"})
+		return
+	}
+
+	userObjID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_user_id", "message": "Invalid user ID format"})
+		return
+	}
+
+	sessionObjID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_session_id", "message": "Invalid session ID format"})
+		return
+	}
+
+	var req generated.UpdateChatSessionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_request", "message": "Invalid request body"})
+		return
+	}
+
+	// Build update document
+	update := bson.M{
+		"$set": bson.M{
+			"updatedAt": time.Now(),
+		},
+	}
+
+	if req.Title != nil {
+		update["$set"].(bson.M)["title"] = *req.Title
+	}
+
+	collection := h.db.Collection(models.ChatSessionCollection)
+	filter := bson.M{
+		"_id":    sessionObjID,
+		"userId": userObjID, // Ensure user owns the session
+	}
+
+	// Find and update the session
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	var updatedSession models.ChatSession
+	err = collection.FindOneAndUpdate(c.Request.Context(), filter, update, opts).Decode(&updatedSession)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "session_not_found", "message": "Chat session not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database_error", "message": "Failed to update chat session"})
+		return
+	}
+
+	c.JSON(http.StatusOK, updatedSession)
+}
+
 // SendChatMessage handles POST /api/chat/sessions/{id}/message
 func (h *ChatHandler) SendChatMessage(c *gin.Context) {
 	startTime := time.Now()

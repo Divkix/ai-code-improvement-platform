@@ -8,6 +8,7 @@ import { get } from 'svelte/store';
 type ChatSession = components['schemas']['ChatSession'];
 type ChatSessionListResponse = components['schemas']['ChatSessionListResponse'];
 type CreateChatSessionRequest = components['schemas']['CreateChatSessionRequest'];
+type UpdateChatSessionRequest = components['schemas']['UpdateChatSessionRequest'];
 type SendMessageRequest = components['schemas']['SendMessageRequest'];
 
 // Use the same base URL mechanism as the rest of the frontend so that requests
@@ -117,6 +118,25 @@ export class ChatClient {
 				error.error
 			);
 		}
+	}
+
+	async updateSession(sessionId: string, request: UpdateChatSessionRequest): Promise<ChatSession> {
+		const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}`, {
+			method: 'PATCH',
+			headers: getAuthHeaders(),
+			body: JSON.stringify(request)
+		});
+
+		if (!response.ok) {
+			const error = await response.json().catch(() => ({ message: 'Failed to update session' }));
+			throw new ChatAPIError(
+				error.message || 'Failed to update chat session',
+				response.status,
+				error.error
+			);
+		}
+
+		return response.json();
 	}
 
 	async sendMessage(sessionId: string, content: string): Promise<ChatSession> {

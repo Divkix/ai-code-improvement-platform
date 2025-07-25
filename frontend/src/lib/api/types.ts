@@ -641,7 +641,11 @@ export interface paths {
 		delete: operations['deleteChatSession'];
 		options?: never;
 		head?: never;
-		patch?: never;
+		/**
+		 * Update chat session
+		 * @description Update chat session properties like title
+		 */
+		patch: operations['updateChatSession'];
 		trace?: never;
 	};
 	'/api/chat/sessions/{id}/message': {
@@ -1011,6 +1015,10 @@ export interface components {
 		SendMessageRequest: {
 			/** @description The user message content */
 			content: string;
+		};
+		UpdateChatSessionRequest: {
+			/** @description New title for the chat session */
+			title?: string;
 		};
 		RetrievedChunk: {
 			/** @description ID of the code chunk */
@@ -2825,6 +2833,60 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content?: never;
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+			/** @description Chat session not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+			/** @description Internal server error */
+			500: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+		};
+	};
+	updateChatSession: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Chat session ID */
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['UpdateChatSessionRequest'];
+			};
+		};
+		responses: {
+			/** @description Chat session updated successfully */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ChatSession'];
+				};
 			};
 			/** @description Unauthorized */
 			401: {
