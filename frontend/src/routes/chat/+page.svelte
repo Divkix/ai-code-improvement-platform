@@ -328,7 +328,7 @@
 					<select
 						id="repo-select"
 						bind:value={selectedRepo}
-						class="rounded-md border border-gray-300 px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+						class="rounded-md border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
 					>
 						<option value="">All repositories</option>
 						{#each repositories as repo (repo.id)}
@@ -394,7 +394,7 @@
 						>
 							<div class="prose prose-sm max-w-none">
 								{#if message.content}
-									<div class="whitespace-pre-wrap text-sm">{message.content}</div>
+									<div class="text-sm whitespace-pre-wrap">{message.content}</div>
 								{:else if message.role === 'assistant'}
 									<div class="flex items-center space-x-2">
 										<div class="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>
@@ -452,7 +452,7 @@
 				<input
 					bind:value={inputText}
 					placeholder="Ask about the code..."
-					class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+					class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50"
 					disabled={!canSendMessage}
 					autocomplete="off"
 				/>
