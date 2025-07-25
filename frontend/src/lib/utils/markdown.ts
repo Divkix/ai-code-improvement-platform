@@ -3,6 +3,7 @@
 
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import hljs from 'highlight.js';
 
 // Configure marked with code highlighting and security options
 marked.setOptions({
@@ -10,13 +11,19 @@ marked.setOptions({
 	gfm: true
 });
 
-// Custom renderer for code blocks to add syntax highlighting classes
+// Custom renderer for code blocks with syntax highlighting
 const renderer = new marked.Renderer();
 renderer.code = function ({ text, lang }: { text: string; lang?: string }) {
 	if (lang) {
-		return `<pre><code class="language-${lang} hljs">${text}</code></pre>`;
+		try {
+			const highlighted = hljs.highlight(text, { language: lang }).value;
+			return `<pre><code class="language-${lang} hljs">${highlighted}</code></pre>`;
+		} catch (error) {
+			console.warn(`Failed to highlight code with language ${lang}:`, error);
+			return `<pre><code class="language-${lang} hljs">${hljs.highlightAuto(text).value}</code></pre>`;
+		}
 	}
-	return `<pre><code class="hljs">${text}</code></pre>`;
+	return `<pre><code class="hljs">${hljs.highlightAuto(text).value}</code></pre>`;
 };
 
 renderer.codespan = function ({ text }: { text: string }) {
