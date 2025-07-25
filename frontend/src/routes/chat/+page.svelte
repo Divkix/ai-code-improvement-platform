@@ -15,7 +15,6 @@
 	let inputText = $state('');
 	let repositories = $state<Repository[]>([]);
 	let repositoriesLoading = $state(true);
-	let showSessionSidebar = $state(false);
 	let messagesContainer: HTMLElement;
 	let renamingSessionId = $state<string | null>(null);
 	let renameInputValue = $state('');
@@ -84,7 +83,7 @@
 				repositoryId: selectedRepo || undefined
 			});
 			chatActions.addSession(session);
-			showSessionSidebar = false;
+			// Sidebar is always visible in fullscreen mode
 		} catch (error) {
 			console.error('Failed to create session:', error);
 			chatActions.setError(
@@ -100,7 +99,7 @@
 			chatActions.setLoading(true);
 			const fullSession = await chatClient.getSession(session.id);
 			chatActions.setCurrentSession(fullSession);
-			showSessionSidebar = false;
+			// Sidebar is always visible in fullscreen mode
 		} catch (error) {
 			console.error('Failed to load session:', error);
 			chatActions.setError(
@@ -257,27 +256,49 @@
 	<title>AI Chat - GitHub Analyzer</title>
 </svelte:head>
 
-<div class="flex h-[calc(100vh-12rem)]">
-	<!-- Session Sidebar -->
-	{#if showSessionSidebar}
-		<div class="w-80 border-r border-gray-200 bg-white">
+<!-- Fullscreen chat container that bypasses layout constraints -->
+<div class="fixed inset-0 z-50 bg-white">
+	<!-- Custom header for fullscreen mode -->
+	<div class="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4">
+		<div class="flex items-center space-x-3">
+			<a href="/" class="text-xl font-semibold text-gray-900">GitHub Analyzer</a>
+			<span class="text-gray-400">|</span>
+			<h1 class="text-lg font-medium text-gray-700">AI Chat</h1>
+		</div>
+		<div class="flex items-center space-x-4">
+			<div class="flex items-center space-x-2">
+				<label for="repo-select" class="text-sm font-medium text-gray-700">Repository:</label>
+				{#if repositoriesLoading}
+					<div class="flex items-center space-x-2">
+						<div class="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>
+						<span class="text-sm text-gray-500">Loading...</span>
+					</div>
+				{:else if repositories.length === 0}
+					<span class="text-sm text-gray-500">No repositories found</span>
+				{:else}
+					<select
+						id="repo-select"
+						bind:value={selectedRepo}
+						class="rounded-md border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+					>
+						<option value="">All repositories</option>
+						{#each repositories as repo (repo.id)}
+							<option value={repo.id}>{repo.fullName}</option>
+						{/each}
+					</select>
+				{/if}
+			</div>
+			<a href="/" class="text-sm text-gray-500 hover:text-gray-700">← Back to Dashboard</a>
+		</div>
+	</div>
+
+	<!-- Main chat interface -->
+	<div class="flex h-[calc(100vh-4rem)]">
+		<!-- Persistent Session Sidebar -->
+		<div class="w-80 border-r border-gray-200 bg-gray-50">
 			<div class="border-b border-gray-200 p-4">
 				<div class="flex items-center justify-between">
 					<h3 class="text-lg font-medium text-gray-900">Chat Sessions</h3>
-					<button
-						onclick={() => (showSessionSidebar = false)}
-						class="text-gray-400 hover:text-gray-600"
-						aria-label="Close session sidebar"
-					>
-						<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M6 18L18 6M6 6l12 12"
-							/>
-						</svg>
-					</button>
 				</div>
 				<button
 					onclick={createNewSession}
@@ -376,188 +397,159 @@
 				{/if}
 			</div>
 		</div>
-	{/if}
 
-	<!-- Main Chat Area -->
-	<div class="flex flex-1 flex-col rounded-lg bg-white shadow">
-		<div class="flex items-center justify-between border-b border-gray-200 p-4">
-			<div class="flex items-center space-x-3">
-				<button
-					onclick={() => (showSessionSidebar = !showSessionSidebar)}
-					class="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-					aria-label="Toggle session sidebar"
-				>
-					<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M4 6h16M4 12h16M4 18h16"
-						/>
-					</svg>
-				</button>
-				<div
-					class="h-3 w-3 rounded-full {chatState.streaming ? 'bg-orange-500' : 'bg-green-500'}"
-				></div>
-				<h2 class="text-lg font-medium text-gray-900">
-					{chatState.currentSession?.title || 'AI Code Assistant'}
-				</h2>
+		<!-- Main Chat Area -->
+		<div class="flex flex-1 flex-col bg-white">
+			<div class="flex items-center justify-between border-b border-gray-200 p-4">
+				<div class="flex items-center space-x-3">
+					<div
+						class="h-3 w-3 rounded-full {chatState.streaming ? 'bg-orange-500' : 'bg-green-500'}"
+					></div>
+					<h2 class="text-lg font-medium text-gray-900">
+						{chatState.currentSession?.title || 'AI Code Assistant'}
+					</h2>
+				</div>
 			</div>
-			<div class="flex items-center space-x-2">
-				<label for="repo-select" class="text-sm font-medium text-gray-700">Repository:</label>
-				{#if repositoriesLoading}
-					<div class="flex items-center space-x-2">
-						<div class="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>
-						<span class="text-sm text-gray-500">Loading...</span>
-					</div>
-				{:else if repositories.length === 0}
-					<span class="text-sm text-gray-500">No repositories found</span>
-				{:else}
-					<select
-						id="repo-select"
-						bind:value={selectedRepo}
-						class="rounded-md border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-					>
-						<option value="">All repositories</option>
-						{#each repositories as repo (repo.id)}
-							<option value={repo.id}>{repo.fullName}</option>
-						{/each}
-					</select>
-				{/if}
-			</div>
-		</div>
 
-		<div bind:this={messagesContainer} class="flex-1 space-y-4 overflow-y-auto p-4">
-			{#if chatState.error}
-				<div class="rounded-lg border border-red-200 bg-red-50 p-4">
-					<div class="flex">
-						<svg class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-							/>
-						</svg>
-						<div class="ml-3">
-							<p class="text-sm text-red-800">{chatState.error}</p>
-							<button
-								onclick={() => chatActions.setError(null)}
-								class="mt-1 text-xs text-red-600 underline hover:text-red-800"
+			<div bind:this={messagesContainer} class="flex-1 space-y-4 overflow-y-auto p-4">
+				{#if chatState.error}
+					<div class="rounded-lg border border-red-200 bg-red-50 p-4">
+						<div class="flex">
+							<svg
+								class="h-5 w-5 text-red-400"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
 							>
-								Dismiss
-							</button>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+								/>
+							</svg>
+							<div class="ml-3">
+								<p class="text-sm text-red-800">{chatState.error}</p>
+								<button
+									onclick={() => chatActions.setError(null)}
+									class="mt-1 text-xs text-red-600 underline hover:text-red-800"
+								>
+									Dismiss
+								</button>
+							</div>
 						</div>
 					</div>
-				</div>
-			{/if}
+				{/if}
 
-			{#if currentMessages.length === 0 && !chatState.loading}
-				<div class="flex h-full items-center justify-center">
-					<div class="text-center">
-						<svg
-							class="mx-auto h-12 w-12 text-gray-400"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.126-.98L3 20l1.98-5.126A8.955 8.955 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z"
-							/>
-						</svg>
-						<h3 class="mt-2 text-sm font-medium text-gray-900">Start a conversation</h3>
-						<p class="mt-1 text-sm text-gray-500">Ask me anything about your code!</p>
+				{#if currentMessages.length === 0 && !chatState.loading}
+					<div class="flex h-full items-center justify-center">
+						<div class="text-center">
+							<svg
+								class="mx-auto h-12 w-12 text-gray-400"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.126-.98L3 20l1.98-5.126A8.955 8.955 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z"
+								/>
+							</svg>
+							<h3 class="mt-2 text-sm font-medium text-gray-900">Start a conversation</h3>
+							<p class="mt-1 text-sm text-gray-500">Ask me anything about your code!</p>
+						</div>
 					</div>
-				</div>
-			{:else}
-				{#each currentMessages as message, i (message.id || i)}
-					<div class="flex {message.role === 'user' ? 'justify-end' : 'justify-start'}">
-						<div
-							class="max-w-3xl {message.role === 'user'
-								? 'bg-blue-600 text-white'
-								: 'bg-gray-100 text-gray-900'} rounded-lg px-4 py-2"
-						>
-							<div class="prose prose-sm max-w-none">
-								{#if message.content}
-									{#if hasMarkdownFormatting(message.content)}
-										{#await parseMarkdown(message.content)}
+				{:else}
+					{#each currentMessages as message, i (message.id || i)}
+						<div class="flex {message.role === 'user' ? 'justify-end' : 'justify-start'}">
+							<div
+								class="max-w-3xl {message.role === 'user'
+									? 'bg-blue-600 text-white'
+									: 'bg-gray-100 text-gray-900'} rounded-lg px-4 py-2"
+							>
+								<div class="prose prose-sm max-w-none">
+									{#if message.content}
+										{#if hasMarkdownFormatting(message.content)}
+											{#await parseMarkdown(message.content)}
+												<div class="text-sm whitespace-pre-wrap">{message.content}</div>
+											{:then parsedContent}
+												<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+												<div class="markdown-content text-sm">{@html parsedContent}</div>
+											{:catch}
+												<div class="text-sm whitespace-pre-wrap">{message.content}</div>
+											{/await}
+										{:else}
 											<div class="text-sm whitespace-pre-wrap">{message.content}</div>
-										{:then parsedContent}
-											<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-											<div class="markdown-content text-sm">{@html parsedContent}</div>
-										{:catch}
-											<div class="text-sm whitespace-pre-wrap">{message.content}</div>
-										{/await}
-									{:else}
-										<div class="text-sm whitespace-pre-wrap">{message.content}</div>
+										{/if}
+									{:else if message.role === 'assistant'}
+										<div class="flex items-center space-x-2">
+											<div
+												class="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"
+											></div>
+											<span class="text-sm text-gray-600">Analyzing code...</span>
+										</div>
 									{/if}
-								{:else if message.role === 'assistant'}
-									<div class="flex items-center space-x-2">
-										<div class="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>
-										<span class="text-sm text-gray-600">Analyzing code...</span>
+								</div>
+								{#if message.retrievedChunks && message.retrievedChunks.length > 0}
+									<div class="mt-2 text-xs opacity-70">
+										Analyzed {message.retrievedChunks.length} code chunks
 									</div>
 								{/if}
-							</div>
-							{#if message.retrievedChunks && message.retrievedChunks.length > 0}
-								<div class="mt-2 text-xs opacity-70">
-									Analyzed {message.retrievedChunks.length} code chunks
+								<div class="mt-1 flex items-center justify-between text-xs opacity-70">
+									<span>{formatTime(message.timestamp)}</span>
+									{#if message.tokensUsed}
+										<span>{message.tokensUsed} tokens</span>
+									{/if}
 								</div>
-							{/if}
-							<div class="mt-1 flex items-center justify-between text-xs opacity-70">
-								<span>{formatTime(message.timestamp)}</span>
-								{#if message.tokensUsed}
-									<span>{message.tokensUsed} tokens</span>
-								{/if}
 							</div>
 						</div>
-					</div>
-				{/each}
-			{/if}
-		</div>
-
-		{#if showSuggestedQuestions}
-			<div class="border-t border-gray-200 p-4">
-				<p class="mb-2 text-sm font-medium text-gray-700">Try asking:</p>
-				<div class="flex flex-wrap gap-2">
-					{#each suggestedQuestions as question (question)}
-						<button
-							onclick={() => askSuggested(question)}
-							class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 hover:bg-gray-200 disabled:opacity-50"
-							disabled={!canSendMessage}
-						>
-							{question}
-						</button>
 					{/each}
-				</div>
+				{/if}
 			</div>
-		{/if}
 
-		<div class="border-t border-gray-200 p-4">
-			<form onsubmit={sendMessage} class="flex space-x-2">
-				<input
-					bind:value={inputText}
-					placeholder="Ask about the code..."
-					class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50"
-					disabled={!canSendMessage}
-					autocomplete="off"
-				/>
-				<button
-					type="submit"
-					disabled={!canSendMessage || !inputText.trim()}
-					class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-				>
-					{#if chatState.streaming}
-						Stop
-					{:else if chatState.loading}
-						Sending...
-					{:else}
-						Send
-					{/if}
-				</button>
-			</form>
+			{#if showSuggestedQuestions}
+				<div class="border-t border-gray-200 p-4">
+					<p class="mb-2 text-sm font-medium text-gray-700">Try asking:</p>
+					<div class="flex flex-wrap gap-2">
+						{#each suggestedQuestions as question (question)}
+							<button
+								onclick={() => askSuggested(question)}
+								class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 hover:bg-gray-200 disabled:opacity-50"
+								disabled={!canSendMessage}
+							>
+								{question}
+							</button>
+						{/each}
+					</div>
+				</div>
+			{/if}
+
+			<div class="border-t border-gray-200 p-4">
+				<form onsubmit={sendMessage} class="flex space-x-2">
+					<input
+						bind:value={inputText}
+						placeholder="Ask about the code..."
+						class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50"
+						disabled={!canSendMessage}
+						autocomplete="off"
+					/>
+					<button
+						type="submit"
+						disabled={!canSendMessage || !inputText.trim()}
+						class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+					>
+						{#if chatState.streaming}
+							Stop
+						{:else if chatState.loading}
+							Sending...
+						{:else}
+							Send
+						{/if}
+					</button>
+				</form>
+			</div>
 		</div>
 	</div>
 </div>
