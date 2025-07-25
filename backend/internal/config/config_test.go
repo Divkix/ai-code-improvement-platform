@@ -19,9 +19,9 @@ func TestLoad_WithDefaults(t *testing.T) {
 		"PORT", "HOST", "GIN_MODE", "MONGODB_URI", "QDRANT_URL", "DB_NAME",
 		"QDRANT_COLLECTION_NAME", "VECTOR_DIMENSION", "JWT_SECRET",
 		"GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET", "GITHUB_ENCRYPTION_KEY",
-		"VOYAGE_API_KEY", "LLM_BASE_URL", "LLM_MODEL",
-		"LLM_API_KEY", "LLM_REQUEST_TIMEOUT", "EMBEDDING_PROVIDER",
-		"LOCAL_EMBEDDING_URL", "LOCAL_EMBEDDING_MODEL",
+		"LLM_BASE_URL", "LLM_MODEL",
+		"LLM_API_KEY", "LLM_REQUEST_TIMEOUT",
+		"EMBEDDING_BASE_URL", "EMBEDDING_MODEL", "EMBEDDING_API_KEY",
 	}
 
 	// Store original values
@@ -33,7 +33,6 @@ func TestLoad_WithDefaults(t *testing.T) {
 
 	// Set minimum required values
 	require.NoError(t, os.Setenv("JWT_SECRET", "test-secret"))
-	require.NoError(t, os.Setenv("VOYAGE_API_KEY", "test-voyage-key"))
 	require.NoError(t, os.Setenv("LLM_API_KEY", "test-llm-key"))
 
 	defer func() {
@@ -68,14 +67,13 @@ func TestLoad_WithDefaults(t *testing.T) {
 	assert.Equal(t, "", config.GitHub.ClientSecret)
 	assert.Equal(t, "", config.GitHub.EncryptionKey)
 
-	assert.Equal(t, "test-voyage-key", config.AI.VoyageAPIKey)
 	assert.Equal(t, "https://api.openai.com/v1", config.AI.LLMBaseURL)
 	assert.Equal(t, "gpt-4o-mini", config.AI.LLMModel)
 	assert.Equal(t, "test-llm-key", config.AI.LLMAPIKey)
 	assert.Equal(t, "30s", config.AI.LLMRequestTimeout)
-	assert.Equal(t, "voyage", config.AI.EmbeddingProvider)
-	assert.Equal(t, "http://localhost:1234", config.AI.LocalEmbeddingURL)
-	assert.Equal(t, "text-embedding-nomic-embed-text-v1.5", config.AI.LocalEmbeddingModel)
+	assert.Equal(t, "https://api.openai.com/v1", config.AI.EmbeddingBaseURL)
+	assert.Equal(t, "text-embedding-nomic-embed-text-v1.5", config.AI.EmbeddingModel)
+	assert.Equal(t, "", config.AI.EmbeddingAPIKey)
 }
 
 func TestLoad_WithCustomValues(t *testing.T) {
@@ -95,14 +93,13 @@ func TestLoad_WithCustomValues(t *testing.T) {
 		"GITHUB_CLIENT_ID":       "github-id",
 		"GITHUB_CLIENT_SECRET":   "github-secret",
 		"GITHUB_ENCRYPTION_KEY":  "encryption-key",
-		"VOYAGE_API_KEY":         "voyage-key",
 		"LLM_BASE_URL":           "https://custom-llm.com/v1",
 		"LLM_MODEL":              "custom-model",
 		"LLM_API_KEY":            "custom-llm-key",
 		"LLM_REQUEST_TIMEOUT":    "60s",
-		"EMBEDDING_PROVIDER":     "local",
-		"LOCAL_EMBEDDING_URL":    "http://custom:8080",
-		"LOCAL_EMBEDDING_MODEL":  "custom-model",
+		"EMBEDDING_BASE_URL":     "https://custom-embeddings.com/v1",
+		"EMBEDDING_MODEL":        "custom-model",
+		"EMBEDDING_API_KEY":      "emb-key",
 	}
 
 	// Store original values and set test values
@@ -144,14 +141,13 @@ func TestLoad_WithCustomValues(t *testing.T) {
 	assert.Equal(t, "github-secret", config.GitHub.ClientSecret)
 	assert.Equal(t, "encryption-key", config.GitHub.EncryptionKey)
 
-	assert.Equal(t, "voyage-key", config.AI.VoyageAPIKey)
 	assert.Equal(t, "https://custom-llm.com/v1", config.AI.LLMBaseURL)
 	assert.Equal(t, "custom-model", config.AI.LLMModel)
 	assert.Equal(t, "custom-llm-key", config.AI.LLMAPIKey)
 	assert.Equal(t, "60s", config.AI.LLMRequestTimeout)
-	assert.Equal(t, "local", config.AI.EmbeddingProvider)
-	assert.Equal(t, "http://custom:8080", config.AI.LocalEmbeddingURL)
-	assert.Equal(t, "custom-model", config.AI.LocalEmbeddingModel)
+	assert.Equal(t, "https://custom-embeddings.com/v1", config.AI.EmbeddingBaseURL)
+	assert.Equal(t, "custom-model", config.AI.EmbeddingModel)
+	assert.Equal(t, "emb-key", config.AI.EmbeddingAPIKey)
 }
 
 func TestValidation_JWTSecretRequired(t *testing.T) {
@@ -159,144 +155,27 @@ func TestValidation_JWTSecretRequired(t *testing.T) {
 
 	// Store all relevant environment variables
 	originalJWT := os.Getenv("JWT_SECRET")
-	originalVoyage := os.Getenv("VOYAGE_API_KEY")
 	originalLLM := os.Getenv("LLM_API_KEY")
-	originalProvider := os.Getenv("EMBEDDING_PROVIDER")
+	originalDimension := os.Getenv("VECTOR_DIMENSION")
 	originalLocalURL := os.Getenv("LOCAL_EMBEDDING_URL")
 
 	defer func() {
 		restoreEnv("JWT_SECRET", originalJWT)
-		restoreEnv("VOYAGE_API_KEY", originalVoyage)
 		restoreEnv("LLM_API_KEY", originalLLM)
-		restoreEnv("EMBEDDING_PROVIDER", originalProvider)
+		restoreEnv("VECTOR_DIMENSION", originalDimension)
 		restoreEnv("LOCAL_EMBEDDING_URL", originalLocalURL)
 	}()
 
 	// Clear JWT_SECRET but set other required values to ensure JWT validation is tested
 	require.NoError(t, os.Unsetenv("JWT_SECRET"))
-	require.NoError(t, os.Setenv("VOYAGE_API_KEY", "test-voyage-key"))
 	require.NoError(t, os.Setenv("LLM_API_KEY", "test-llm-key"))
-	require.NoError(t, os.Setenv("EMBEDDING_PROVIDER", "voyage"))
+	require.NoError(t, os.Setenv("VECTOR_DIMENSION", "1024"))
 
 	config, err := Load()
 	assert.Error(t, err)
 	assert.Nil(t, config)
 	if err != nil {
 		assert.Contains(t, err.Error(), "JWT_SECRET is required")
-	}
-}
-
-func TestValidation_EmbeddingProvider(t *testing.T) {
-	// Don't run in parallel due to environment variable manipulation
-
-	tests := []struct {
-		name          string
-		provider      string
-		voyageKey     string
-		localURL      string
-		llmKey        string
-		expectError   bool
-		errorContains string
-	}{
-		{
-			name:        "voyage provider with key",
-			provider:    "voyage",
-			voyageKey:   "test-key",
-			llmKey:      "llm-key",
-			expectError: false,
-		},
-		{
-			name:          "voyage provider without key",
-			provider:      "voyage",
-			voyageKey:     "",
-			llmKey:        "llm-key",
-			expectError:   true,
-			errorContains: "VOYAGE_API_KEY is required",
-		},
-		{
-			name:        "local provider with URL",
-			provider:    "local",
-			localURL:    "http://localhost:8080",
-			llmKey:      "llm-key",
-			expectError: false,
-		},
-		{
-			name:          "local provider without URL",
-			provider:      "local",
-			localURL:      "",
-			llmKey:        "llm-key",
-			expectError:   true,
-			errorContains: "LOCAL_EMBEDDING_URL is required",
-		},
-		{
-			name:          "invalid provider",
-			provider:      "invalid",
-			voyageKey:     "", // Explicitly set to empty
-			localURL:      "", // Explicitly set to empty
-			llmKey:        "llm-key",
-			expectError:   true,
-			errorContains: "invalid EMBEDDING_PROVIDER",
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			// Don't run subtests in parallel due to environment variable manipulation
-
-			// Store original values - capture ALL environment variables that could affect the test
-			originalVoyage := os.Getenv("VOYAGE_API_KEY")
-			originalLocal := os.Getenv("LOCAL_EMBEDDING_URL")
-			originalProvider := os.Getenv("EMBEDDING_PROVIDER")
-			originalLLM := os.Getenv("LLM_API_KEY")
-			originalJWT := os.Getenv("JWT_SECRET")
-			originalVector := os.Getenv("VECTOR_DIMENSION")
-
-			defer func() {
-				restoreEnv("VOYAGE_API_KEY", originalVoyage)
-				restoreEnv("LOCAL_EMBEDDING_URL", originalLocal)
-				restoreEnv("EMBEDDING_PROVIDER", originalProvider)
-				restoreEnv("LLM_API_KEY", originalLLM)
-				restoreEnv("JWT_SECRET", originalJWT)
-				restoreEnv("VECTOR_DIMENSION", originalVector)
-			}()
-
-			// Set test values - always set all relevant environment variables explicitly
-			require.NoError(t, os.Setenv("JWT_SECRET", "test-secret"))
-			require.NoError(t, os.Setenv("EMBEDDING_PROVIDER", tt.provider))
-
-			// Always set VOYAGE_API_KEY explicitly (empty string if not needed)
-			if tt.voyageKey == "" {
-				require.NoError(t, os.Unsetenv("VOYAGE_API_KEY"))
-			} else {
-				require.NoError(t, os.Setenv("VOYAGE_API_KEY", tt.voyageKey))
-			}
-
-			// Handle LOCAL_EMBEDDING_URL: unset if empty, otherwise set
-			if tt.localURL == "" {
-				require.NoError(t, os.Unsetenv("LOCAL_EMBEDDING_URL"))
-			} else {
-				require.NoError(t, os.Setenv("LOCAL_EMBEDDING_URL", tt.localURL))
-			}
-
-			require.NoError(t, os.Setenv("LLM_API_KEY", tt.llmKey))
-
-			// Clear other environment variables that might interfere
-			require.NoError(t, os.Unsetenv("VECTOR_DIMENSION"))
-
-			config, err := Load()
-
-			if tt.expectError {
-				assert.Error(t, err)
-				assert.Nil(t, config)
-				if err != nil {
-					assert.Contains(t, err.Error(), tt.errorContains)
-				}
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, config)
-			}
-		})
 	}
 }
 
@@ -329,17 +208,14 @@ func TestValidation_LLMAPIKey(t *testing.T) {
 			// Store original values
 			originalLLM := os.Getenv("LLM_API_KEY")
 			originalJWT := os.Getenv("JWT_SECRET")
-			originalVoyage := os.Getenv("VOYAGE_API_KEY")
 
 			defer func() {
 				restoreEnv("LLM_API_KEY", originalLLM)
 				restoreEnv("JWT_SECRET", originalJWT)
-				restoreEnv("VOYAGE_API_KEY", originalVoyage)
 			}()
 
 			// Set required values
 			require.NoError(t, os.Setenv("JWT_SECRET", "test-secret"))
-			require.NoError(t, os.Setenv("VOYAGE_API_KEY", "test-voyage-key"))
 			require.NoError(t, os.Setenv("LLM_API_KEY", tt.llmKey))
 
 			config, err := Load()
@@ -405,27 +281,20 @@ func TestValidation_VectorDimension(t *testing.T) {
 
 			// Store original values
 			originalJWT := os.Getenv("JWT_SECRET")
-			originalVoyage := os.Getenv("VOYAGE_API_KEY")
 			originalLLM := os.Getenv("LLM_API_KEY")
 			originalDimension := os.Getenv("VECTOR_DIMENSION")
-			originalProvider := os.Getenv("EMBEDDING_PROVIDER")
 			originalLocalURL := os.Getenv("LOCAL_EMBEDDING_URL")
 
 			defer func() {
 				restoreEnv("JWT_SECRET", originalJWT)
-				restoreEnv("VOYAGE_API_KEY", originalVoyage)
 				restoreEnv("LLM_API_KEY", originalLLM)
 				restoreEnv("VECTOR_DIMENSION", originalDimension)
-				restoreEnv("EMBEDDING_PROVIDER", originalProvider)
 				restoreEnv("LOCAL_EMBEDDING_URL", originalLocalURL)
 			}()
 
 			// Set required values
 			require.NoError(t, os.Setenv("JWT_SECRET", "test-secret"))
-			require.NoError(t, os.Setenv("VOYAGE_API_KEY", "test-voyage-key"))
 			require.NoError(t, os.Setenv("LLM_API_KEY", "test-llm-key"))
-			require.NoError(t, os.Setenv("EMBEDDING_PROVIDER", "voyage")) // Only validate for voyage provider
-			require.NoError(t, os.Unsetenv("LOCAL_EMBEDDING_URL"))        // Clear any previous local URL
 			require.NoError(t, os.Setenv("VECTOR_DIMENSION", tt.dimension))
 
 			config, err := Load()

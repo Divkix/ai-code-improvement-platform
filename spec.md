@@ -145,7 +145,7 @@ volumes:
 }
 ```
 
-#### code_chunks
+#### codechunks
 ```javascript
 {
   _id: ObjectId,
@@ -179,7 +179,7 @@ volumes:
     role: string, // "user" or "assistant"
     content: string,
     timestamp: Date,
-    retrievedChunks: [ObjectId], // code_chunks references for context
+    retrievedChunks: [ObjectId], // codechunks references for context
     tokensUsed: number
   }],
   createdAt: Date,

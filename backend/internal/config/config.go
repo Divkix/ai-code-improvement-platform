@@ -43,20 +43,21 @@ type GitHubConfig struct {
 }
 
 type AIConfig struct {
-	VoyageAPIKey string
-
 	// LLM Configuration (OpenAI-compatible API)
 	LLMBaseURL        string
 	LLMModel          string
 	LLMAPIKey         string
 	LLMRequestTimeout string
 
-	// Provider selects which embedding backend to use: "voyage" (default) or "local".
-	EmbeddingProvider string
-	// Base URL for the local embedding server (used when provider==local)
-	LocalEmbeddingURL string
-	// Model name to send to the local embedding endpoint
-	LocalEmbeddingModel string
+	// Universal embedding endpoint (OpenAI-compatible)
+	EmbeddingBaseURL string
+
+	// Provider agnostic model name
+	// Generic embedding model name shared across providers (set via EMBEDDING_MODEL)
+	EmbeddingModel string
+
+	// Universal embedding API key (set via EMBEDDING_API_KEY). May be empty for local servers.
+	EmbeddingAPIKey string
 }
 
 func Load() (*Config, error) {
@@ -85,14 +86,13 @@ func Load() (*Config, error) {
 			EncryptionKey: getEnv("GITHUB_ENCRYPTION_KEY", ""),
 		},
 		AI: AIConfig{
-			VoyageAPIKey:        getEnv("VOYAGE_API_KEY", ""),
-			LLMBaseURL:          getEnv("LLM_BASE_URL", "https://api.openai.com/v1"),
-			LLMModel:            getEnv("LLM_MODEL", "gpt-4o-mini"),
-			LLMAPIKey:           getEnv("LLM_API_KEY", ""),
-			LLMRequestTimeout:   getEnv("LLM_REQUEST_TIMEOUT", "30s"),
-			EmbeddingProvider:   getEnv("EMBEDDING_PROVIDER", "voyage"),
-			LocalEmbeddingURL:   getEnv("LOCAL_EMBEDDING_URL", "http://localhost:1234"),
-			LocalEmbeddingModel: getEnv("LOCAL_EMBEDDING_MODEL", "text-embedding-nomic-embed-text-v1.5"),
+			LLMBaseURL:        getEnv("LLM_BASE_URL", "https://api.openai.com/v1"),
+			LLMModel:          getEnv("LLM_MODEL", "gpt-4o-mini"),
+			LLMAPIKey:         getEnv("LLM_API_KEY", ""),
+			LLMRequestTimeout: getEnv("LLM_REQUEST_TIMEOUT", "30s"),
+			EmbeddingBaseURL:  getEnv("EMBEDDING_BASE_URL", "https://api.openai.com/v1"),
+			EmbeddingModel:    getEnv("EMBEDDING_MODEL", "text-embedding-nomic-embed-text-v1.5"),
+			EmbeddingAPIKey:   getEnv("EMBEDDING_API_KEY", ""),
 		},
 	}
 
@@ -108,18 +108,12 @@ func (c *Config) validate() error {
 		return fmt.Errorf("JWT_SECRET is required")
 	}
 
-	// Validate AI / embedding provider requirements
-	switch c.AI.EmbeddingProvider {
-	case "voyage":
-		if c.AI.VoyageAPIKey == "" {
-			return fmt.Errorf("VOYAGE_API_KEY is required when EMBEDDING_PROVIDER=voyage")
-		}
-	case "local":
-		if os.Getenv("LOCAL_EMBEDDING_URL") == "" {
-			return fmt.Errorf("LOCAL_EMBEDDING_URL is required when EMBEDDING_PROVIDER=local")
-		}
-	default:
-		return fmt.Errorf("invalid EMBEDDING_PROVIDER: %s", c.AI.EmbeddingProvider)
+	// Basic validation – ensure base URL and model are set
+	if c.AI.EmbeddingBaseURL == "" {
+		return fmt.Errorf("EMBEDDING_BASE_URL is required")
+	}
+	if c.AI.EmbeddingModel == "" {
+		return fmt.Errorf("EMBEDDING_MODEL is required")
 	}
 
 	// Validate LLM configuration
@@ -127,11 +121,9 @@ func (c *Config) validate() error {
 		return fmt.Errorf("LLM_API_KEY is required for AI chat functionality")
 	}
 
-	// Validate vector dimension only when using Voyage provider (model expects certain dims)
-	if c.AI.EmbeddingProvider == "voyage" {
-		if c.Database.VectorDimension != 1024 && c.Database.VectorDimension != 512 && c.Database.VectorDimension != 256 && c.Database.VectorDimension != 2048 {
-			return fmt.Errorf("VECTOR_DIMENSION must be one of 256, 512, 1024, or 2048 for Voyage AI voyage-code-3 model, got %d", c.Database.VectorDimension)
-		}
+	// Optional sanity check: common Voyage models expect 256/512/1024/2048 dims.
+	if c.Database.VectorDimension != 256 && c.Database.VectorDimension != 512 && c.Database.VectorDimension != 1024 && c.Database.VectorDimension != 2048 {
+		return fmt.Errorf("VECTOR_DIMENSION must be one of 256, 512, 1024, or 2048, got %d", c.Database.VectorDimension)
 	}
 
 	return nil

@@ -259,7 +259,7 @@ LOCAL_EMBEDDING_MODEL=text-embedding-nomic-embed-text-v1.5  # For local provider
 
 # Vector Configuration
 VECTOR_DIMENSION=1024  # Must be 256, 512, 1024, or 2048 for Voyage
-QDRANT_COLLECTION_NAME=code_chunks
+QDRANT_COLLECTION_NAME=codechunks
 
 # Server Configuration (Optional)
 PORT=8080

@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -81,16 +82,14 @@ func main() {
 	dashboardService := services.NewDashboardService(mongoDB.Database())
 	githubService := services.NewGitHubService(mongoDB.Database(), cfg.GitHub.ClientID, cfg.GitHub.ClientSecret, cfg.GitHub.EncryptionKey)
 
-	// Initialize embedding provider (Voyage or Local)
-	var embeddingProvider services.EmbeddingProvider
-	switch cfg.AI.EmbeddingProvider {
-	case "local":
-		embeddingProvider = services.NewLocalEmbeddingService(cfg.AI.LocalEmbeddingURL, cfg.AI.LocalEmbeddingModel)
-		log.Println("🚀 Using local embedding provider at", cfg.AI.LocalEmbeddingURL)
-	default:
-		embeddingProvider = services.NewVoyageService(cfg.AI.VoyageAPIKey)
-		log.Println("🚀 Using Voyage AI embedding provider")
-	}
+	// Initialize universal embedding provider
+	embeddingProvider := services.NewOpenAIEmbeddingService(
+		cfg.AI.EmbeddingBaseURL,
+		cfg.AI.EmbeddingAPIKey,
+		cfg.AI.EmbeddingModel,
+		60*time.Second,
+	)
+	log.Println("🚀 Using embedding endpoint:", cfg.AI.EmbeddingBaseURL)
 
 	embeddingService := services.NewEmbeddingService(embeddingProvider, qdrant, mongoDB, cfg)
 	embeddingPipeline := services.NewEmbeddingPipeline(embeddingService, mongoDB, cfg)
