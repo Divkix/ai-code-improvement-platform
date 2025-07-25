@@ -1,5 +1,5 @@
 // ABOUTME: Code processing service for chunking files and extracting metadata
-// ABOUTME: Implements 150-line chunks with overlap and language-aware processing
+// ABOUTME: Implements 75-line chunks with overlap and language-aware processing
 
 package services
 
@@ -22,8 +22,8 @@ type CodeProcessor struct {
 // NewCodeProcessor creates a new code processor with default settings
 func NewCodeProcessor() *CodeProcessor {
 	return &CodeProcessor{
-		chunkSize:   150, // 150 lines per chunk
-		overlapSize: 50,  // 50 lines overlap
+		chunkSize:   75, // 75 lines per chunk
+		overlapSize: 25,  // 25 lines overlap
 	}
 }
 
