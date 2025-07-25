@@ -105,6 +105,7 @@ bun run format
 
 # Generate TypeScript types from OpenAPI
 bun run generate-api
+bun run generate  # Alias for generate-api
 
 # Run tests
 bun run test
@@ -244,14 +245,14 @@ GITHUB_CLIENT_ID=your-github-client-id
 GITHUB_CLIENT_SECRET=your-github-client-secret
 GITHUB_ENCRYPTION_KEY=your-16-24-32-byte-aes-key
 
-# AI Services - LLM (OpenAI-compatible)
-LLM_BASE_URL=https://api.openai.com/v1
-LLM_MODEL=gpt-4o-mini
-LLM_API_KEY=your-llm-api-key
+# AI Services - LLM (OpenAI-compatible or Anthropic)
+LLM_BASE_URL=https://api.openai.com/v1  # For OpenAI-compatible APIs
+LLM_MODEL=gpt-4o-mini                    # For OpenAI models
+LLM_API_KEY=your-llm-api-key             # OpenAI API key
 LLM_REQUEST_TIMEOUT=30s
 
-# Legacy Anthropic support (optional)
-LLM_API_KEY=your-llm-api-key
+# For Anthropic Claude (alternative to OpenAI)
+ANTHROPIC_API_KEY=your-anthropic-key     # If using Claude instead
 
 # Embedding Provider (voyage or local)
 EMBEDDING_PROVIDER=voyage
@@ -307,6 +308,8 @@ go test -v -run TestEmbeddingService ./internal/services/
 bun run test        # All tests (unit + e2e) - uses npm run internally
 bun run test:unit   # Vitest unit tests
 bun run test:e2e    # Playwright e2e tests
+
+# Note: Package management uses Bun, but some scripts delegate to npm for compatibility
 ```
 
 **Linting:**
