@@ -63,15 +63,19 @@
 	}
 
 	function manageProgressPolling() {
-		const hasImportingRepos = repositories.some(
-			(repo) => repo.status === 'importing' || repo.status === 'pending'
+		const hasProcessingRepos = repositories.some(
+			(repo) =>
+				repo.status === 'importing' ||
+				repo.status === 'pending' ||
+				repo.status === 'queued-embedding' ||
+				repo.status === 'embedding'
 		);
 
-		if (hasImportingRepos && !pollingInterval) {
+		if (hasProcessingRepos && !pollingInterval) {
 			// Start polling every 3 seconds
 			pollingInterval = setInterval(updateRepositoryProgress, 3000);
-		} else if (!hasImportingRepos && pollingInterval) {
-			// Stop polling when no repositories are importing
+		} else if (!hasProcessingRepos && pollingInterval) {
+			// Stop polling when no repositories are processing
 			clearInterval(pollingInterval);
 			pollingInterval = null;
 		}
@@ -79,11 +83,15 @@
 
 	async function updateRepositoryProgress() {
 		try {
-			const importingRepos = repositories.filter(
-				(repo) => repo.status === 'importing' || repo.status === 'pending'
+			const processingRepos = repositories.filter(
+				(repo) =>
+					repo.status === 'importing' ||
+					repo.status === 'pending' ||
+					repo.status === 'queued-embedding' ||
+					repo.status === 'embedding'
 			);
 
-			if (importingRepos.length === 0) {
+			if (processingRepos.length === 0) {
 				// No repos to poll, stop polling
 				if (pollingInterval) {
 					clearInterval(pollingInterval);
@@ -92,8 +100,8 @@
 				return;
 			}
 
-			// Poll each importing repository for updates
-			const updatePromises = importingRepos.map(async (repo) => {
+			// Poll each processing repository for updates
+			const updatePromises = processingRepos.map(async (repo) => {
 				try {
 					const updatedRepo = await getRepository(repo.id);
 					// Update the repository in our local state
@@ -196,12 +204,35 @@
 				return 'bg-green-100 text-green-800';
 			case 'importing':
 				return 'bg-blue-100 text-blue-800';
+			case 'embedding':
+				return 'bg-purple-100 text-purple-800';
+			case 'queued-embedding':
+				return 'bg-indigo-100 text-indigo-800';
 			case 'pending':
 				return 'bg-yellow-100 text-yellow-800';
 			case 'error':
 				return 'bg-red-100 text-red-800';
 			default:
 				return 'bg-gray-100 text-gray-800';
+		}
+	}
+
+	function getStatusText(status: string) {
+		switch (status) {
+			case 'pending':
+				return 'pending import';
+			case 'queued-embedding':
+				return 'embedding pending';
+			case 'importing':
+				return 'importing';
+			case 'embedding':
+				return 'embedding';
+			case 'ready':
+				return 'ready';
+			case 'error':
+				return 'error';
+			default:
+				return status;
 		}
 	}
 
@@ -401,7 +432,7 @@
 									repo.status
 								)}"
 							>
-								{repo.status}
+								{getStatusText(repo.status)}
 							</span>
 						</div>
 

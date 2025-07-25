@@ -252,7 +252,7 @@ func (s *RepositoryService) UpdateRepositoryProgress(ctx context.Context, userID
 	case 0:
 		status = models.StatusPending
 	case 100:
-		status = models.StatusReady
+		status = models.StatusQueuedEmbedding
 	}
 
 	filter := bson.M{"_id": objectID, "userId": userID}
@@ -529,17 +529,12 @@ func (s *RepositoryService) processRepositoryImport(ctx context.Context, repoID 
 		return
 	}
 	
-	// Step 6: Mark repository as ready (100% progress)
+	// Step 6: Complete import and queue for embedding (100% progress)
 	if err := s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 95); err != nil {
 		log.Printf("Failed to update progress: %v", err)
 	}
 	
-	// Mark repository as ready (instead of just "indexed")
-	if err := s.UpdateRepositoryStatus(ctx, userID, repoIDStr, models.StatusReady); err != nil {
-		log.Printf("Failed to mark repository as ready: %v", err)
-		return
-	}
-	
+	// Complete import - this will set status to queued-embedding
 	if err := s.UpdateRepositoryProgress(ctx, userID, repoIDStr, 100); err != nil {
 		log.Printf("Failed to update final progress: %v", err)
 	}

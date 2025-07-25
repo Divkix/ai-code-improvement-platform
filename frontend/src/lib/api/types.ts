@@ -794,7 +794,7 @@ export interface components {
 			/** Format: date-time */
 			lastSyncedAt?: string;
 			/** @enum {string} */
-			status: 'pending' | 'importing' | 'ready' | 'error';
+			status: 'pending' | 'importing' | 'queued-embedding' | 'embedding' | 'ready' | 'error';
 			importProgress?: number;
 			stats?: {
 				totalFiles?: number;

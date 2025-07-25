@@ -4,6 +4,7 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -67,16 +68,18 @@ type RepositoryListResponse struct {
 
 // Repository status constants
 const (
-	StatusPending   = "pending"
-	StatusImporting = "importing"
-	StatusReady     = "ready"
-	StatusError     = "error"
+	StatusPending           = "pending"
+	StatusImporting         = "importing"
+	StatusQueuedEmbedding   = "queued-embedding"
+	StatusEmbedding         = "embedding"
+	StatusReady             = "ready"
+	StatusError             = "error"
 )
 
 // ValidStatus checks if the provided status is valid
 func ValidStatus(status string) bool {
 	switch status {
-	case StatusPending, StatusImporting, StatusReady, StatusError:
+	case StatusPending, StatusImporting, StatusQueuedEmbedding, StatusEmbedding, StatusReady, StatusError:
 		return true
 	default:
 		return false
@@ -156,4 +159,54 @@ func (r *Repository) MarkIndexed() {
 	r.IndexedAt = &now
 	r.LastSyncedAt = &now
 	r.UpdatedAt = now
+}
+
+// GetCompositeStatus returns the composite status for display based on both import and embedding status
+func (r *Repository) GetCompositeStatus() string {
+	// Handle error states first
+	if r.Status == StatusError {
+		return StatusError
+	}
+	if r.EmbeddingStatus == "failed" {
+		return StatusError
+	}
+
+	// Handle pending/importing states
+	if r.Status == StatusPending {
+		return StatusPending
+	}
+	if r.Status == StatusImporting {
+		return StatusImporting
+	}
+
+	// Handle post-import states based on embedding status
+	if r.Status == StatusReady || r.Status == StatusQueuedEmbedding {
+		switch r.EmbeddingStatus {
+		case "", "pending":
+			return StatusQueuedEmbedding
+		case "processing":
+			return StatusEmbedding
+		case "completed":
+			return StatusReady
+		default:
+			// Unknown embedding status, assume queued for embedding
+			return StatusQueuedEmbedding
+		}
+	}
+
+	// Fallback to original status
+	return r.Status
+}
+
+// MarshalJSON provides custom JSON marshalling that uses composite status for API responses
+func (r *Repository) MarshalJSON() ([]byte, error) {
+	// Create an anonymous struct that mirrors Repository but with composite status
+	type RepositoryAlias Repository
+	return json.Marshal(&struct {
+		*RepositoryAlias
+		Status string `json:"status"`
+	}{
+		RepositoryAlias: (*RepositoryAlias)(r),
+		Status:          r.GetCompositeStatus(),
+	})
 }

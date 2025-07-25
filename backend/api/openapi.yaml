@@ -304,7 +304,7 @@ components:
           format: date-time
         status:
           type: string
-          enum: [pending, importing, ready, error]
+          enum: [pending, importing, queued-embedding, embedding, ready, error]
         importProgress:
           type: integer
           minimum: 0

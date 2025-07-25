@@ -65,10 +65,12 @@ const (
 
 // Defines values for RepositoryStatus.
 const (
-	RepositoryStatusError     RepositoryStatus = "error"
-	RepositoryStatusImporting RepositoryStatus = "importing"
-	RepositoryStatusPending   RepositoryStatus = "pending"
-	RepositoryStatusReady     RepositoryStatus = "ready"
+	RepositoryStatusEmbedding       RepositoryStatus = "embedding"
+	RepositoryStatusError           RepositoryStatus = "error"
+	RepositoryStatusImporting       RepositoryStatus = "importing"
+	RepositoryStatusPending         RepositoryStatus = "pending"
+	RepositoryStatusQueuedEmbedding RepositoryStatus = "queued-embedding"
+	RepositoryStatusReady           RepositoryStatus = "ready"
 )
 
 // Defines values for SimilarityResultRelevance.
