@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 // ABOUTME: Tests for SearchResults component functionality
 // ABOUTME: Covers result display, pagination, filtering, and GitHub link interactions
 

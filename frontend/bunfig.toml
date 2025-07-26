@@ -1,0 +1,12 @@
+# bunfig.toml
+[test]
+# Globs to exclude from coverage
+coveragePathIgnorePatterns = [
+    # excludes build artefacts at root
+    "build/**",
+    # excludes build directory inside frontend
+    "frontend/build/**",
+]
+
+# (optional) while you’re here you can also skip test files themselves
+# coverageSkipTestFiles = true
