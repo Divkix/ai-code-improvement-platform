@@ -3,6 +3,11 @@
 
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
+	import * as Card from '$lib/components/ui/card/index.js';
+	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
+	import { Check, Copy } from 'lucide-svelte';
 
 	export let content: string;
 	export let language: string = '';
@@ -16,7 +21,7 @@
 		copy: string;
 	}>();
 
-	let copySuccess = false;
+	let copying = false;
 
 	// Language color mapping
 	const languageColors: Record<string, string> = {
@@ -69,13 +74,14 @@
 	}
 
 	async function copyToClipboard() {
+		if (copying) return;
+		copying = true;
+		
 		try {
 			await navigator.clipboard.writeText(content);
-			copySuccess = true;
 			dispatch('copy', content);
-
 			setTimeout(() => {
-				copySuccess = false;
+				copying = false;
 			}, 2000);
 		} catch (err) {
 			console.warn('Failed to copy to clipboard:', err);
@@ -86,13 +92,13 @@
 			textArea.select();
 			try {
 				document.execCommand('copy');
-				copySuccess = true;
 				dispatch('copy', content);
 				setTimeout(() => {
-					copySuccess = false;
+					copying = false;
 				}, 2000);
 			} catch (fallbackErr) {
 				console.error('Fallback copy failed:', fallbackErr);
+				copying = false;
 			}
 			document.body.removeChild(textArea);
 		}
@@ -102,158 +108,68 @@
 	$: truncated = maxLines > 0 && content.split('\n').length > maxLines;
 </script>
 
-<div class="code-snippet">
-	<div class="code-header">
-		{#if language}
-			<span class="language-badge" style="background-color: {getLanguageColor(language)}">
-				{language}
-			</span>
-		{/if}
+<Card.Root class="overflow-hidden font-mono">
+	<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
+		<div class="flex items-center gap-2">
+			{#if language}
+				<Badge variant="outline" class="text-xs" style="background-color: {getLanguageColor(language)}; color: white;">
+					{language}
+				</Badge>
+			{/if}
 
-		{#if fileName}
-			<span class="file-name">{fileName}</span>
-		{/if}
-
-		<div class="code-actions">
-			<button
-				class="copy-button"
-				on:click={copyToClipboard}
-				title="Copy to clipboard"
-				aria-label="Copy code to clipboard"
-			>
-				{#if copySuccess}
-					<svg
-						width="16"
-						height="16"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-					>
-						<path d="M20 6L9 17l-5-5" />
-					</svg>
-					<span class="sr-only">Copied!</span>
-				{:else}
-					<svg
-						width="16"
-						height="16"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-					>
-						<rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-						<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-					</svg>
-				{/if}
-			</button>
+			{#if fileName}
+				<span class="text-sm text-muted-foreground font-medium truncate">{fileName}</span>
+			{/if}
 		</div>
-	</div>
 
-	<div class="code-content">
-		<pre class="code-block" class:line-numbers={showLineNumbers}><code class="language-{language}"
-				>{#each processedLines as line, index (index)}
-					<span class="code-line" data-line={startLine + index}>
-						<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-						{@html highlightSearchTerm(line, searchTerm)}
+		<Button
+			variant="outline"
+			size="sm"
+			on:click={copyToClipboard}
+			disabled={copying}
+			title="Copy to clipboard"
+			aria-label="Copy code to clipboard"
+		>
+			{#if copying}
+				<Check class="h-4 w-4 mr-2" />
+				Copied!
+			{:else}
+				<Copy class="h-4 w-4 mr-2" />
+				Copy
+			{/if}
+		</Button>
+	</Card.Header>
+	<Card.Content class="p-0">
+		<ScrollArea class="h-full max-h-96">
+			<pre class="p-4 text-sm code-block" class:line-numbers={showLineNumbers}><code class="language-{language}"
+					>{#each processedLines as line, index (index)}
+						<span class="code-line" data-line={startLine + index}>
+							<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+							{@html highlightSearchTerm(line, searchTerm)}
+						</span>
+					{/each}</code
+				></pre>
+
+			{#if truncated}
+				<div class="border-t bg-muted/50 px-4 py-2 text-center">
+					<span class="text-xs text-muted-foreground italic">
+						... truncated ({content.split('\n').length - maxLines} more lines)
 					</span>
-				{/each}</code
-			></pre>
-
-		{#if truncated}
-			<div class="truncated-indicator">
-				<span class="truncated-text">
-					... truncated ({content.split('\n').length - maxLines} more lines)
-				</span>
-			</div>
-		{/if}
-	</div>
-</div>
+				</div>
+			{/if}
+		</ScrollArea>
+	</Card.Content>
+</Card.Root>
 
 <style>
-	.code-snippet {
-		border: 1px solid #e5e7eb;
-		border-radius: 8px;
-		background: #fafafa;
-		font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
-		overflow: hidden;
-	}
-
-	.code-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 8px 12px;
-		background: #f8f9fa;
-		border-bottom: 1px solid #e5e7eb;
-		gap: 8px;
-	}
-
-	.language-badge {
-		display: inline-block;
-		padding: 2px 8px;
-		border-radius: 12px;
-		font-size: 12px;
-		font-weight: 500;
-		color: white;
-		text-transform: capitalize;
-		min-width: 0;
-		flex-shrink: 0;
-	}
-
-	.file-name {
-		font-size: 12px;
-		color: #6b7280;
-		font-weight: 500;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		flex: 1;
-	}
-
-	.code-actions {
-		display: flex;
-		align-items: center;
-		gap: 4px;
-	}
-
-	.copy-button {
-		background: none;
-		border: none;
-		color: #6b7280;
-		cursor: pointer;
-		padding: 4px;
-		border-radius: 4px;
-		transition:
-			color 0.2s,
-			background-color 0.2s;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.copy-button:hover {
-		color: #374151;
-		background-color: #e5e7eb;
-	}
-
-	.copy-button:focus {
-		outline: 2px solid #3b82f6;
-		outline-offset: 2px;
-	}
-
-	.code-content {
-		position: relative;
-	}
-
 	.code-block {
 		margin: 0;
-		padding: 16px;
-		background: white;
+		background: transparent;
 		overflow-x: auto;
-		font-size: 10px; /* slightly smaller text */
-		line-height: 1; /* tighter line spacing */
-		color: #1f2937;
+		font-size: 13px;
+		line-height: 1.4;
+		color: hsl(var(--foreground));
+		font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
 	}
 
 	.code-block.line-numbers {
@@ -267,7 +183,7 @@
 		left: 16px;
 		width: 32px;
 		text-align: right;
-		color: #9ca3af;
+		color: hsl(var(--muted-foreground));
 		font-size: 12px;
 		user-select: none;
 	}
@@ -275,28 +191,15 @@
 	.code-line {
 		display: block;
 		position: relative;
-		min-height: 1em; /* match new line-height */
+		min-height: 1.4em;
 	}
 
 	.code-line:empty::before {
 		content: ' ';
 	}
 
-	.truncated-indicator {
-		padding: 8px 16px;
-		background: #f8f9fa;
-		border-top: 1px solid #e5e7eb;
-		text-align: center;
-	}
-
-	.truncated-text {
-		font-size: 12px;
-		color: #6b7280;
-		font-style: italic;
-	}
-
 	/* Search term highlighting */
-	:global(.code-snippet mark) {
+	:global(mark) {
 		background-color: #fef3c7;
 		color: #92400e;
 		padding: 1px 2px;
@@ -304,28 +207,10 @@
 		font-weight: 600;
 	}
 
-	/* Screen reader only content */
-	.sr-only {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		padding: 0;
-		margin: -1px;
-		overflow: hidden;
-		clip: rect(0, 0, 0, 0);
-		white-space: nowrap;
-		border: 0;
-	}
-
 	/* Mobile responsiveness */
 	@media (max-width: 640px) {
-		.code-header {
-			padding: 6px 8px;
-		}
-
 		.code-block {
-			padding: 12px;
-			font-size: 13px;
+			font-size: 12px;
 		}
 
 		.code-block.line-numbers {
@@ -336,43 +221,13 @@
 			left: 12px;
 			width: 28px;
 		}
-
-		.file-name {
-			font-size: 11px;
-		}
-
-		.language-badge {
-			font-size: 11px;
-			padding: 1px 6px;
-		}
 	}
 
 	/* High contrast mode support */
 	@media (prefers-contrast: high) {
-		.code-snippet {
-			border-color: #000;
-		}
-
-		.code-header {
-			background: #f0f0f0;
-			border-bottom-color: #000;
-		}
-
-		.code-block {
-			background: white;
-			color: #000;
-		}
-
-		:global(.code-snippet mark) {
+		:global(mark) {
 			background-color: #ffff00;
 			color: #000;
-		}
-	}
-
-	/* Reduced motion support */
-	@media (prefers-reduced-motion: reduce) {
-		.copy-button {
-			transition: none;
 		}
 	}
 </style>
