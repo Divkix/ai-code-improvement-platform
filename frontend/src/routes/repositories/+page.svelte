@@ -490,7 +490,7 @@
 </div>
 
 <Dialog.Root bind:open={showAddModal}>
-	<Dialog.Content class="max-w-3xl">
+	<Dialog.Content class="max-w-[calc(100%-2rem)] sm:max-w-5xl">
 		<Dialog.Header>
 			<Dialog.Title>Add Repository</Dialog.Title>
 		</Dialog.Header>
@@ -562,7 +562,7 @@
 
 <!-- GitHub Repository Browser Modal -->
 <Dialog.Root bind:open={showGitHubBrowser}>
-	<Dialog.Content class="max-w-4xl">
+	<Dialog.Content class="max-w-[calc(100%-2rem)] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
 		<Dialog.Header>
 			<Dialog.Title>Browse GitHub Repositories</Dialog.Title>
 		</Dialog.Header>

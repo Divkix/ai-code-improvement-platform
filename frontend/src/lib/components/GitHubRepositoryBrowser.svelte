@@ -173,7 +173,7 @@
 			</Alert.Root>
 		{/if}
 
-		<div class="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+		<div class="grid gap-4 grid-cols-1 md:grid-cols-2">
 			{#each repositories as repo (repo.id)}
 				<Card.Root class="transition-shadow hover:shadow-md">
 					<Card.Header class="pb-3">
@@ -181,13 +181,13 @@
 							<div class="min-w-0 flex-1">
 								<div class="flex items-center space-x-2">
 									{#if repo.private}
-										<Lock class="h-4 w-4 text-amber-500" />
+										<Lock class="h-4 w-4 text-amber-500 flex-shrink-0" />
 									{:else}
-										<Unlock class="h-4 w-4 text-green-500" />
+										<Unlock class="h-4 w-4 text-green-500 flex-shrink-0" />
 									{/if}
-									<Card.Title class="truncate text-sm">{repo.name}</Card.Title>
+									<Card.Title class="text-sm font-semibold break-words leading-tight">{repo.name}</Card.Title>
 								</div>
-								<Card.Description class="text-xs">
+								<Card.Description class="text-xs text-muted-foreground break-words">
 									{repo.owner}/{repo.name}
 								</Card.Description>
 							</div>
