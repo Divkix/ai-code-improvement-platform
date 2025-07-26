@@ -83,12 +83,7 @@
 		<!-- Language Filter -->
 		<div class="space-y-2">
 			<label class="text-sm font-medium text-foreground"> Programming Language </label>
-			<Select.Root
-				type="single"
-				bind:value={selectedLanguage}
-				onValueChange={handleLanguageChange}
-				{disabled}
-			>
+			<Select.Root bind:value={selectedLanguage} onValueChange={handleLanguageChange} {disabled}>
 				<Select.Trigger class="w-full">
 					{selectedLanguage
 						? selectedLanguage.charAt(0).toUpperCase() + selectedLanguage.slice(1)
@@ -108,12 +103,7 @@
 		<!-- File Type Filter -->
 		<div class="space-y-2">
 			<label class="text-sm font-medium text-foreground"> File Type </label>
-			<Select.Root
-				type="single"
-				bind:value={selectedFileType}
-				onValueChange={handleFileTypeChange}
-				{disabled}
-			>
+			<Select.Root bind:value={selectedFileType} onValueChange={handleFileTypeChange} {disabled}>
 				<Select.Trigger class="w-full">
 					{selectedFileType
 						? commonFileTypes.find((ft) => ft.value === selectedFileType)?.label || selectedFileType
@@ -135,7 +125,6 @@
 			<div class="space-y-2">
 				<label class="text-sm font-medium text-foreground"> Repository </label>
 				<Select.Root
-					type="single"
 					bind:value={selectedRepository}
 					onValueChange={handleRepositoryChange}
 					{disabled}

@@ -69,19 +69,26 @@
 		try {
 			// Load available languages and repositories for filters
 			const [languagesResponse, repositoriesResponse] = await Promise.all([
-				apiClient.GET('/api/search/languages'),
-				apiClient.GET('/api/repositories')
+				apiClient.GET('/api/search/languages').catch(() => ({ data: null, error: null })),
+				apiClient.GET('/api/repositories').catch(() => ({ data: null, error: null }))
 			]);
 
-			if (languagesResponse.data) {
-				availableLanguages = languagesResponse.data.languages || [];
+			if (languagesResponse.data && languagesResponse.data.languages) {
+				availableLanguages = languagesResponse.data.languages;
+			} else {
+				availableLanguages = [];
 			}
 
-			if (repositoriesResponse.data) {
+			if (repositoriesResponse.data && repositoriesResponse.data.repositories) {
 				availableRepositories = repositoriesResponse.data.repositories;
+			} else {
+				availableRepositories = [];
 			}
 		} catch (err) {
 			console.warn('Failed to load initial data:', err);
+			// Ensure arrays are never null
+			availableLanguages = [];
+			availableRepositories = [];
 		}
 	}
 
@@ -262,7 +269,7 @@
 		<SearchBox
 			placeholder="Search for functions, classes, variables, or any code pattern..."
 			{loading}
-			{searchMode}
+			bind:searchMode
 			showModeSelector={true}
 			on:search={handleSearch}
 			on:modeChange={handleModeChange}
