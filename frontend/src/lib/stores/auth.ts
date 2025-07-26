@@ -30,7 +30,7 @@ const loggedOutState: AuthState = {
 
 // Create the auth store - using Svelte stores for SSR compatibility
 function createAuthStore() {
-	const { subscribe, set, update } = writable<AuthState>(initialState);
+	const { subscribe, set } = writable<AuthState>(initialState);
 
 	// Internal state tracking (SSR-safe)
 	let _currentState: AuthState = initialState;
