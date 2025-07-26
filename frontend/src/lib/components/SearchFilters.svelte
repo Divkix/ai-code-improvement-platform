@@ -22,6 +22,11 @@
 		clearFilters: void;
 	}>();
 
+	// IDs for accessibility associations
+	const languageSelectId = 'language-select';
+	const fileTypeSelectId = 'filetype-select';
+	const repoSelectId = 'repo-select';
+
 	// Common file types for quick selection
 	const commonFileTypes = [
 		{ value: 'js', label: 'JavaScript (.js)' },
@@ -69,7 +74,7 @@
 	$: hasActiveFilters = selectedLanguage || selectedFileType || selectedRepository;
 </script>
 
-<div class="mb-6 rounded-lg border bg-card p-6">
+<div class="bg-card mb-6 rounded-lg border p-6">
 	<div class="mb-4 flex items-center justify-between">
 		<h3 class="text-base font-semibold">Filters</h3>
 		{#if hasActiveFilters}
@@ -82,9 +87,16 @@
 	<div class="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
 		<!-- Language Filter -->
 		<div class="space-y-2">
-			<label class="text-sm font-medium text-foreground"> Programming Language </label>
-			<Select.Root bind:value={selectedLanguage} onValueChange={handleLanguageChange} {disabled}>
-				<Select.Trigger class="w-full">
+			<label class="text-foreground text-sm font-medium" for={languageSelectId}>
+				Programming Language
+			</label>
+			<Select.Root
+				type="single"
+				bind:value={selectedLanguage}
+				onValueChange={handleLanguageChange}
+				{disabled}
+			>
+				<Select.Trigger id={languageSelectId} class="w-full">
 					{selectedLanguage
 						? selectedLanguage.charAt(0).toUpperCase() + selectedLanguage.slice(1)
 						: 'All Languages'}
@@ -102,9 +114,14 @@
 
 		<!-- File Type Filter -->
 		<div class="space-y-2">
-			<label class="text-sm font-medium text-foreground"> File Type </label>
-			<Select.Root bind:value={selectedFileType} onValueChange={handleFileTypeChange} {disabled}>
-				<Select.Trigger class="w-full">
+			<label class="text-foreground text-sm font-medium" for={fileTypeSelectId}> File Type </label>
+			<Select.Root
+				type="single"
+				bind:value={selectedFileType}
+				onValueChange={handleFileTypeChange}
+				{disabled}
+			>
+				<Select.Trigger id={fileTypeSelectId} class="w-full">
 					{selectedFileType
 						? commonFileTypes.find((ft) => ft.value === selectedFileType)?.label || selectedFileType
 						: 'All File Types'}
@@ -123,13 +140,14 @@
 		<!-- Repository Filter -->
 		{#if repositories.length > 0}
 			<div class="space-y-2">
-				<label class="text-sm font-medium text-foreground"> Repository </label>
+				<label class="text-foreground text-sm font-medium" for={repoSelectId}> Repository </label>
 				<Select.Root
+					type="single"
 					bind:value={selectedRepository}
 					onValueChange={handleRepositoryChange}
 					{disabled}
 				>
-					<Select.Trigger class="w-full">
+					<Select.Trigger id={repoSelectId} class="w-full">
 						{selectedRepository
 							? repositories.find((r) => r.id === selectedRepository)?.fullName ||
 								selectedRepository
@@ -151,7 +169,7 @@
 	<!-- Active Filters Display -->
 	{#if hasActiveFilters}
 		<div class="border-t pt-4">
-			<span class="mb-2 block text-sm font-medium text-muted-foreground">Active filters:</span>
+			<span class="text-muted-foreground mb-2 block text-sm font-medium">Active filters:</span>
 			<div class="flex flex-wrap gap-2">
 				{#if selectedLanguage}
 					<Badge variant="secondary" class="gap-1">
@@ -159,7 +177,7 @@
 						<Button
 							variant="ghost"
 							size="sm"
-							class="hover:text-destructive-foreground h-4 w-4 p-0 hover:bg-destructive"
+							class="hover:text-destructive-foreground hover:bg-destructive h-4 w-4 p-0"
 							onclick={() => {
 								selectedLanguage = '';
 								dispatch('languageChange', '');
@@ -177,7 +195,7 @@
 						<Button
 							variant="ghost"
 							size="sm"
-							class="hover:text-destructive-foreground h-4 w-4 p-0 hover:bg-destructive"
+							class="hover:text-destructive-foreground hover:bg-destructive h-4 w-4 p-0"
 							onclick={() => {
 								selectedFileType = '';
 								dispatch('fileTypeChange', '');
@@ -196,7 +214,7 @@
 						<Button
 							variant="ghost"
 							size="sm"
-							class="hover:text-destructive-foreground h-4 w-4 p-0 hover:bg-destructive"
+							class="hover:text-destructive-foreground hover:bg-destructive h-4 w-4 p-0"
 							onclick={() => {
 								selectedRepository = '';
 								dispatch('repositoryChange', '');
