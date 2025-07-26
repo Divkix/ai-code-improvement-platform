@@ -14,7 +14,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import * as Alert from '$lib/components/ui/alert';
-	import { Github, Link, Unlink, Loader2, Check, AlertCircle, ExternalLink } from '@lucide/svelte';
+	import { Github, Unlink, Loader2, Check, AlertCircle } from '@lucide/svelte';
 
 	let { user }: { user: User } = $props();
 
