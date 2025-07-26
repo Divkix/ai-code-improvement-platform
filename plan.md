@@ -705,11 +705,11 @@ Business Logic to Preserve:
 
 **Expected Outcome**: Embedding status uses shadcn-svelte Card and Progress
 **Test Criteria**:
-- [ ] Status display updates correctly
-- [ ] Progress bar reflects actual progress
-- [ ] Status badges show appropriate variants
-- [ ] Re-embed button works properly
-- [ ] Auto-refresh continues working
+- [x] Status display updates correctly
+- [x] Progress bar reflects actual progress
+- [x] Status badges show appropriate variants
+- [x] Re-embed button works properly
+- [x] Auto-refresh continues working
 
 #### Step 2.4.3: Pre-Migration Analysis - GitHubConnection
 
@@ -825,23 +825,23 @@ Business Logic to Preserve:
 
 **Expected Outcome**: GitHub connection uses shadcn-svelte Card and Alert
 **Test Criteria**:
-- [ ] Connection status displays correctly
-- [ ] Connect/disconnect buttons work
-- [ ] OAuth flow completes successfully
-- [ ] Success/error alerts display
-- [ ] URL cleanup after OAuth
+- [x] Connection status displays correctly
+- [x] Connect/disconnect buttons work
+- [x] OAuth flow completes successfully
+- [x] Success/error alerts display
+- [x] URL cleanup after OAuth
 
 #### Step 2.4.5: Integration Testing - Status Components
 
 **Test Scenarios**:
-- [ ] Embedding status polling and updates
-- [ ] Progress bar accuracy during processing
-- [ ] Status badge variants for different states
-- [ ] Re-embed functionality
-- [ ] GitHub OAuth flow end-to-end
-- [ ] Connection state persistence  
-- [ ] Error handling and display
-- [ ] Success message display and timeout
+- [x] Embedding status polling and updates
+- [x] Progress bar accuracy during processing
+- [x] Status badge variants for different states
+- [x] Re-embed functionality
+- [x] GitHub OAuth flow end-to-end
+- [x] Connection state persistence  
+- [x] Error handling and display
+- [x] Success message display and timeout
 
 **Expected Outcome**: All status functionality preserved with improved UI
 

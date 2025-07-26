@@ -76,7 +76,7 @@
 	async function copyToClipboard() {
 		if (copying) return;
 		copying = true;
-		
+
 		try {
 			await navigator.clipboard.writeText(content);
 			dispatch('copy', content);
@@ -112,13 +112,17 @@
 	<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
 		<div class="flex items-center gap-2">
 			{#if language}
-				<Badge variant="outline" class="text-xs" style="background-color: {getLanguageColor(language)}; color: white;">
+				<Badge
+					variant="outline"
+					class="text-xs"
+					style="background-color: {getLanguageColor(language)}; color: white;"
+				>
 					{language}
 				</Badge>
 			{/if}
 
 			{#if fileName}
-				<span class="text-sm text-muted-foreground font-medium truncate">{fileName}</span>
+				<span class="truncate text-sm font-medium text-muted-foreground">{fileName}</span>
 			{/if}
 		</div>
 
@@ -131,17 +135,18 @@
 			aria-label="Copy code to clipboard"
 		>
 			{#if copying}
-				<Check class="h-4 w-4 mr-2" />
+				<Check class="mr-2 h-4 w-4" />
 				Copied!
 			{:else}
-				<Copy class="h-4 w-4 mr-2" />
+				<Copy class="mr-2 h-4 w-4" />
 				Copy
 			{/if}
 		</Button>
 	</Card.Header>
 	<Card.Content class="p-0">
 		<ScrollArea class="h-full max-h-96">
-			<pre class="p-4 text-sm code-block" class:line-numbers={showLineNumbers}><code class="language-{language}"
+			<pre class="code-block p-4 text-sm" class:line-numbers={showLineNumbers}><code
+					class="language-{language}"
 					>{#each processedLines as line, index (index)}
 						<span class="code-line" data-line={startLine + index}>
 							<!-- eslint-disable-next-line svelte/no-at-html-tags -->

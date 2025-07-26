@@ -4,6 +4,12 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
 	import { vectorSearchAPI } from '../api/client';
+	import * as Card from '$lib/components/ui/card';
+	import { Button } from '$lib/components/ui/button';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Progress } from '$lib/components/ui/progress';
+	import { Separator } from '$lib/components/ui/separator';
+	import { RefreshCw, Play, Loader2, Check, X, AlertCircle, Clock, Zap } from '@lucide/svelte';
 
 	export let repositoryId: string;
 	export let autoRefresh = true;
@@ -94,28 +100,28 @@
 	function getStatusIcon(status: string) {
 		switch (status) {
 			case 'completed':
-				return '✅';
+				return Check;
 			case 'processing':
-				return '⚡';
+				return Zap;
 			case 'failed':
-				return '❌';
+				return X;
 			case 'pending':
 			default:
-				return '⏳';
+				return Clock;
 		}
 	}
 
-	function getStatusColor(status: string) {
+	function getStatusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
 		switch (status) {
 			case 'completed':
-				return '#10b981'; // green
+				return 'default';
 			case 'processing':
-				return '#3b82f6'; // blue
+				return 'secondary';
 			case 'failed':
-				return '#ef4444'; // red
+				return 'destructive';
 			case 'pending':
 			default:
-				return '#f59e0b'; // amber
+				return 'outline';
 		}
 	}
 
@@ -138,61 +144,52 @@
 	}
 </script>
 
-<div class="embedding-status">
-	<div class="status-header">
-		<h3>Vector Embeddings</h3>
-		{#if !loading}
-			<button
-				class="refresh-button"
-				on:click={fetchStatus}
-				title="Refresh status"
-				aria-label="Refresh embedding status"
-			>
-				<svg
-					width="16"
-					height="16"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
+<Card.Root>
+	<Card.Header>
+		<Card.Title class="flex items-center justify-between">
+			Vector Embeddings
+			{#if !loading}
+				<Button
+					variant="outline"
+					size="sm"
+					on:click={fetchStatus}
+					title="Refresh status"
+					aria-label="Refresh embedding status"
 				>
-					<polyline points="23,4 23,10 17,10" />
-					<polyline points="1,20 1,14 7,14" />
-					<path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10" />
-					<path d="M3.51 15a9 9 0 0 0 14.85 3.36L23 14" />
-				</svg>
-			</button>
-		{/if}
-	</div>
-
-	{#if loading && !status}
-		<div class="loading-state">
-			<div class="spinner"></div>
-			<p>Loading embedding status...</p>
-		</div>
-	{:else if error}
-		<div class="error-state">
-			<p class="error-message">{error}</p>
-			<button class="retry-button" on:click={fetchStatus}> Try Again </button>
-		</div>
-	{:else if status}
-		<div class="status-content">
+					<RefreshCw class="h-4 w-4" />
+				</Button>
+			{/if}
+		</Card.Title>
+	</Card.Header>
+	<Card.Content class="space-y-4">
+		{#if loading && !status}
+			<div class="flex flex-col items-center space-y-2 py-8 text-muted-foreground">
+				<Loader2 class="h-8 w-8 animate-spin" />
+				<p>Loading embedding status...</p>
+			</div>
+		{:else if error}
+			<div class="flex flex-col items-center space-y-4 py-6 text-center">
+				<AlertCircle class="h-8 w-8 text-destructive" />
+				<p class="text-destructive">{error}</p>
+				<Button variant="outline" on:click={fetchStatus}>
+					<RefreshCw class="mr-2 h-4 w-4" />
+					Try Again
+				</Button>
+			</div>
+		{:else if status}
 			<!-- Status Overview -->
-			<div class="status-overview">
-				<div class="status-badge" style="background-color: {getStatusColor(status.status)}">
-					<span class="status-icon">{getStatusIcon(status.status)}</span>
-					<span class="status-text"
-						>{status.status.charAt(0).toUpperCase() + status.status.slice(1)}</span
-					>
-				</div>
+			<div class="flex items-center justify-between">
+				<Badge variant={getStatusVariant(status.status)} class="gap-1">
+					{@const StatusIcon = getStatusIcon(status.status)}
+					<StatusIcon class="h-3 w-3" />
+					{status.status.charAt(0).toUpperCase() + status.status.slice(1)}
+				</Badge>
 
 				{#if status.status === 'processing'}
-					<div class="progress-info">
-						<span class="progress-text">{status.progress}% complete</span>
+					<div class="flex flex-col items-end space-y-1 text-sm text-muted-foreground">
+						<span>{status.progress}% complete</span>
 						{#if status.estimatedTimeRemaining}
-							<span class="time-remaining">
-								ETA: {formatDuration(status.estimatedTimeRemaining)}
-							</span>
+							<span>ETA: {formatDuration(status.estimatedTimeRemaining)}</span>
 						{/if}
 					</div>
 				{/if}
@@ -200,394 +197,92 @@
 
 			<!-- Progress Bar -->
 			{#if status.status === 'processing' || status.status === 'completed'}
-				<div class="progress-bar">
-					<div
-						class="progress-fill"
-						class:completed={status.status === 'completed'}
-						style="width: {status.progress}%"
-					></div>
+				<div class="space-y-2">
+					<div class="flex justify-between text-sm">
+						<span>Progress</span>
+						<span>{status.processedChunks || 0} / {status.totalChunks || 0}</span>
+					</div>
+					<Progress value={status.progress} class="h-2" />
 				</div>
 			{/if}
 
 			<!-- Statistics -->
 			{#if status.totalChunks || status.processedChunks}
-				<div class="statistics">
-					<div class="stat-grid">
-						{#if status.totalChunks}
-							<div class="stat-item">
-								<span class="stat-label">Total Chunks</span>
-								<span class="stat-value">{status.totalChunks.toLocaleString()}</span>
-							</div>
-						{/if}
-						{#if status.processedChunks}
-							<div class="stat-item">
-								<span class="stat-label">Processed</span>
-								<span class="stat-value">{status.processedChunks.toLocaleString()}</span>
-							</div>
-						{/if}
-						{#if status.failedChunks && status.failedChunks > 0}
-							<div class="stat-item">
-								<span class="stat-label">Failed</span>
-								<span class="stat-value error">{status.failedChunks.toLocaleString()}</span>
-							</div>
-						{/if}
-					</div>
+				<Separator />
+				<div class="grid grid-cols-3 gap-4">
+					{#if status.totalChunks}
+						<div class="space-y-1">
+							<p class="text-xs font-medium text-muted-foreground">Total Chunks</p>
+							<p class="text-lg font-semibold">{status.totalChunks.toLocaleString()}</p>
+						</div>
+					{/if}
+					{#if status.processedChunks}
+						<div class="space-y-1">
+							<p class="text-xs font-medium text-muted-foreground">Processed</p>
+							<p class="text-lg font-semibold">{status.processedChunks.toLocaleString()}</p>
+						</div>
+					{/if}
+					{#if status.failedChunks && status.failedChunks > 0}
+						<div class="space-y-1">
+							<p class="text-xs font-medium text-muted-foreground">Failed</p>
+							<p class="text-lg font-semibold text-destructive">
+								{status.failedChunks.toLocaleString()}
+							</p>
+						</div>
+					{/if}
 				</div>
 			{/if}
 
 			<!-- Timestamps -->
 			{#if status.startedAt || status.completedAt}
-				<div class="timestamps">
+				<Separator />
+				<div class="space-y-2 rounded-md bg-muted/50 p-3 text-xs">
 					{#if status.startedAt}
-						<div class="timestamp">
-							<span class="timestamp-label">Started:</span>
-							<span class="timestamp-value">{formatTimestamp(status.startedAt)}</span>
+						<div class="flex justify-between">
+							<span class="font-medium text-muted-foreground">Started:</span>
+							<span>{formatTimestamp(status.startedAt)}</span>
 						</div>
 					{/if}
 					{#if status.completedAt}
-						<div class="timestamp">
-							<span class="timestamp-label">Completed:</span>
-							<span class="timestamp-value">{formatTimestamp(status.completedAt)}</span>
+						<div class="flex justify-between">
+							<span class="font-medium text-muted-foreground">Completed:</span>
+							<span>{formatTimestamp(status.completedAt)}</span>
 						</div>
 					{/if}
 				</div>
 			{/if}
 
 			<!-- Action Buttons -->
-			<div class="actions">
+			<div class="flex justify-end">
 				{#if status.status === 'pending' || status.status === 'failed'}
-					<button class="action-button primary" on:click={triggerEmbedding} disabled={loading}>
+					<Button on:click={triggerEmbedding} disabled={loading}>
 						{#if loading}
-							<div class="button-spinner"></div>
+							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 						{:else}
-							<svg
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-							>
-								<polygon points="5,3 19,12 5,21 5,3" />
-							</svg>
+							<Play class="mr-2 h-4 w-4" />
 						{/if}
 						{status.status === 'failed' ? 'Retry Embedding' : 'Start Embedding'}
-					</button>
+					</Button>
 				{:else if status.status === 'completed'}
-					<button class="action-button secondary" on:click={triggerEmbedding} disabled={loading}>
+					<Button variant="outline" on:click={triggerEmbedding} disabled={loading}>
 						{#if loading}
-							<div class="button-spinner"></div>
+							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 						{:else}
-							<svg
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-							>
-								<polyline points="23,4 23,10 17,10" />
-								<polyline points="1,20 1,14 7,14" />
-								<path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10" />
-								<path d="M3.51 15a9 9 0 0 0 14.85 3.36L23 14" />
-							</svg>
+							<RefreshCw class="mr-2 h-4 w-4" />
 						{/if}
 						Re-embed Repository
-					</button>
+					</Button>
 				{/if}
 			</div>
-		</div>
-	{:else}
-		<div class="empty-state">
-			<p>No embedding status available</p>
-			<button class="action-button primary" on:click={triggerEmbedding} disabled={loading}>
-				Start Embedding
-			</button>
-		</div>
-	{/if}
-</div>
-
-<style>
-	.embedding-status {
-		background: white;
-		border: 1px solid #e5e7eb;
-		border-radius: 8px;
-		padding: 20px;
-		font-family:
-			system-ui,
-			-apple-system,
-			sans-serif;
-	}
-
-	.status-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 16px;
-	}
-
-	.status-header h3 {
-		margin: 0;
-		font-size: 18px;
-		font-weight: 600;
-		color: #1f2937;
-	}
-
-	.refresh-button {
-		background: none;
-		border: 1px solid #d1d5db;
-		border-radius: 6px;
-		padding: 6px;
-		cursor: pointer;
-		color: #6b7280;
-		transition: all 0.2s;
-	}
-
-	.refresh-button:hover {
-		background: #f9fafb;
-		border-color: #9ca3af;
-		color: #374151;
-	}
-
-	.loading-state {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		padding: 32px;
-		gap: 12px;
-		color: #6b7280;
-	}
-
-	.error-state {
-		text-align: center;
-		padding: 24px;
-	}
-
-	.error-message {
-		color: #ef4444;
-		margin: 0 0 12px 0;
-	}
-
-	.status-overview {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 16px;
-	}
-
-	.status-badge {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		padding: 6px 12px;
-		border-radius: 6px;
-		color: white;
-		font-weight: 500;
-		font-size: 14px;
-	}
-
-	.progress-info {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		gap: 4px;
-		font-size: 12px;
-		color: #6b7280;
-	}
-
-	.progress-bar {
-		background: #f3f4f6;
-		border-radius: 4px;
-		height: 8px;
-		margin-bottom: 16px;
-		overflow: hidden;
-	}
-
-	.progress-fill {
-		height: 100%;
-		background: #3b82f6;
-		transition: width 0.3s ease;
-		border-radius: 4px;
-	}
-
-	.progress-fill.completed {
-		background: #10b981;
-	}
-
-	.statistics {
-		margin-bottom: 16px;
-	}
-
-	.stat-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-		gap: 16px;
-	}
-
-	.stat-item {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-	}
-
-	.stat-label {
-		font-size: 12px;
-		color: #6b7280;
-		font-weight: 500;
-	}
-
-	.stat-value {
-		font-size: 18px;
-		font-weight: 600;
-		color: #1f2937;
-	}
-
-	.stat-value.error {
-		color: #ef4444;
-	}
-
-	.timestamps {
-		margin-bottom: 16px;
-		padding: 12px;
-		background: #f9fafb;
-		border-radius: 6px;
-		font-size: 12px;
-	}
-
-	.timestamp {
-		display: flex;
-		justify-content: space-between;
-		margin-bottom: 4px;
-	}
-
-	.timestamp:last-child {
-		margin-bottom: 0;
-	}
-
-	.timestamp-label {
-		color: #6b7280;
-		font-weight: 500;
-	}
-
-	.timestamp-value {
-		color: #374151;
-	}
-
-	.actions {
-		display: flex;
-		justify-content: center;
-	}
-
-	.action-button {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		padding: 10px 16px;
-		border-radius: 6px;
-		font-weight: 500;
-		cursor: pointer;
-		transition: all 0.2s;
-		border: 1px solid transparent;
-	}
-
-	.action-button.primary {
-		background: #3b82f6;
-		color: white;
-	}
-
-	.action-button.primary:hover {
-		background: #2563eb;
-	}
-
-	.action-button.secondary {
-		background: white;
-		color: #374151;
-		border-color: #d1d5db;
-	}
-
-	.action-button.secondary:hover {
-		background: #f9fafb;
-		border-color: #9ca3af;
-	}
-
-	.action-button:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.retry-button {
-		background: #3b82f6;
-		color: white;
-		border: none;
-		padding: 8px 16px;
-		border-radius: 6px;
-		font-weight: 500;
-		cursor: pointer;
-		transition: background-color 0.2s;
-	}
-
-	.retry-button:hover {
-		background: #2563eb;
-	}
-
-	.spinner,
-	.button-spinner {
-		width: 16px;
-		height: 16px;
-		border: 2px solid #e5e7eb;
-		border-top: 2px solid #3b82f6;
-		border-radius: 50%;
-		animation: spin 1s linear infinite;
-	}
-
-	.button-spinner {
-		border-top-color: currentColor;
-		border-color: rgba(255, 255, 255, 0.3);
-	}
-
-	@keyframes spin {
-		0% {
-			transform: rotate(0deg);
-		}
-		100% {
-			transform: rotate(360deg);
-		}
-	}
-
-	.empty-state {
-		text-align: center;
-		padding: 32px;
-		color: #6b7280;
-	}
-
-	.empty-state p {
-		margin: 0 0 16px 0;
-	}
-
-	/* Responsive adjustments */
-	@media (max-width: 640px) {
-		.embedding-status {
-			padding: 16px;
-		}
-
-		.status-overview {
-			flex-direction: column;
-			align-items: flex-start;
-			gap: 8px;
-		}
-
-		.progress-info {
-			align-items: flex-start;
-		}
-
-		.stat-grid {
-			grid-template-columns: 1fr;
-			gap: 12px;
-		}
-
-		.timestamp {
-			flex-direction: column;
-			gap: 2px;
-		}
-	}
-</style>
+		{:else}
+			<div class="flex flex-col items-center space-y-4 py-8 text-center text-muted-foreground">
+				<Clock class="h-8 w-8" />
+				<p>No embedding status available</p>
+				<Button on:click={triggerEmbedding} disabled={loading}>
+					<Play class="mr-2 h-4 w-4" />
+					Start Embedding
+				</Button>
+			</div>
+		{/if}
+	</Card.Content>
+</Card.Root>

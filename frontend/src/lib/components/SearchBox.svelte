@@ -96,7 +96,7 @@
 <div class="w-full max-w-2xl">
 	<!-- Search Mode Selector -->
 	{#if showModeSelector}
-		<div class="flex gap-1 p-1 bg-muted rounded-lg mb-3" role="radiogroup" aria-label="Search mode">
+		<div class="mb-3 flex gap-1 rounded-lg bg-muted p-1" role="radiogroup" aria-label="Search mode">
 			<Button
 				variant={searchMode === 'text' ? 'default' : 'ghost'}
 				size="sm"
@@ -106,7 +106,7 @@
 				{disabled}
 				class="flex-1"
 			>
-				<BookOpen class="h-4 w-4 mr-2" />
+				<BookOpen class="mr-2 h-4 w-4" />
 				Text
 			</Button>
 			<Button
@@ -118,7 +118,7 @@
 				{disabled}
 				class="flex-1"
 			>
-				<Sparkles class="h-4 w-4 mr-2" />
+				<Sparkles class="mr-2 h-4 w-4" />
 				Semantic
 			</Button>
 			<Button
@@ -130,7 +130,7 @@
 				{disabled}
 				class="flex-1"
 			>
-				<ArrowUpDown class="h-4 w-4 mr-2" />
+				<ArrowUpDown class="mr-2 h-4 w-4" />
 				Hybrid
 			</Button>
 		</div>
@@ -146,13 +146,13 @@
 			on:blur={handleBlur}
 			{placeholder}
 			{disabled}
-			class="pl-10 pr-10"
+			class="pr-10 pl-10"
 			autocomplete="off"
 			spellcheck="false"
 		/>
 
 		<!-- Search icon or loading spinner -->
-		<div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+		<div class="absolute top-1/2 left-3 -translate-y-1/2 transform text-muted-foreground">
 			{#if loading}
 				<Loader2 class="h-4 w-4 animate-spin" aria-label="Searching..." />
 			{:else}
@@ -165,7 +165,7 @@
 			<Button
 				variant="ghost"
 				size="sm"
-				class="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+				class="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 transform p-0"
 				on:click={handleClear}
 				aria-label="Clear search"
 				tabindex="-1"
@@ -175,4 +175,3 @@
 		{/if}
 	</div>
 </div>
-
