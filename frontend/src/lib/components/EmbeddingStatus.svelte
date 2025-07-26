@@ -12,9 +12,13 @@
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { RefreshCw, Play, Loader2, Check, X, AlertCircle, Clock, Zap } from '@lucide/svelte';
 
-	export let repositoryId: string;
-	export let autoRefresh = true;
-	export let refreshInterval = 5000; // 5 seconds
+	interface Props {
+		repositoryId: string;
+		autoRefresh?: boolean;
+		refreshInterval?: number; // 5 seconds
+	}
+
+	let { repositoryId, autoRefresh = true, refreshInterval = 5000 }: Props = $props();
 
 	interface EmbeddingStatus {
 		repositoryId: string;
@@ -28,9 +32,9 @@
 		estimatedTimeRemaining?: number;
 	}
 
-	let status: EmbeddingStatus | null = null;
-	let loading = false;
-	let error: string | null = null;
+	let status: EmbeddingStatus | null = $state(null);
+	let loading = $state(false);
+	let error: string | null = $state(null);
 	let refreshTimeout: NodeJS.Timeout;
 
 	const dispatch = createEventDispatcher<{

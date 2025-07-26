@@ -23,7 +23,7 @@
 		processing: number;
 		completed: number;
 		failed: number;
-	} | null = null;
+	} | null = $state(null);
 	let statsInterval: NodeJS.Timeout;
 
 	async function fetchPipelineStats() {
@@ -46,18 +46,18 @@
 	type Repository = components['schemas']['Repository'];
 
 	// Search state
-	let searchQuery = '';
-	let searchMode: 'text' | 'vector' | 'hybrid' = 'text';
-	let searchResults: SearchResponse | null = null;
-	let loading = false;
-	let error: string | null = null;
+	let searchQuery = $state('');
+	let searchMode: 'text' | 'vector' | 'hybrid' = $state('text');
+	let searchResults: SearchResponse | null = $state(null);
+	let loading = $state(false);
+	let error: string | null = $state(null);
 
 	// Filter state
-	let selectedLanguage = '';
-	let selectedFileType = '';
-	let selectedRepository = '';
-	let availableLanguages: string[] = [];
-	let availableRepositories: Repository[] = [];
+	let selectedLanguage = $state('');
+	let selectedFileType = $state('');
+	let selectedRepository = $state('');
+	let availableLanguages: string[] = $state([]);
+	let availableRepositories: Repository[] = $state([]);
 
 	// Pagination
 	let currentOffset = 0;

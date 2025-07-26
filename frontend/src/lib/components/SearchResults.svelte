@@ -20,11 +20,21 @@
 		ArrowUpDown
 	} from 'lucide-svelte';
 
-	export let results: SearchResponse | null = null;
-	export let loading = false;
-	export let error: string | null = null;
-	export let query = '';
-	export let searchMode: 'text' | 'vector' | 'hybrid' = 'text';
+	interface Props {
+		results?: SearchResponse | null;
+		loading?: boolean;
+		error?: string | null;
+		query?: string;
+		searchMode?: 'text' | 'vector' | 'hybrid';
+	}
+
+	let {
+		results = null,
+		loading = false,
+		error = null,
+		query = '',
+		searchMode = 'text'
+	}: Props = $props();
 
 	const dispatch = createEventDispatcher<{
 		loadMore: void;

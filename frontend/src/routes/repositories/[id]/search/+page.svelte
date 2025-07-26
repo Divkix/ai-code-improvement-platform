@@ -15,26 +15,26 @@
 	type Repository = components['schemas']['Repository'];
 
 	// Repository context
-	let repository: Repository | null = null;
-	let repositoryLoading = true;
-	let repositoryError: string | null = null;
+	let repository: Repository | null = $state(null);
+	let repositoryLoading = $state(true);
+	let repositoryError: string | null = $state(null);
 
 	// Search state
-	let searchQuery = '';
-	let searchResults: SearchResponse | null = null;
-	let loading = false;
-	let error: string | null = null;
+	let searchQuery = $state('');
+	let searchResults: SearchResponse | null = $state(null);
+	let loading = $state(false);
+	let error: string | null = $state(null);
 
 	// Filter state (no repository filter needed since we're in a specific repo)
-	let selectedLanguage = '';
-	let selectedFileType = '';
-	let availableLanguages: string[] = [];
+	let selectedLanguage = $state('');
+	let selectedFileType = $state('');
+	let availableLanguages: string[] = $state([]);
 
 	// Pagination
 	let currentOffset = 0;
 	const limit = 10;
 
-	$: repositoryId = $page.params.id;
+	let repositoryId = $derived($page.params.id);
 
 	onMount(async () => {
 		await loadRepositoryData();
@@ -185,7 +185,7 @@
 		<div class="repository-error">
 			<h2>Error Loading Repository</h2>
 			<p>{repositoryError}</p>
-			<button class="retry-button" on:click={loadRepositoryData}> Try Again </button>
+			<button class="retry-button" onclick={loadRepositoryData}> Try Again </button>
 		</div>
 	{:else if repository}
 		<!-- Repository Header -->

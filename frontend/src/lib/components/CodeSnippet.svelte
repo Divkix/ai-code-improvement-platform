@@ -9,19 +9,31 @@
 	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
 	import { Check, Copy } from 'lucide-svelte';
 
-	export let content: string;
-	export let language: string = '';
-	export let searchTerm: string = '';
-	export let maxLines: number = 0;
-	export let showLineNumbers: boolean = false;
-	export let startLine: number = 1;
-	export let fileName: string = '';
+	interface Props {
+		content: string;
+		language?: string;
+		searchTerm?: string;
+		maxLines?: number;
+		showLineNumbers?: boolean;
+		startLine?: number;
+		fileName?: string;
+	}
+
+	let {
+		content,
+		language = '',
+		searchTerm = '',
+		maxLines = 0,
+		showLineNumbers = false,
+		startLine = 1,
+		fileName = ''
+	}: Props = $props();
 
 	const dispatch = createEventDispatcher<{
 		copy: string;
 	}>();
 
-	let copying = false;
+	let copying = $state(false);
 
 	// Language color mapping
 	const languageColors: Record<string, string> = {
@@ -104,8 +116,8 @@
 		}
 	}
 
-	$: processedLines = processContent(content);
-	$: truncated = maxLines > 0 && content.split('\n').length > maxLines;
+	let processedLines = $derived(processContent(content));
+	let truncated = $derived(maxLines > 0 && content.split('\n').length > maxLines);
 </script>
 
 <Card.Root class="overflow-hidden font-mono">

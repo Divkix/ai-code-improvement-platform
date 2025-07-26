@@ -8,12 +8,23 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { X } from '@lucide/svelte';
 
-	export let selectedLanguage: string = '';
-	export let selectedFileType: string = '';
-	export let selectedRepository: string = '';
-	export let languages: string[] = [];
-	export let repositories: Array<{ id: string; name: string; fullName: string }> = [];
-	export let disabled: boolean = false;
+	interface Props {
+		selectedLanguage?: string;
+		selectedFileType?: string;
+		selectedRepository?: string;
+		languages?: string[];
+		repositories?: Array<{ id: string; name: string; fullName: string }>;
+		disabled?: boolean;
+	}
+
+	let {
+		selectedLanguage = $bindable(''),
+		selectedFileType = $bindable(''),
+		selectedRepository = $bindable(''),
+		languages = [],
+		repositories = [],
+		disabled = false
+	}: Props = $props();
 
 	const dispatch = createEventDispatcher<{
 		languageChange: string;
@@ -71,7 +82,7 @@
 		dispatch('clearFilters');
 	}
 
-	$: hasActiveFilters = selectedLanguage || selectedFileType || selectedRepository;
+	let hasActiveFilters = $derived(selectedLanguage || selectedFileType || selectedRepository);
 </script>
 
 <div class="mb-6 rounded-lg border bg-card p-6">

@@ -8,12 +8,23 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Search, X, BookOpen, Sparkles, ArrowUpDown, Loader2 } from '@lucide/svelte';
 
-	export let value = '';
-	export let placeholder = 'Search code...';
-	export let disabled = false;
-	export let loading = false;
-	export let searchMode: 'text' | 'vector' | 'hybrid' = 'text';
-	export let showModeSelector = true;
+	interface Props {
+		value?: string;
+		placeholder?: string;
+		disabled?: boolean;
+		loading?: boolean;
+		searchMode?: 'text' | 'vector' | 'hybrid';
+		showModeSelector?: boolean;
+	}
+
+	let {
+		value = $bindable(''),
+		placeholder = 'Search code...',
+		disabled = false,
+		loading = false,
+		searchMode = $bindable('text'),
+		showModeSelector = true
+	}: Props = $props();
 	// Remove autofocus prop to improve accessibility
 
 	const dispatch = createEventDispatcher<{
