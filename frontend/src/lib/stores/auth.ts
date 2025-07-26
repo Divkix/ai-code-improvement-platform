@@ -1,4 +1,4 @@
-// ABOUTME: Authentication store using Svelte 5 runes with store compatibility for user state management
+// ABOUTME: Authentication store using Svelte stores for SSR compatibility with user state management
 // ABOUTME: Handles token storage, user data, and authentication state throughout the app
 
 import { writable } from 'svelte/store';
@@ -28,22 +28,22 @@ const loggedOutState: AuthState = {
 	isLoading: false
 };
 
-// Create the auth store - using hybrid approach for compatibility
+// Create the auth store - using Svelte stores for SSR compatibility
 function createAuthStore() {
 	const { subscribe, set, update } = writable<AuthState>(initialState);
 	
-	// Internal state for direct access (Svelte 5 style)
-	let _currentState = $state<AuthState>(initialState);
+	// Internal state tracking (SSR-safe)
+	let _currentState: AuthState = initialState;
 	
-	// Sync the writable store with the rune state
+	// Subscribe to keep internal state in sync
 	subscribe((value) => {
 		_currentState = value;
 	});
 	
-	// Helper to update both store and state
+	// Helper to update state
 	const updateState = (newState: AuthState) => {
-		set(newState);
 		_currentState = newState;
+		set(newState);
 	};
 
 	return {
