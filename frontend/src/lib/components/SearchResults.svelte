@@ -5,6 +5,20 @@
 	import type { SearchResponse, SearchResult } from '../api/search-types';
 	import CodeSnippet from './CodeSnippet.svelte';
 	import { createEventDispatcher } from 'svelte';
+	import * as Card from '$lib/components/ui/card/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
+	import * as Alert from '$lib/components/ui/alert/index.js';
+	import {
+		FileText,
+		ExternalLink,
+		Search,
+		AlertCircle,
+		Loader2,
+		Sparkles,
+		ArrowUpDown
+	} from 'lucide-svelte';
 
 	export let results: SearchResponse | null = null;
 	export let loading = false;
@@ -104,211 +118,175 @@
 	}
 </script>
 
-<div class="search-results">
+<div class="mx-auto w-full max-w-4xl">
 	{#if loading}
-		<div class="loading-state">
-			<div class="spinner"></div>
-			<p>Searching code...</p>
-		</div>
+		<Card.Root>
+			<Card.Content class="flex items-center justify-center py-8">
+				<Loader2 class="mr-3 h-8 w-8 animate-spin" />
+				<p class="text-muted-foreground">Searching code...</p>
+			</Card.Content>
+		</Card.Root>
 	{:else if error}
-		<div class="error-state">
-			<svg
-				width="48"
-				height="48"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-			>
-				<circle cx="12" cy="12" r="10" />
-				<line x1="15" y1="9" x2="9" y2="15" />
-				<line x1="9" y1="9" x2="15" y2="15" />
-			</svg>
-			<h3>Search Error</h3>
-			<p class="error-message">{error}</p>
-			<button class="retry-button" on:click={handleRetry}> Try Again </button>
-		</div>
+		<Alert.Root variant="destructive">
+			<AlertCircle class="h-4 w-4" />
+			<Alert.Title>Search Error</Alert.Title>
+			<Alert.Description class="mt-2">
+				{error}
+				<Button variant="outline" size="sm" class="mt-3" onclick={handleRetry}>Try Again</Button>
+			</Alert.Description>
+		</Alert.Root>
 	{:else if results && Array.isArray(results.results) && results.results.length > 0}
-		<div class="results-header">
-			<h3>Search Results</h3>
-			<p class="results-meta">
+		<div class="mb-6">
+			<h3 class="mb-2 text-lg font-semibold text-foreground">Search Results</h3>
+			<p class="text-sm text-muted-foreground">
 				{results.total} result{results.total === 1 ? '' : 's'} for "{query}"
 			</p>
 		</div>
 
-		<div class="results-list">
-			{#each results.results as result, i (`${result.id}-${result.startLine}-${i}`)}
-				<div
-					class="result-item"
-					on:click={() => handleResultClick(result)}
-					on:keydown={(e) => e.key === 'Enter' && handleResultClick(result)}
-					role="button"
-					tabindex="0"
-					aria-label="View code chunk in {result.fileName}"
-				>
-					<div class="result-header">
-						<div class="file-info">
-							<div class="file-path-container">
-								<span class="file-path" title={result.filePath}>
-									{result.filePath}
-								</span>
-								<button
-									class="open-external"
+		<ScrollArea class="h-[600px] w-full">
+			<div class="space-y-4 pr-4">
+				{#each results.results as result, i (`${result.id}-${result.startLine}-${i}`)}
+					<Card.Root
+						class="cursor-pointer transition-colors hover:bg-muted/50"
+						onclick={() => handleResultClick(result)}
+						onkeydown={(e) => e.key === 'Enter' && handleResultClick(result)}
+						role="button"
+						tabindex={0}
+						aria-label="View code chunk in {result.fileName}"
+					>
+						<Card.Header class="pb-3">
+							<div class="flex items-center justify-between">
+								<div class="flex min-w-0 flex-1 items-center space-x-2">
+									<FileText class="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+									<span class="truncate text-sm font-medium" title={result.filePath}>
+										{result.filePath}
+									</span>
+								</div>
+								<Button
+									variant="ghost"
+									size="sm"
+									class="h-8 w-8 flex-shrink-0 p-0"
 									title="Open in new tab"
 									aria-label="Open code chunk in new tab"
-									on:click|stopPropagation={() => handleResultClick(result)}
+									onclick={(e) => {
+										e.stopPropagation();
+										handleResultClick(result);
+									}}
 								>
-									<svg
-										width="14"
-										height="14"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="2"
-									>
-										<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-										<polyline points="15,3 21,3 21,9" />
-										<line x1="10" y1="14" x2="21" y2="3" />
-									</svg>
-								</button>
+									<ExternalLink class="h-4 w-4" />
+								</Button>
 							</div>
-							<div class="file-meta">
-								<span
-									class="language-badge"
-									style="background-color: {getLanguageColor(result.language)}"
+							<div class="mt-2 flex items-center gap-2">
+								<Badge
+									variant="outline"
+									class="text-xs"
+									style="background-color: {getLanguageColor(result.language)}; color: white;"
 								>
 									{result.language}
-								</span>
-								<span class="line-range">
+								</Badge>
+								<Badge variant="secondary" class="text-xs">
 									{formatLineRange(result.startLine, result.endLine)}
-								</span>
-								<span
-									class="relevance-score"
-									class:semantic={searchMode === 'vector' || searchMode === 'hybrid'}
+								</Badge>
+								<Badge
+									variant="outline"
+									class="gap-1 text-xs"
 									style="color: {getRelevanceColor(getRelevanceLevel(result.score, searchMode))}"
 									title="{getScoreLabel(searchMode)}: {formatScore(result.score, searchMode)}"
 								>
 									{#if searchMode === 'vector'}
-										<svg
-											width="12"
-											height="12"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"
-										>
-											<path d="M9 19c-5 0-8-2.5-8-5s3-5 8-5 8 2.5 8 5-3 5-8 5Z" />
-											<path d="m8 19 8-14" />
-											<path d="m1 14 8-14" />
-											<path d="m15 5 4 14" />
-										</svg>
+										<Sparkles class="h-3 w-3" />
 									{:else if searchMode === 'hybrid'}
-										<svg
-											width="12"
-											height="12"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"
-										>
-											<path d="M12 3v18m0-18 4 4m-4-4-4 4" />
-											<path d="m8 17 4 4 4-4" />
-										</svg>
+										<ArrowUpDown class="h-3 w-3" />
 									{/if}
 									{getScoreLabel(searchMode)}: {formatScore(result.score, searchMode)}
-								</span>
+								</Badge>
 							</div>
-						</div>
-					</div>
+						</Card.Header>
 
-					<div class="code-preview">
-						<CodeSnippet
-							content={result.highlight && result.highlight.trim().length > 0
-								? result.highlight
-								: result.content}
-							language={result.language}
-							searchTerm={query}
-							maxLines={8}
-							showLineNumbers={true}
-							startLine={result.startLine}
-						/>
-					</div>
-
-					{#if result.metadata?.functions && result.metadata.functions.length > 0}
-						<div class="metadata">
-							<span class="metadata-label">Functions:</span>
-							<div class="metadata-items">
-								{#each result.metadata.functions.slice(0, 3) as func (func)}
-									<span class="metadata-item">{func}</span>
-								{/each}
-								{#if result.metadata.functions.length > 3}
-									<span class="metadata-more">
-										+{result.metadata.functions.length - 3} more
-									</span>
-								{/if}
+						<Card.Content class="pt-0">
+							<div class="mb-4">
+								<CodeSnippet
+									content={result.highlight && result.highlight.trim().length > 0
+										? result.highlight
+										: result.content}
+									language={result.language}
+									searchTerm={query}
+									maxLines={8}
+									showLineNumbers={true}
+									startLine={result.startLine}
+								/>
 							</div>
-						</div>
-					{/if}
 
-					{#if result.metadata?.classes && result.metadata.classes.length > 0}
-						<div class="metadata">
-							<span class="metadata-label">Classes:</span>
-							<div class="metadata-items">
-								{#each result.metadata.classes.slice(0, 3) as cls (cls)}
-									<span class="metadata-item">{cls}</span>
-								{/each}
-								{#if result.metadata.classes.length > 3}
-									<span class="metadata-more">
-										+{result.metadata.classes.length - 3} more
-									</span>
-								{/if}
-							</div>
-						</div>
-					{/if}
-				</div>
-			{/each}
-		</div>
+							{#if result.metadata?.functions && result.metadata.functions.length > 0}
+								<div class="mb-2">
+									<span class="mr-2 text-xs font-medium text-muted-foreground">Functions:</span>
+									<div class="inline-flex flex-wrap gap-1">
+										{#each result.metadata.functions.slice(0, 3) as func (func)}
+											<Badge variant="secondary" class="text-xs">
+												{func}
+											</Badge>
+										{/each}
+										{#if result.metadata.functions.length > 3}
+											<Badge variant="outline" class="text-xs">
+												+{result.metadata.functions.length - 3} more
+											</Badge>
+										{/if}
+									</div>
+								</div>
+							{/if}
+
+							{#if result.metadata?.classes && result.metadata.classes.length > 0}
+								<div class="mb-2">
+									<span class="mr-2 text-xs font-medium text-muted-foreground">Classes:</span>
+									<div class="inline-flex flex-wrap gap-1">
+										{#each result.metadata.classes.slice(0, 3) as cls (cls)}
+											<Badge variant="secondary" class="text-xs">
+												{cls}
+											</Badge>
+										{/each}
+										{#if result.metadata.classes.length > 3}
+											<Badge variant="outline" class="text-xs">
+												+{result.metadata.classes.length - 3} more
+											</Badge>
+										{/if}
+									</div>
+								</div>
+							{/if}
+						</Card.Content>
+					</Card.Root>
+				{/each}
+			</div>
+		</ScrollArea>
 
 		{#if results.hasMore}
-			<div class="load-more">
-				<button class="load-more-button" on:click={handleLoadMore} disabled={loading}>
-					{loading ? 'Loading...' : 'Load More Results'}
-				</button>
+			<div class="mt-6 text-center">
+				<Button variant="outline" onclick={handleLoadMore} disabled={loading}>
+					{#if loading}
+						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+						Loading...
+					{:else}
+						Load More Results
+					{/if}
+				</Button>
 			</div>
 		{/if}
 	{:else if query}
-		<div class="no-results">
-			<svg
-				width="64"
-				height="64"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="1.5"
-			>
-				<circle cx="11" cy="11" r="8" />
-				<path d="M21 21l-4.35-4.35" />
-			</svg>
-			<h3>No Results Found</h3>
-			<p>No code chunks found for "{query}"</p>
-			<div class="suggestions">
-				<h4>Try:</h4>
-				<ul>
-					<li>Different keywords or phrases</li>
-					<li>Broader search terms</li>
-					<li>Checking your spelling</li>
-					<li>Searching for function or class names</li>
-					<li>Using specific programming constructs</li>
-				</ul>
-			</div>
-		</div>
+		<Card.Root>
+			<Card.Content class="py-12 text-center">
+				<Search class="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
+				<h3 class="mb-2 text-lg font-semibold text-foreground">No Results Found</h3>
+				<p class="mb-6 text-muted-foreground">No code chunks found for "{query}"</p>
+				<div class="mx-auto max-w-md text-left">
+					<h4 class="mb-3 text-sm font-medium text-foreground">Try:</h4>
+					<ul class="list-inside list-disc space-y-1 text-sm text-muted-foreground">
+						<li>Different keywords or phrases</li>
+						<li>Broader search terms</li>
+						<li>Checking your spelling</li>
+						<li>Searching for function or class names</li>
+						<li>Using specific programming constructs</li>
+					</ul>
+				</div>
+			</Card.Content>
+		</Card.Root>
 	{/if}
 </div>
-
-<style>
-	.search-results {
-		width: 100%;
-		max-width: 900px;
-		margin: 0 auto;
-	}
-</style>

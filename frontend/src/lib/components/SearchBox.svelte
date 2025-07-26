@@ -100,7 +100,7 @@
 			<Button
 				variant={searchMode === 'text' ? 'default' : 'ghost'}
 				size="sm"
-				on:click={() => handleModeChange('text')}
+				onclick={() => handleModeChange('text')}
 				aria-pressed={searchMode === 'text'}
 				aria-label={getModeDescription('text')}
 				{disabled}
@@ -112,7 +112,7 @@
 			<Button
 				variant={searchMode === 'vector' ? 'default' : 'ghost'}
 				size="sm"
-				on:click={() => handleModeChange('vector')}
+				onclick={() => handleModeChange('vector')}
 				aria-pressed={searchMode === 'vector'}
 				aria-label={getModeDescription('vector')}
 				{disabled}
@@ -124,7 +124,7 @@
 			<Button
 				variant={searchMode === 'hybrid' ? 'default' : 'ghost'}
 				size="sm"
-				on:click={() => handleModeChange('hybrid')}
+				onclick={() => handleModeChange('hybrid')}
 				aria-pressed={searchMode === 'hybrid'}
 				aria-label={getModeDescription('hybrid')}
 				{disabled}
@@ -166,7 +166,7 @@
 				variant="ghost"
 				size="sm"
 				class="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 transform p-0"
-				on:click={handleClear}
+				onclick={handleClear}
 				aria-label="Clear search"
 				tabindex="-1"
 			>

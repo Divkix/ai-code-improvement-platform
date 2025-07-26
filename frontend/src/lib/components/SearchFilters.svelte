@@ -73,7 +73,7 @@
 	<div class="mb-4 flex items-center justify-between">
 		<h3 class="text-base font-semibold">Filters</h3>
 		{#if hasActiveFilters}
-			<Button variant="outline" size="sm" on:click={clearAllFilters} {disabled} class="text-xs">
+			<Button variant="outline" size="sm" onclick={clearAllFilters} {disabled} class="text-xs">
 				Clear All
 			</Button>
 		{/if}
@@ -171,7 +171,7 @@
 							variant="ghost"
 							size="sm"
 							class="hover:text-destructive-foreground h-4 w-4 p-0 hover:bg-destructive"
-							on:click={() => {
+							onclick={() => {
 								selectedLanguage = '';
 								dispatch('languageChange', '');
 							}}
@@ -189,7 +189,7 @@
 							variant="ghost"
 							size="sm"
 							class="hover:text-destructive-foreground h-4 w-4 p-0 hover:bg-destructive"
-							on:click={() => {
+							onclick={() => {
 								selectedFileType = '';
 								dispatch('fileTypeChange', '');
 							}}
@@ -208,7 +208,7 @@
 							variant="ghost"
 							size="sm"
 							class="hover:text-destructive-foreground h-4 w-4 p-0 hover:bg-destructive"
-							on:click={() => {
+							onclick={() => {
 								selectedRepository = '';
 								dispatch('repositoryChange', '');
 							}}

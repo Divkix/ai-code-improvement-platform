@@ -152,7 +152,7 @@
 				<Button
 					variant="outline"
 					size="sm"
-					on:click={fetchStatus}
+					onclick={fetchStatus}
 					title="Refresh status"
 					aria-label="Refresh embedding status"
 				>
@@ -171,7 +171,7 @@
 			<div class="flex flex-col items-center space-y-4 py-6 text-center">
 				<AlertCircle class="h-8 w-8 text-destructive" />
 				<p class="text-destructive">{error}</p>
-				<Button variant="outline" on:click={fetchStatus}>
+				<Button variant="outline" onclick={fetchStatus}>
 					<RefreshCw class="mr-2 h-4 w-4" />
 					Try Again
 				</Button>
@@ -255,7 +255,7 @@
 			<!-- Action Buttons -->
 			<div class="flex justify-end">
 				{#if status.status === 'pending' || status.status === 'failed'}
-					<Button on:click={triggerEmbedding} disabled={loading}>
+					<Button onclick={triggerEmbedding} disabled={loading}>
 						{#if loading}
 							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 						{:else}
@@ -264,7 +264,7 @@
 						{status.status === 'failed' ? 'Retry Embedding' : 'Start Embedding'}
 					</Button>
 				{:else if status.status === 'completed'}
-					<Button variant="outline" on:click={triggerEmbedding} disabled={loading}>
+					<Button variant="outline" onclick={triggerEmbedding} disabled={loading}>
 						{#if loading}
 							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 						{:else}
@@ -278,7 +278,7 @@
 			<div class="flex flex-col items-center space-y-4 py-8 text-center text-muted-foreground">
 				<Clock class="h-8 w-8" />
 				<p>No embedding status available</p>
-				<Button on:click={triggerEmbedding} disabled={loading}>
+				<Button onclick={triggerEmbedding} disabled={loading}>
 					<Play class="mr-2 h-4 w-4" />
 					Start Embedding
 				</Button>

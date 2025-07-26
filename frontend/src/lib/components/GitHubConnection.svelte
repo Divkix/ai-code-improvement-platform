@@ -137,7 +137,7 @@
 				<Button
 					variant="outline"
 					size="sm"
-					on:click={disconnectGitHub}
+					onclick={disconnectGitHub}
 					disabled={connecting}
 					class="text-destructive hover:text-destructive"
 				>
@@ -154,7 +154,7 @@
 					<div class="h-2 w-2 rounded-full bg-muted-foreground"></div>
 					<span class="text-sm text-muted-foreground">Not connected</span>
 				</div>
-				<Button on:click={connectGitHub} disabled={connecting}>
+				<Button onclick={connectGitHub} disabled={connecting}>
 					{#if connecting}
 						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 						Connecting...
@@ -175,7 +175,7 @@
 					<Button
 						variant="ghost"
 						size="sm"
-						on:click={clearMessages}
+						onclick={clearMessages}
 						class="mt-2 h-auto p-0 text-destructive underline hover:text-destructive"
 					>
 						Dismiss
@@ -193,7 +193,7 @@
 					<Button
 						variant="ghost"
 						size="sm"
-						on:click={clearMessages}
+						onclick={clearMessages}
 						class="mt-2 h-auto p-0 text-muted-foreground underline hover:text-foreground"
 					>
 						Dismiss

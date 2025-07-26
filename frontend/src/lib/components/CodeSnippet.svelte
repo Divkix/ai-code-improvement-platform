@@ -129,7 +129,7 @@
 		<Button
 			variant="outline"
 			size="sm"
-			on:click={copyToClipboard}
+			onclick={copyToClipboard}
 			disabled={copying}
 			title="Copy to clipboard"
 			aria-label="Copy code to clipboard"
