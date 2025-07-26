@@ -18,6 +18,7 @@
 	import { Progress } from '$lib/components/ui/progress/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
+	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Loader2, Github, Plus, FolderGit2 } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 
@@ -500,26 +501,20 @@
 			<div class="mb-6">
 				<fieldset>
 					<legend class="text-base font-medium">Import Method</legend>
-					<div class="mt-2 space-y-2">
-						<Label class="flex items-center">
-							<input
-								type="radio"
-								bind:group={importMethod}
-								value="github"
-								class="h-4 w-4 border-border text-primary focus:ring-primary"
-							/>
-							<span class="ml-3 block text-sm font-medium"> Browse your GitHub repositories </span>
-						</Label>
-						<Label class="flex items-center">
-							<input
-								type="radio"
-								bind:group={importMethod}
-								value="url"
-								class="h-4 w-4 border-border text-primary focus:ring-primary"
-							/>
-							<span class="ml-3 block text-sm font-medium"> Enter repository URL manually </span>
-						</Label>
-					</div>
+					<RadioGroup.Root bind:value={importMethod} class="mt-2">
+						<div class="flex items-center space-x-2">
+							<RadioGroup.Item value="github" id="github-method" />
+							<Label for="github-method" class="text-sm font-medium">
+								Browse your GitHub repositories
+							</Label>
+						</div>
+						<div class="flex items-center space-x-2">
+							<RadioGroup.Item value="url" id="url-method" />
+							<Label for="url-method" class="text-sm font-medium">
+								Enter repository URL manually
+							</Label>
+						</div>
+					</RadioGroup.Root>
 				</fieldset>
 			</div>
 		{/if}
@@ -562,7 +557,7 @@
 
 <!-- GitHub Repository Browser Modal -->
 <Dialog.Root bind:open={showGitHubBrowser}>
-	<Dialog.Content class="max-w-[calc(100%-2rem)] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+	<Dialog.Content class="max-h-[90vh] max-w-[calc(100%-2rem)] overflow-y-auto sm:max-w-4xl">
 		<Dialog.Header>
 			<Dialog.Title>Browse GitHub Repositories</Dialog.Title>
 		</Dialog.Header>

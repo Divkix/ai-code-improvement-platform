@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
-	import { authStore } from '$lib/stores/auth';
+	import { authStore, type AuthState } from '$lib/stores/auth';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Sheet from '$lib/components/ui/sheet/index.js';
 	import * as NavigationMenu from '$lib/components/ui/navigation-menu/index.js';
@@ -20,7 +20,7 @@
 	}
 
 	// Subscribe to auth store reactively
-	let authState = $state({
+	let authState = $state<AuthState>({
 		user: null,
 		token: null,
 		isAuthenticated: false,
