@@ -24,20 +24,29 @@
 		modeChange: 'text' | 'vector' | 'hybrid';
 	}>();
 
-	// Debounced search function to avoid too many API calls
+	// Debounced search function. We trigger a leading-edge call for instant
+	// feedback and rely on the debounce to coalesce rapid subsequent input.
 	const debouncedSearch = debounce((query: string) => {
+		// Trailing edge execution – ensures we also run when typing stops.
 		if (query.trim()) {
 			dispatch('search', { query: query.trim(), mode: searchMode });
 		} else {
 			dispatch('clear');
 		}
-	}, 300);
+	}, 250);
 
 	function handleInput(event: Event) {
 		const target = event.target as HTMLInputElement;
 		value = target.value;
 
-		// Always trigger the debounced search
+		// Immediately dispatch for a snappy UI, then debounce to limit requests
+		if (value.trim()) {
+			dispatch('search', { query: value.trim(), mode: searchMode });
+		} else {
+			dispatch('clear');
+		}
+
+		// Schedule trailing-edge search update to capture final state after pause
 		debouncedSearch(value);
 	}
 
@@ -96,7 +105,7 @@
 <div class="w-full max-w-2xl">
 	<!-- Search Mode Selector -->
 	{#if showModeSelector}
-		<div class="mb-3 flex gap-1 rounded-lg bg-muted p-1" role="radiogroup" aria-label="Search mode">
+		<div class="bg-muted mb-3 flex gap-1 rounded-lg p-1" role="radiogroup" aria-label="Search mode">
 			<Button
 				variant={searchMode === 'text' ? 'default' : 'ghost'}
 				size="sm"
@@ -137,7 +146,9 @@
 	{/if}
 
 	<div class="relative">
-		<Input
+		<!-- Native input to simplify event typings -->
+		<input
+			class="border-input bg-background shadow-xs ring-offset-background selection:bg-primary selection:text-primary-foreground placeholder:text-muted-foreground dark:bg-input/30 focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 flex h-9 w-full min-w-0 rounded-md border px-3 py-1 pl-10 pr-10 text-base outline-none transition-[color,box-shadow] focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
 			type="text"
 			bind:value
 			on:input={handleInput}
@@ -146,13 +157,12 @@
 			on:blur={handleBlur}
 			{placeholder}
 			{disabled}
-			class="pr-10 pl-10"
 			autocomplete="off"
 			spellcheck="false"
 		/>
 
 		<!-- Search icon or loading spinner -->
-		<div class="absolute top-1/2 left-3 -translate-y-1/2 transform text-muted-foreground">
+		<div class="text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 transform">
 			{#if loading}
 				<Loader2 class="h-4 w-4 animate-spin" aria-label="Searching..." />
 			{:else}
@@ -165,10 +175,10 @@
 			<Button
 				variant="ghost"
 				size="sm"
-				class="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 transform p-0"
+				class="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 transform p-0"
 				onclick={handleClear}
 				aria-label="Clear search"
-				tabindex="-1"
+				tabindex={-1}
 			>
 				<X class="h-4 w-4" />
 			</Button>

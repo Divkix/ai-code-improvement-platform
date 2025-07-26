@@ -61,6 +61,12 @@
 	let currentOffset = 0;
 	const limit = 10;
 
+	// Track latest search to prevent race conditions where slower previous
+	// requests overwrite the most recent results. A simple incrementing id
+	// is sufficient because performSearch is always called synchronously
+	// from the event handlers in this component.
+	let latestSearchId = 0;
+
 	onMount(async () => {
 		await loadInitialData();
 	});
@@ -98,6 +104,9 @@
 		offset = 0,
 		append = false
 	) {
+		// Increment the global search id and capture a local copy for this call.
+		const searchId = ++latestSearchId;
+
 		if (!query.trim()) {
 			searchResults = null;
 			return;
@@ -156,6 +165,12 @@
 
 			const data = apiRes.data as SearchResponse;
 
+			// If a newer search has been initiated while this one was awaiting,
+			// discard this response to avoid overwriting fresher results.
+			if (searchId !== latestSearchId) {
+				return;
+			}
+
 			if (append && searchResults) {
 				// Append results for pagination
 				searchResults = {
@@ -171,7 +186,10 @@
 			error = err instanceof Error ? err.message : 'Search failed';
 			console.error('Search error:', err);
 		} finally {
-			loading = false;
+			// Only clear the loading state if this search is still the latest one.
+			if (searchId === latestSearchId) {
+				loading = false;
+			}
 		}
 	}
 
