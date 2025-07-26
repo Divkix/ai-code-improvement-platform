@@ -13,11 +13,16 @@ export const apiClient = createClient<paths>({
 // Set up auth token interceptor
 export function setAuthToken(token: string | null) {
 	if (token) {
+		// Clear existing middleware and add new one with token
+		apiClient.eject();
 		apiClient.use({
 			onRequest({ request }) {
 				request.headers.set('Authorization', `Bearer ${token}`);
 			}
 		});
+	} else {
+		// Clear all middleware when no token
+		apiClient.eject();
 	}
 }
 

@@ -10,30 +10,31 @@
 	import { searchClient } from '$lib/api/search-client';
 	import type { SearchResponse, SearchRequest } from '$lib/api/search-types';
 	import type { components } from '$lib/api/types';
+	import { generateGitHubUrl, openGitHubUrl } from '$lib/utils/github';
 
 	type Repository = components['schemas']['Repository'];
 
 	// Repository context
-	let repository: Repository | null = null;
-	let repositoryLoading = true;
-	let repositoryError: string | null = null;
+	let repository: Repository | null = $state(null);
+	let repositoryLoading = $state(true);
+	let repositoryError: string | null = $state(null);
 
 	// Search state
-	let searchQuery = '';
-	let searchResults: SearchResponse | null = null;
-	let loading = false;
-	let error: string | null = null;
+	let searchQuery = $state('');
+	let searchResults: SearchResponse | null = $state(null);
+	let loading = $state(false);
+	let error: string | null = $state(null);
 
 	// Filter state (no repository filter needed since we're in a specific repo)
-	let selectedLanguage = '';
-	let selectedFileType = '';
-	let availableLanguages: string[] = [];
+	let selectedLanguage = $state('');
+	let selectedFileType = $state('');
+	let availableLanguages: string[] = $state([]);
 
 	// Pagination
 	let currentOffset = 0;
 	const limit = 10;
 
-	$: repositoryId = $page.params.id;
+	let repositoryId = $derived($page.params.id);
 
 	onMount(async () => {
 		await loadRepositoryData();
@@ -142,9 +143,19 @@
 
 	function handleResultSelect(event: CustomEvent) {
 		const result = event.detail;
-		// Navigate to the specific file/line (implementation depends on your routing setup)
-		console.log('Selected result in repository:', repository?.name, result);
-		// Example: navigate to `/repositories/${repositoryId}/files?path=${result.filePath}&line=${result.startLine}`
+
+		if (repository) {
+			// Generate GitHub URL with line highlighting
+			const githubUrl = generateGitHubUrl(
+				repository,
+				result.filePath,
+				result.startLine,
+				result.endLine
+			);
+			openGitHubUrl(githubUrl);
+		} else {
+			console.error('Repository not loaded');
+		}
 	}
 
 	function handleRetry() {
@@ -174,7 +185,7 @@
 		<div class="repository-error">
 			<h2>Error Loading Repository</h2>
 			<p>{repositoryError}</p>
-			<button class="retry-button" on:click={loadRepositoryData}> Try Again </button>
+			<button class="retry-button" onclick={loadRepositoryData}> Try Again </button>
 		</div>
 	{:else if repository}
 		<!-- Repository Header -->

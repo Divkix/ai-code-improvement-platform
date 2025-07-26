@@ -4,6 +4,12 @@
 	import { getDashboardStats, getDashboardActivity, getDashboardTrends } from '$lib/api/hooks';
 	import { authStore } from '$lib/stores/auth';
 	import type { DashboardStats, ActivityItem, TrendDataPoint } from '$lib/api';
+	import * as Card from '$lib/components/ui/card/index.js';
+	import * as Alert from '$lib/components/ui/alert/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
+	import { ChartContainer } from '$lib/components/ui/chart/index.js';
+	import { TrendingUp } from '@lucide/svelte';
 
 	Chart.register(...registerables);
 
@@ -167,33 +173,90 @@
 </svelte:head>
 
 {#if loading}
-	<div class="flex h-96 items-center justify-center">
-		<div class="text-center">
-			<div
-				class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"
-			></div>
-			<p class="mt-4 text-gray-600">Loading dashboard data...</p>
+	<div class="space-y-6">
+		<!-- Stats Cards Skeleton -->
+		<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+			<Card.Root>
+				<Card.Content class="p-6">
+					<div class="space-y-2">
+						<Skeleton class="h-4 w-20" />
+						<Skeleton class="h-8 w-16" />
+					</div>
+				</Card.Content>
+			</Card.Root>
+			<Card.Root>
+				<Card.Content class="p-6">
+					<div class="space-y-2">
+						<Skeleton class="h-4 w-20" />
+						<Skeleton class="h-8 w-16" />
+					</div>
+				</Card.Content>
+			</Card.Root>
+			<Card.Root>
+				<Card.Content class="p-6">
+					<div class="space-y-2">
+						<Skeleton class="h-4 w-20" />
+						<Skeleton class="h-8 w-16" />
+					</div>
+				</Card.Content>
+			</Card.Root>
+			<Card.Root>
+				<Card.Content class="p-6">
+					<div class="space-y-2">
+						<Skeleton class="h-4 w-20" />
+						<Skeleton class="h-8 w-16" />
+					</div>
+				</Card.Content>
+			</Card.Root>
+		</div>
+
+		<!-- Chart and Activity Skeleton -->
+		<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+			<Card.Root>
+				<Card.Header>
+					<Skeleton class="h-6 w-32" />
+				</Card.Header>
+				<Card.Content>
+					<Skeleton class="h-64 w-full" />
+				</Card.Content>
+			</Card.Root>
+			<Card.Root>
+				<Card.Header>
+					<Skeleton class="h-6 w-40" />
+				</Card.Header>
+				<Card.Content>
+					<div class="space-y-4">
+						<div class="space-y-2">
+							<Skeleton class="h-4 w-full" />
+							<Skeleton class="h-3 w-24" />
+						</div>
+						<div class="space-y-2">
+							<Skeleton class="h-4 w-full" />
+							<Skeleton class="h-3 w-24" />
+						</div>
+						<div class="space-y-2">
+							<Skeleton class="h-4 w-full" />
+							<Skeleton class="h-3 w-24" />
+						</div>
+					</div>
+				</Card.Content>
+			</Card.Root>
 		</div>
 	</div>
 {:else if error}
-	<div class="rounded-md bg-red-50 p-4">
-		<div class="flex">
-			<div class="ml-3">
-				<h3 class="text-sm font-medium text-red-800">Error loading dashboard</h3>
-				<p class="mt-2 text-sm text-red-700">{error}</p>
-				<button
-					onclick={loadDashboardData}
-					class="mt-3 inline-flex items-center rounded-md bg-red-100 px-3 py-2 text-sm font-medium text-red-800 hover:bg-red-200"
-				>
-					Try again
-				</button>
+	<Alert.Root variant="destructive">
+		<Alert.Title>Error loading dashboard</Alert.Title>
+		<Alert.Description>
+			<p>{error}</p>
+			<div class="mt-3">
+				<Button variant="outline" size="sm" onclick={loadDashboardData}>Try again</Button>
 			</div>
-		</div>
-	</div>
+		</Alert.Description>
+	</Alert.Root>
 {:else if stats}
 	<div class="space-y-6">
-		<div class="overflow-hidden rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 shadow-xl">
-			<div class="p-8">
+		<Card.Root class="overflow-hidden border-0 bg-gradient-to-r from-blue-600 to-purple-600">
+			<Card.Content class="p-8">
 				<div class="grid grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-6">
 					<div class="text-center">
 						<dt class="truncate text-sm font-medium text-blue-100">Repositories</dt>
@@ -232,29 +295,15 @@
 						</dd>
 					</div>
 				</div>
-			</div>
-		</div>
+			</Card.Content>
+		</Card.Root>
 
-		<div class="rounded-lg border border-green-200 bg-green-50 p-6">
-			<div class="flex items-center justify-between">
-				<div class="flex items-center space-x-3">
-					<div class="rounded-full bg-green-100 p-3">
-						<svg
-							class="h-6 w-6 text-green-600"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-							></path>
-						</svg>
-					</div>
+		<Alert.Root class="border-green-200 bg-green-50">
+			<TrendingUp class="h-4 w-4" />
+			<Alert.Title>Impressive Cost Savings</Alert.Title>
+			<Alert.Description>
+				<div class="mt-2 flex items-center justify-between">
 					<div>
-						<h3 class="text-lg font-semibold text-green-900">Impressive Cost Savings</h3>
 						<p class="text-sm text-green-700">
 							Your team is saving an average of <strong
 								>${Math.round(stats.costSavingsMonthly).toLocaleString()}</strong
@@ -264,38 +313,42 @@
 							for building features instead of understanding code.
 						</p>
 					</div>
-				</div>
-				<div class="text-right">
-					<div class="text-3xl font-bold text-green-600">
-						${Math.round((stats.costSavingsMonthly * 12) / 1000)}K
+					<div class="text-right">
+						<div class="text-3xl font-bold text-green-600">
+							${Math.round((stats.costSavingsMonthly * 12) / 1000)}K
+						</div>
+						<div class="text-sm text-green-600">Annual Savings</div>
 					</div>
-					<div class="text-sm text-green-600">Annual Savings</div>
 				</div>
-			</div>
-		</div>
+			</Alert.Description>
+		</Alert.Root>
 
 		<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-			<div class="overflow-hidden rounded-lg bg-white shadow">
-				<div class="p-6">
-					<h3 class="mb-4 text-lg font-medium text-gray-900">Performance Trends (14 days)</h3>
+			<Card.Root>
+				<Card.Header>
+					<Card.Title>Performance Trends (14 days)</Card.Title>
+				</Card.Header>
+				<Card.Content>
 					{#if trends.length > 0}
-						<div class="h-64">
+						<ChartContainer config={{}} class="h-64">
 							<canvas bind:this={chartCanvas}></canvas>
-						</div>
+						</ChartContainer>
 					{:else}
-						<div class="flex h-64 items-center justify-center text-gray-500">
+						<div class="flex h-64 items-center justify-center text-muted-foreground">
 							<p>No trend data available</p>
 						</div>
 					{/if}
-				</div>
-			</div>
+				</Card.Content>
+			</Card.Root>
 
-			<div class="overflow-hidden rounded-lg bg-white shadow">
-				<div class="p-6">
-					<div class="mb-4 flex items-center justify-between">
-						<h3 class="text-lg font-medium text-gray-900">Recent Activity</h3>
-						<span class="text-sm text-gray-500">{activities.length} items</span>
+			<Card.Root>
+				<Card.Header>
+					<div class="flex items-center justify-between">
+						<Card.Title>Recent Activity</Card.Title>
+						<span class="text-sm text-muted-foreground">{activities.length} items</span>
 					</div>
+				</Card.Header>
+				<Card.Content>
 					<div class="space-y-4">
 						{#each activities as activity (activity.id)}
 							<div class="flex items-start space-x-4">
@@ -309,8 +362,8 @@
 									</div>
 								</div>
 								<div class="min-w-0 flex-1">
-									<p class="text-sm font-medium text-gray-900">{activity.message}</p>
-									<div class="mt-1 flex items-center space-x-2 text-xs text-gray-500">
+									<p class="text-sm font-medium">{activity.message}</p>
+									<div class="mt-1 flex items-center space-x-2 text-xs text-muted-foreground">
 										{#if activity.repositoryName}
 											<span class="font-medium">{activity.repositoryName}</span>
 											<span>•</span>
@@ -321,67 +374,67 @@
 							</div>
 						{/each}
 						{#if activities.length === 0}
-							<div class="py-8 text-center text-gray-500">
+							<div class="py-8 text-center text-muted-foreground">
 								<p>No recent activity</p>
 							</div>
 						{/if}
 					</div>
-				</div>
-			</div>
+				</Card.Content>
+			</Card.Root>
 		</div>
 
-		<div class="rounded-lg border border-indigo-200 bg-gradient-to-r from-indigo-50 to-blue-50 p-8">
-			<div class="flex items-center justify-between">
-				<div class="flex items-center space-x-4">
-					<div class="rounded-full bg-indigo-100 p-3">
-						<svg
-							class="h-8 w-8 text-indigo-600"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
+		<Card.Root class="border-indigo-200 bg-gradient-to-r from-indigo-50 to-blue-50">
+			<Card.Content class="p-8">
+				<div class="flex items-center justify-between">
+					<div class="flex items-center space-x-4">
+						<div class="rounded-full bg-indigo-100 p-3">
+							<svg
+								class="h-8 w-8 text-indigo-600"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+								></path>
+							</svg>
+						</div>
+						<div>
+							<h3 class="text-xl font-semibold text-indigo-900">
+								Ready to analyze a new repository?
+							</h3>
+							<p class="mt-1 text-sm text-indigo-700">
+								Connect your GitHub repositories and unlock AI-powered insights to accelerate your
+								team's productivity.
+							</p>
+						</div>
+					</div>
+					<div class="flex space-x-3">
+						<Button
+							variant="outline"
+							href="/repositories"
+							class="border-indigo-300 bg-white text-indigo-700 hover:bg-indigo-50"
 						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-							></path>
-						</svg>
-					</div>
-					<div>
-						<h3 class="text-xl font-semibold text-indigo-900">
-							Ready to analyze a new repository?
-						</h3>
-						<p class="mt-1 text-sm text-indigo-700">
-							Connect your GitHub repositories and unlock AI-powered insights to accelerate your
-							team's productivity.
-						</p>
+							View Repositories
+						</Button>
+						<Button href="/repositories" class="bg-indigo-600 hover:bg-indigo-700">
+							<svg class="mr-2 -ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M12 4v16m8-8H4"
+								></path>
+							</svg>
+							Import Repository
+						</Button>
 					</div>
 				</div>
-				<div class="flex space-x-3">
-					<a
-						href="/repositories"
-						class="inline-flex items-center rounded-lg border border-indigo-300 bg-white px-6 py-3 text-sm font-medium text-indigo-700 shadow-sm transition-colors hover:bg-indigo-50"
-					>
-						View Repositories
-					</a>
-					<a
-						href="/repositories"
-						class="inline-flex items-center rounded-lg bg-indigo-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700"
-					>
-						<svg class="mr-2 -ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M12 4v16m8-8H4"
-							></path>
-						</svg>
-						Import Repository
-					</a>
-				</div>
-			</div>
-		</div>
+			</Card.Content>
+		</Card.Root>
 	</div>
 {:else}
 	<div class="py-16 text-center">

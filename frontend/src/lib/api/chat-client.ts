@@ -3,7 +3,6 @@
 
 import { authStore } from '$lib/stores/auth';
 import type { components } from './types';
-import { get } from 'svelte/store';
 
 type ChatSession = components['schemas']['ChatSession'];
 type ChatSessionListResponse = components['schemas']['ChatSessionListResponse'];
@@ -28,10 +27,9 @@ class ChatAPIError extends Error {
 }
 
 function getAuthHeaders(): Record<string, string> {
-	const auth = get(authStore);
 	return {
 		'Content-Type': 'application/json',
-		...(auth.token ? { Authorization: `Bearer ${auth.token}` } : {})
+		...(authStore.current.token ? { Authorization: `Bearer ${authStore.current.token}` } : {})
 	};
 }
 
@@ -240,7 +238,6 @@ export class ChatClient {
 		const formData = new FormData();
 		formData.append('data', JSON.stringify(request));
 
-		const auth = get(authStore);
 		const eventSourceUrl = new URL(
 			`${API_BASE_URL}/chat/sessions/${sessionId}/message`,
 			window.location.origin
@@ -248,8 +245,8 @@ export class ChatClient {
 
 		// For EventSource, we need to handle the authentication differently
 		// We'll send the auth token as a query parameter since EventSource doesn't support custom headers
-		if (auth.token) {
-			eventSourceUrl.searchParams.set('token', auth.token);
+		if (authStore.current.token) {
+			eventSourceUrl.searchParams.set('token', authStore.current.token);
 		}
 
 		try {

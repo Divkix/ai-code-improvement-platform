@@ -1,3 +1,6 @@
+<!-- ABOUTME: GitHub OAuth connection management with secure authentication flow -->
+<!-- ABOUTME: Handles GitHub account linking, disconnection, and OAuth callbacks -->
+
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { replaceState } from '$app/navigation';
@@ -8,6 +11,10 @@
 	} from '$lib/api/hooks';
 	import { type User } from '$lib/api';
 	import { authStore } from '$lib/stores/auth';
+	import * as Card from '$lib/components/ui/card';
+	import { Button } from '$lib/components/ui/button';
+	import * as Alert from '$lib/components/ui/alert';
+	import { Github, Unlink, Loader2, Check, AlertCircle } from '@lucide/svelte';
 
 	let { user }: { user: User } = $props();
 
@@ -110,155 +117,117 @@
 	}
 </script>
 
-<div class="rounded-lg border border-gray-200 bg-white p-6">
-	<div class="flex items-center justify-between">
-		<div>
-			<h3 class="text-lg font-medium text-gray-900">GitHub Connection</h3>
-			<p class="mt-1 text-sm text-gray-600">
-				Connect your GitHub account to import and analyze your repositories
-			</p>
-		</div>
-
-		<div class="flex items-center space-x-3">
+<Card.Root>
+	<Card.Header>
+		<Card.Title class="flex items-center gap-2">
+			<Github class="h-5 w-5" />
+			GitHub Connection
+		</Card.Title>
+		<Card.Description>
+			Connect your GitHub account to import and analyze your repositories
+		</Card.Description>
+	</Card.Header>
+	<Card.Content class="space-y-4">
+		<div class="flex items-center justify-between">
 			{#if user.githubConnected}
-				<div class="flex items-center text-sm text-green-600">
-					<svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M5 13l4 4L19 7"
-						/>
-					</svg>
-					Connected as {user.githubUsername}
+				<div class="flex items-center gap-2">
+					<div class="h-2 w-2 rounded-full bg-green-500"></div>
+					<span class="text-sm">Connected as <strong>{user.githubUsername}</strong></span>
 				</div>
-				<button
+				<Button
+					variant="outline"
+					size="sm"
 					onclick={disconnectGitHub}
 					disabled={connecting}
-					class="rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-				>
-					{connecting ? 'Disconnecting...' : 'Disconnect'}
-				</button>
-			{:else}
-				<div class="flex items-center text-sm text-gray-500">
-					<svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M6 18L18 6M6 6l12 12"
-						/>
-					</svg>
-					Not connected
-				</div>
-				<button
-					onclick={connectGitHub}
-					disabled={connecting}
-					class="inline-flex items-center rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+					class="text-destructive hover:text-destructive"
 				>
 					{#if connecting}
-						<svg class="mr-2 h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-							<circle
-								class="opacity-25"
-								cx="12"
-								cy="12"
-								r="10"
-								stroke="currentColor"
-								stroke-width="4"
-							></circle>
-							<path
-								class="opacity-75"
-								fill="currentColor"
-								d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-							></path>
-						</svg>
+						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+						Disconnecting...
+					{:else}
+						<Unlink class="mr-2 h-4 w-4" />
+						Disconnect
+					{/if}
+				</Button>
+			{:else}
+				<div class="flex items-center gap-2">
+					<div class="h-2 w-2 rounded-full bg-muted-foreground"></div>
+					<span class="text-sm text-muted-foreground">Not connected</span>
+				</div>
+				<Button onclick={connectGitHub} disabled={connecting}>
+					{#if connecting}
+						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 						Connecting...
 					{:else}
-						<svg class="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-							<path
-								fill-rule="evenodd"
-								d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z"
-								clip-rule="evenodd"
-							/>
-						</svg>
+						<Github class="mr-2 h-4 w-4" />
 						Connect GitHub
 					{/if}
-				</button>
+				</Button>
 			{/if}
 		</div>
-	</div>
 
-	{#if error}
-		<div class="mt-4 rounded-md bg-red-50 p-4">
-			<div class="flex">
-				<div class="flex-shrink-0">
-					<svg class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-						/>
-					</svg>
-				</div>
-				<div class="ml-3">
-					<h3 class="text-sm font-medium text-red-800">Connection Error</h3>
-					<p class="mt-2 text-sm text-red-700">{error}</p>
-					<div class="mt-4">
-						<button
-							onclick={clearMessages}
-							class="rounded-md bg-red-100 px-2 py-1 text-sm font-medium text-red-800 hover:bg-red-200"
-						>
-							Dismiss
-						</button>
-					</div>
-				</div>
+		{#if error}
+			<Alert.Root variant="destructive">
+				<AlertCircle class="h-4 w-4" />
+				<Alert.Title>Connection Error</Alert.Title>
+				<Alert.Description>
+					{error}
+					<Button
+						variant="ghost"
+						size="sm"
+						onclick={clearMessages}
+						class="mt-2 h-auto p-0 text-destructive underline hover:text-destructive"
+					>
+						Dismiss
+					</Button>
+				</Alert.Description>
+			</Alert.Root>
+		{/if}
+
+		{#if success}
+			<Alert.Root>
+				<Check class="h-4 w-4" />
+				<Alert.Title>Success</Alert.Title>
+				<Alert.Description>
+					{success}
+					<Button
+						variant="ghost"
+						size="sm"
+						onclick={clearMessages}
+						class="mt-2 h-auto p-0 text-muted-foreground underline hover:text-foreground"
+					>
+						Dismiss
+					</Button>
+				</Alert.Description>
+			</Alert.Root>
+		{/if}
+
+		{#if user.githubConnected}
+			<div class="rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
+				<p>Your GitHub account is connected and ready to import repositories.</p>
 			</div>
-		</div>
-	{/if}
-
-	{#if success}
-		<div class="mt-4 rounded-md bg-green-50 p-4">
-			<div class="flex">
-				<div class="flex-shrink-0">
-					<svg class="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M5 13l4 4L19 7"
-						/>
-					</svg>
-				</div>
-				<div class="ml-3">
-					<h3 class="text-sm font-medium text-green-800">Success</h3>
-					<p class="mt-2 text-sm text-green-700">{success}</p>
-					<div class="mt-4">
-						<button
-							onclick={clearMessages}
-							class="rounded-md bg-green-100 px-2 py-1 text-sm font-medium text-green-800 hover:bg-green-200"
-						>
-							Dismiss
-						</button>
-					</div>
-				</div>
+		{:else}
+			<div class="space-y-2 text-sm text-muted-foreground">
+				<p>Connect your GitHub account to:</p>
+				<ul class="ml-4 space-y-1">
+					<li class="flex items-start gap-2">
+						<div class="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-muted-foreground"></div>
+						Import repositories directly from GitHub
+					</li>
+					<li class="flex items-start gap-2">
+						<div class="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-muted-foreground"></div>
+						Access private repositories you own
+					</li>
+					<li class="flex items-start gap-2">
+						<div class="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-muted-foreground"></div>
+						Get real-time repository statistics
+					</li>
+					<li class="flex items-start gap-2">
+						<div class="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-muted-foreground"></div>
+						Automatically sync repository changes
+					</li>
+				</ul>
 			</div>
-		</div>
-	{/if}
-
-	{#if user.githubConnected}
-		<div class="mt-4 text-sm text-gray-600">
-			<p>Your GitHub account is connected and ready to import repositories.</p>
-		</div>
-	{:else}
-		<div class="mt-4 text-sm text-gray-600">
-			<p>Connect your GitHub account to:</p>
-			<ul class="mt-2 list-inside list-disc space-y-1">
-				<li>Import repositories directly from GitHub</li>
-				<li>Access private repositories you own</li>
-				<li>Get real-time repository statistics</li>
-				<li>Automatically sync repository changes</li>
-			</ul>
-		</div>
-	{/if}
-</div>
+		{/if}
+	</Card.Content>
+</Card.Root>

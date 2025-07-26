@@ -22,6 +22,7 @@ func TestLoad_WithDefaults(t *testing.T) {
 		"LLM_BASE_URL", "LLM_MODEL",
 		"LLM_API_KEY", "LLM_REQUEST_TIMEOUT",
 		"EMBEDDING_BASE_URL", "EMBEDDING_MODEL", "EMBEDDING_API_KEY",
+		"ENABLE_QDRANT_REPO_FILTER", "LLM_CONTEXT_LENGTH", "CHUNK_SIZE", "CHUNK_OVERLAP_SIZE",
 	}
 
 	// Store original values
@@ -62,6 +63,9 @@ func TestLoad_WithDefaults(t *testing.T) {
 	assert.Equal(t, 1024, config.Database.VectorDimension)
 	assert.True(t, config.Database.EnableQdrantRepoFilter)
 
+	assert.Equal(t, 30, config.CodeProcessing.ChunkSize)
+	assert.Equal(t, 10, config.CodeProcessing.OverlapSize)
+
 	assert.Equal(t, "test-secret", config.JWT.Secret)
 
 	assert.Equal(t, "", config.GitHub.ClientID)
@@ -72,6 +76,7 @@ func TestLoad_WithDefaults(t *testing.T) {
 	assert.Equal(t, "gpt-4o-mini", config.AI.LLMModel)
 	assert.Equal(t, "test-llm-key", config.AI.LLMAPIKey)
 	assert.Equal(t, "30s", config.AI.LLMRequestTimeout)
+	assert.Equal(t, 2048, config.AI.LLMContextLength)
 	assert.Equal(t, "https://api.openai.com/v1", config.AI.EmbeddingBaseURL)
 	assert.Equal(t, "text-embedding-nomic-embed-text-v1.5", config.AI.EmbeddingModel)
 	assert.Equal(t, "", config.AI.EmbeddingAPIKey)
@@ -198,7 +203,7 @@ func TestValidation_LLMAPIKey(t *testing.T) {
 		{
 			name:          "No API keys provided",
 			expectError:   true,
-			errorContains: "LLM_API_KEY is required",
+			errorContains: "LLM_API_KEY is required for AI chat functionality",
 		},
 	}
 

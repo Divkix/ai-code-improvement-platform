@@ -5,12 +5,36 @@
 	import type { SearchResponse, SearchResult } from '../api/search-types';
 	import CodeSnippet from './CodeSnippet.svelte';
 	import { createEventDispatcher } from 'svelte';
+	import * as Card from '$lib/components/ui/card/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
+	import * as Alert from '$lib/components/ui/alert/index.js';
+	import {
+		FileText,
+		ExternalLink,
+		Search,
+		AlertCircle,
+		Loader2,
+		Sparkles,
+		ArrowUpDown
+	} from '@lucide/svelte';
 
-	export let results: SearchResponse | null = null;
-	export let loading = false;
-	export let error: string | null = null;
-	export let query = '';
-	export let searchMode: 'text' | 'vector' | 'hybrid' = 'text';
+	interface Props {
+		results?: SearchResponse | null;
+		loading?: boolean;
+		error?: string | null;
+		query?: string;
+		searchMode?: 'text' | 'vector' | 'hybrid';
+	}
+
+	let {
+		results = null,
+		loading = false,
+		error = null,
+		query = '',
+		searchMode = 'text'
+	}: Props = $props();
 
 	const dispatch = createEventDispatcher<{
 		loadMore: void;
@@ -104,590 +128,175 @@
 	}
 </script>
 
-<div class="search-results">
+<div class="mx-auto w-full max-w-4xl">
 	{#if loading}
-		<div class="loading-state">
-			<div class="spinner"></div>
-			<p>Searching code...</p>
-		</div>
+		<Card.Root>
+			<Card.Content class="flex items-center justify-center py-8">
+				<Loader2 class="mr-3 h-8 w-8 animate-spin" />
+				<p class="text-muted-foreground">Searching code...</p>
+			</Card.Content>
+		</Card.Root>
 	{:else if error}
-		<div class="error-state">
-			<svg
-				width="48"
-				height="48"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-			>
-				<circle cx="12" cy="12" r="10" />
-				<line x1="15" y1="9" x2="9" y2="15" />
-				<line x1="9" y1="9" x2="15" y2="15" />
-			</svg>
-			<h3>Search Error</h3>
-			<p class="error-message">{error}</p>
-			<button class="retry-button" on:click={handleRetry}> Try Again </button>
-		</div>
+		<Alert.Root variant="destructive">
+			<AlertCircle class="h-4 w-4" />
+			<Alert.Title>Search Error</Alert.Title>
+			<Alert.Description class="mt-2">
+				{error}
+				<Button variant="outline" size="sm" class="mt-3" onclick={handleRetry}>Try Again</Button>
+			</Alert.Description>
+		</Alert.Root>
 	{:else if results && Array.isArray(results.results) && results.results.length > 0}
-		<div class="results-header">
-			<h3>Search Results</h3>
-			<p class="results-meta">
+		<div class="mb-6">
+			<h3 class="mb-2 text-lg font-semibold text-foreground">Search Results</h3>
+			<p class="text-sm text-muted-foreground">
 				{results.total} result{results.total === 1 ? '' : 's'} for "{query}"
 			</p>
 		</div>
 
-		<div class="results-list">
-			{#each results.results as result, i (`${result.id}-${result.startLine}-${i}`)}
-				<div
-					class="result-item"
-					on:click={() => handleResultClick(result)}
-					on:keydown={(e) => e.key === 'Enter' && handleResultClick(result)}
-					role="button"
-					tabindex="0"
-					aria-label="View code chunk in {result.fileName}"
-				>
-					<div class="result-header">
-						<div class="file-info">
-							<div class="file-path-container">
-								<span class="file-path" title={result.filePath}>
-									{result.filePath}
-								</span>
-								<button
-									class="open-external"
+		<ScrollArea class="h-[600px] w-full">
+			<div class="space-y-4 pr-4">
+				{#each results.results as result, i (`${result.id}-${result.startLine}-${i}`)}
+					<Card.Root
+						class="cursor-pointer transition-colors hover:bg-muted/50"
+						onclick={() => handleResultClick(result)}
+						onkeydown={(e) => e.key === 'Enter' && handleResultClick(result)}
+						role="button"
+						tabindex={0}
+						aria-label="View code chunk in {result.fileName}"
+					>
+						<Card.Header class="pb-3">
+							<div class="flex items-center justify-between">
+								<div class="flex min-w-0 flex-1 items-center space-x-2">
+									<FileText class="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+									<span class="truncate text-sm font-medium" title={result.filePath}>
+										{result.filePath}
+									</span>
+								</div>
+								<Button
+									variant="ghost"
+									size="sm"
+									class="h-8 w-8 flex-shrink-0 p-0"
 									title="Open in new tab"
 									aria-label="Open code chunk in new tab"
-									on:click|stopPropagation={() => handleResultClick(result)}
+									onclick={(e) => {
+										e.stopPropagation();
+										handleResultClick(result);
+									}}
 								>
-									<svg
-										width="14"
-										height="14"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="2"
-									>
-										<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-										<polyline points="15,3 21,3 21,9" />
-										<line x1="10" y1="14" x2="21" y2="3" />
-									</svg>
-								</button>
+									<ExternalLink class="h-4 w-4" />
+								</Button>
 							</div>
-							<div class="file-meta">
-								<span
-									class="language-badge"
-									style="background-color: {getLanguageColor(result.language)}"
+							<div class="mt-2 flex items-center gap-2">
+								<Badge
+									variant="outline"
+									class="text-xs"
+									style="background-color: {getLanguageColor(result.language)}; color: white;"
 								>
 									{result.language}
-								</span>
-								<span class="line-range">
+								</Badge>
+								<Badge variant="secondary" class="text-xs">
 									{formatLineRange(result.startLine, result.endLine)}
-								</span>
-								<span
-									class="relevance-score"
-									class:semantic={searchMode === 'vector' || searchMode === 'hybrid'}
+								</Badge>
+								<Badge
+									variant="outline"
+									class="gap-1 text-xs"
 									style="color: {getRelevanceColor(getRelevanceLevel(result.score, searchMode))}"
 									title="{getScoreLabel(searchMode)}: {formatScore(result.score, searchMode)}"
 								>
 									{#if searchMode === 'vector'}
-										<svg
-											width="12"
-											height="12"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"
-										>
-											<path d="M9 19c-5 0-8-2.5-8-5s3-5 8-5 8 2.5 8 5-3 5-8 5Z" />
-											<path d="m8 19 8-14" />
-											<path d="m1 14 8-14" />
-											<path d="m15 5 4 14" />
-										</svg>
+										<Sparkles class="h-3 w-3" />
 									{:else if searchMode === 'hybrid'}
-										<svg
-											width="12"
-											height="12"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"
-										>
-											<path d="M12 3v18m0-18 4 4m-4-4-4 4" />
-											<path d="m8 17 4 4 4-4" />
-										</svg>
+										<ArrowUpDown class="h-3 w-3" />
 									{/if}
 									{getScoreLabel(searchMode)}: {formatScore(result.score, searchMode)}
-								</span>
+								</Badge>
 							</div>
-						</div>
-					</div>
+						</Card.Header>
 
-					<div class="code-preview">
-						<CodeSnippet
-							content={result.highlight && result.highlight.trim().length > 0
-								? result.highlight
-								: result.content}
-							language={result.language}
-							searchTerm={query}
-							maxLines={8}
-							showLineNumbers={true}
-							startLine={result.startLine}
-						/>
-					</div>
-
-					{#if result.metadata?.functions && result.metadata.functions.length > 0}
-						<div class="metadata">
-							<span class="metadata-label">Functions:</span>
-							<div class="metadata-items">
-								{#each result.metadata.functions.slice(0, 3) as func (func)}
-									<span class="metadata-item">{func}</span>
-								{/each}
-								{#if result.metadata.functions.length > 3}
-									<span class="metadata-more">
-										+{result.metadata.functions.length - 3} more
-									</span>
-								{/if}
+						<Card.Content class="pt-0">
+							<div class="mb-4">
+								<CodeSnippet
+									content={result.highlight && result.highlight.trim().length > 0
+										? result.highlight
+										: result.content}
+									language={result.language}
+									searchTerm={query}
+									maxLines={8}
+									showLineNumbers={true}
+									startLine={result.startLine}
+								/>
 							</div>
-						</div>
-					{/if}
 
-					{#if result.metadata?.classes && result.metadata.classes.length > 0}
-						<div class="metadata">
-							<span class="metadata-label">Classes:</span>
-							<div class="metadata-items">
-								{#each result.metadata.classes.slice(0, 3) as cls (cls)}
-									<span class="metadata-item">{cls}</span>
-								{/each}
-								{#if result.metadata.classes.length > 3}
-									<span class="metadata-more">
-										+{result.metadata.classes.length - 3} more
-									</span>
-								{/if}
-							</div>
-						</div>
-					{/if}
-				</div>
-			{/each}
-		</div>
+							{#if result.metadata?.functions && result.metadata.functions.length > 0}
+								<div class="mb-2">
+									<span class="mr-2 text-xs font-medium text-muted-foreground">Functions:</span>
+									<div class="inline-flex flex-wrap gap-1">
+										{#each result.metadata.functions.slice(0, 3) as func (func)}
+											<Badge variant="secondary" class="text-xs">
+												{func}
+											</Badge>
+										{/each}
+										{#if result.metadata.functions.length > 3}
+											<Badge variant="outline" class="text-xs">
+												+{result.metadata.functions.length - 3} more
+											</Badge>
+										{/if}
+									</div>
+								</div>
+							{/if}
+
+							{#if result.metadata?.classes && result.metadata.classes.length > 0}
+								<div class="mb-2">
+									<span class="mr-2 text-xs font-medium text-muted-foreground">Classes:</span>
+									<div class="inline-flex flex-wrap gap-1">
+										{#each result.metadata.classes.slice(0, 3) as cls (cls)}
+											<Badge variant="secondary" class="text-xs">
+												{cls}
+											</Badge>
+										{/each}
+										{#if result.metadata.classes.length > 3}
+											<Badge variant="outline" class="text-xs">
+												+{result.metadata.classes.length - 3} more
+											</Badge>
+										{/if}
+									</div>
+								</div>
+							{/if}
+						</Card.Content>
+					</Card.Root>
+				{/each}
+			</div>
+		</ScrollArea>
 
 		{#if results.hasMore}
-			<div class="load-more">
-				<button class="load-more-button" on:click={handleLoadMore} disabled={loading}>
-					{loading ? 'Loading...' : 'Load More Results'}
-				</button>
+			<div class="mt-6 text-center">
+				<Button variant="outline" onclick={handleLoadMore} disabled={loading}>
+					{#if loading}
+						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+						Loading...
+					{:else}
+						Load More Results
+					{/if}
+				</Button>
 			</div>
 		{/if}
 	{:else if query}
-		<div class="no-results">
-			<svg
-				width="64"
-				height="64"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="1.5"
-			>
-				<circle cx="11" cy="11" r="8" />
-				<path d="M21 21l-4.35-4.35" />
-			</svg>
-			<h3>No Results Found</h3>
-			<p>No code chunks found for "{query}"</p>
-			<div class="suggestions">
-				<h4>Try:</h4>
-				<ul>
-					<li>Different keywords or phrases</li>
-					<li>Broader search terms</li>
-					<li>Checking your spelling</li>
-					<li>Searching for function or class names</li>
-					<li>Using specific programming constructs</li>
-				</ul>
-			</div>
-		</div>
+		<Card.Root>
+			<Card.Content class="py-12 text-center">
+				<Search class="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
+				<h3 class="mb-2 text-lg font-semibold text-foreground">No Results Found</h3>
+				<p class="mb-6 text-muted-foreground">No code chunks found for "{query}"</p>
+				<div class="mx-auto max-w-md text-left">
+					<h4 class="mb-3 text-sm font-medium text-foreground">Try:</h4>
+					<ul class="list-inside list-disc space-y-1 text-sm text-muted-foreground">
+						<li>Different keywords or phrases</li>
+						<li>Broader search terms</li>
+						<li>Checking your spelling</li>
+						<li>Searching for function or class names</li>
+						<li>Using specific programming constructs</li>
+					</ul>
+				</div>
+			</Card.Content>
+		</Card.Root>
 	{/if}
 </div>
-
-<style>
-	.search-results {
-		width: 100%;
-		max-width: 900px;
-		margin: 0 auto;
-	}
-
-	.loading-state {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		padding: 64px 20px;
-		text-align: center;
-	}
-
-	.loading-state .spinner {
-		width: 32px;
-		height: 32px;
-		border: 3px solid #e5e7eb;
-		border-top: 3px solid #3b82f6;
-		border-radius: 50%;
-		animation: spin 1s linear infinite;
-		margin-bottom: 16px;
-	}
-
-	.loading-state p {
-		color: #6b7280;
-		font-size: 16px;
-	}
-
-	.error-state {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		padding: 64px 20px;
-		text-align: center;
-		color: #dc2626;
-	}
-
-	.error-state svg {
-		margin-bottom: 16px;
-	}
-
-	.error-state h3 {
-		margin: 0 0 8px 0;
-		font-size: 20px;
-		font-weight: 600;
-	}
-
-	.error-message {
-		color: #6b7280;
-		margin-bottom: 16px;
-	}
-
-	.retry-button {
-		background-color: #3b82f6;
-		color: white;
-		border: none;
-		padding: 8px 16px;
-		border-radius: 6px;
-		font-weight: 500;
-		cursor: pointer;
-		transition: background-color 0.2s;
-	}
-
-	.retry-button:hover {
-		background-color: #2563eb;
-	}
-
-	.results-header {
-		margin-bottom: 24px;
-	}
-
-	.results-header h3 {
-		font-size: 24px;
-		font-weight: 600;
-		margin: 0 0 8px 0;
-		color: #1f2937;
-	}
-
-	.results-meta {
-		color: #6b7280;
-		font-size: 14px;
-		margin: 0;
-	}
-
-	.results-list {
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-	}
-
-	.result-item {
-		background: white;
-		border: 1px solid #e5e7eb;
-		border-radius: 8px;
-		padding: 20px;
-		cursor: pointer;
-		transition: all 0.2s;
-		position: relative;
-	}
-
-	.result-item:hover {
-		border-color: #3b82f6;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-	}
-
-	.result-item:focus {
-		outline: none;
-		border-color: #3b82f6;
-		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-	}
-
-	.result-header {
-		margin-bottom: 16px;
-	}
-
-	.file-info {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-	}
-
-	.file-path-container {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-	}
-
-	.file-path {
-		font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-		font-size: 14px;
-		font-weight: 500;
-		color: #1f2937;
-		flex: 1;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.open-external {
-		background: none;
-		border: none;
-		color: #6b7280;
-		cursor: pointer;
-		padding: 2px;
-		border-radius: 3px;
-		transition: color 0.2s;
-		flex-shrink: 0;
-	}
-
-	.open-external:hover {
-		color: #3b82f6;
-	}
-
-	.file-meta {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 12px;
-		align-items: center;
-	}
-
-	.language-badge {
-		display: inline-block;
-		padding: 2px 8px;
-		border-radius: 12px;
-		font-size: 12px;
-		font-weight: 500;
-		color: white;
-		text-transform: capitalize;
-	}
-
-	.line-range {
-		font-size: 12px;
-		color: #6b7280;
-		font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-	}
-
-	.relevance-score {
-		font-size: 12px;
-		color: #6b7280;
-		padding: 2px 6px;
-		background-color: #f3f4f6;
-		border-radius: 4px;
-		display: inline-flex;
-		align-items: center;
-		gap: 4px;
-		font-weight: 500;
-	}
-
-	.relevance-score.semantic {
-		background-color: rgba(59, 130, 246, 0.1);
-		border: 1px solid rgba(59, 130, 246, 0.2);
-	}
-
-	.relevance-score svg {
-		opacity: 0.8;
-	}
-
-	.code-preview {
-		margin-bottom: 16px;
-	}
-
-	.metadata {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		font-size: 12px;
-		padding-top: 12px;
-		border-top: 1px solid #f3f4f6;
-		margin-top: 12px;
-	}
-
-	.metadata:first-of-type {
-		border-top: none;
-		padding-top: 0;
-		margin-top: 0;
-	}
-
-	.metadata-label {
-		color: #6b7280;
-		font-weight: 500;
-		flex-shrink: 0;
-	}
-
-	.metadata-items {
-		display: flex;
-		gap: 6px;
-		flex-wrap: wrap;
-		align-items: center;
-	}
-
-	.metadata-item {
-		background-color: #eff6ff;
-		color: #1d4ed8;
-		padding: 2px 6px;
-		border-radius: 4px;
-		font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-	}
-
-	.metadata-more {
-		color: #6b7280;
-		font-style: italic;
-	}
-
-	.load-more {
-		text-align: center;
-		margin-top: 32px;
-	}
-
-	.load-more-button {
-		background-color: #3b82f6;
-		color: white;
-		border: none;
-		padding: 12px 24px;
-		border-radius: 6px;
-		font-weight: 500;
-		cursor: pointer;
-		transition: background-color 0.2s;
-	}
-
-	.load-more-button:hover:not(:disabled) {
-		background-color: #2563eb;
-	}
-
-	.load-more-button:disabled {
-		background-color: #9ca3af;
-		cursor: not-allowed;
-	}
-
-	.no-results {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		padding: 64px 20px;
-		text-align: center;
-		color: #6b7280;
-	}
-
-	.no-results svg {
-		margin-bottom: 24px;
-		color: #d1d5db;
-	}
-
-	.no-results h3 {
-		color: #1f2937;
-		margin: 0 0 8px 0;
-		font-size: 20px;
-		font-weight: 600;
-	}
-
-	.no-results > p {
-		margin-bottom: 24px;
-		font-size: 16px;
-	}
-
-	.suggestions {
-		text-align: left;
-		max-width: 300px;
-	}
-
-	.suggestions h4 {
-		color: #1f2937;
-		margin: 0 0 12px 0;
-		font-size: 16px;
-		font-weight: 500;
-	}
-
-	.suggestions ul {
-		list-style-type: disc;
-		padding-left: 20px;
-		margin: 0;
-	}
-
-	.suggestions li {
-		margin-bottom: 4px;
-		font-size: 14px;
-	}
-
-	@keyframes spin {
-		0% {
-			transform: rotate(0deg);
-		}
-		100% {
-			transform: rotate(360deg);
-		}
-	}
-
-	/* Mobile responsiveness */
-	@media (max-width: 768px) {
-		.result-item {
-			padding: 16px;
-		}
-
-		.file-meta {
-			flex-direction: column;
-			align-items: flex-start;
-			gap: 8px;
-		}
-
-		.results-header h3 {
-			font-size: 20px;
-		}
-
-		.file-path-container {
-			flex-direction: column;
-			align-items: flex-start;
-			gap: 4px;
-		}
-
-		.metadata {
-			flex-direction: column;
-			align-items: flex-start;
-			gap: 4px;
-		}
-	}
-
-	/* High contrast mode support */
-	@media (prefers-contrast: high) {
-		.result-item {
-			border-color: #000;
-		}
-
-		.result-item:hover,
-		.result-item:focus {
-			border-color: #0066cc;
-		}
-
-		.metadata {
-			border-top-color: #000;
-		}
-	}
-
-	/* Reduced motion support */
-	@media (prefers-reduced-motion: reduce) {
-		.result-item,
-		.load-more-button,
-		.retry-button,
-		.open-external,
-		.loading-state .spinner {
-			transition: none;
-			animation: none;
-		}
-	}
-</style>
