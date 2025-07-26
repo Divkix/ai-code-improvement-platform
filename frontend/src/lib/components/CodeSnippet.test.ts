@@ -140,7 +140,8 @@ export default greet;`;
 	});
 
 	it('should wrap long lines when enabled', () => {
-		const longCode = 'const veryLongVariableName = "This is a very long string that should wrap when word wrap is enabled and the container is not wide enough to fit it all on one line";';
+		const longCode =
+			'const veryLongVariableName = "This is a very long string that should wrap when word wrap is enabled and the container is not wide enough to fit it all on one line";';
 
 		render(CodeSnippet, {
 			props: {

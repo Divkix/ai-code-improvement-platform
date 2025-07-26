@@ -37,10 +37,13 @@ describe('SearchBox', () => {
 		await searchInput.fill('test query');
 
 		// Wait for debounce
-		await waitFor(() => {
-			expect(searchEventFired).toBe(true);
-			expect(searchQuery).toBe('test query');
-		}, { timeout: 1000 });
+		await waitFor(
+			() => {
+				expect(searchEventFired).toBe(true);
+				expect(searchQuery).toBe('test query');
+			},
+			{ timeout: 1000 }
+		);
 	});
 
 	it('should debounce search input', async () => {
@@ -60,9 +63,12 @@ describe('SearchBox', () => {
 		await searchInput.fill('test');
 
 		// Should only fire once after debounce delay
-		await waitFor(() => {
-			expect(searchEventCount).toBe(1);
-		}, { timeout: 1000 });
+		await waitFor(
+			() => {
+				expect(searchEventCount).toBe(1);
+			},
+			{ timeout: 1000 }
+		);
 	});
 
 	it('should handle empty search query', async () => {
@@ -79,10 +85,13 @@ describe('SearchBox', () => {
 		const searchInput = page.getByPlaceholderText('Search your code...');
 		await searchInput.fill('   ');
 
-		await waitFor(() => {
-			expect(searchEventFired).toBe(true);
-			expect(searchQuery).toBe('');
-		}, { timeout: 1000 });
+		await waitFor(
+			() => {
+				expect(searchEventFired).toBe(true);
+				expect(searchQuery).toBe('');
+			},
+			{ timeout: 1000 }
+		);
 	});
 
 	it('should handle keyboard shortcuts', async () => {

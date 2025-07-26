@@ -13,7 +13,11 @@ export default defineConfig({
 						provider: 'playwright',
 						instances: [{ browser: 'chromium' }]
 					},
-					include: ['src/**/*.svelte.{test,spec}.{js,ts}', 'src/lib/components/**/*.{test,spec}.{js,ts}', 'src/routes/**/*.svelte.{test,spec}.{js,ts}'],
+					include: [
+						'src/**/*.svelte.{test,spec}.{js,ts}',
+						'src/lib/components/**/*.{test,spec}.{js,ts}',
+						'src/routes/**/*.svelte.{test,spec}.{js,ts}'
+					],
 					exclude: ['src/lib/server/**'],
 					setupFiles: ['./vitest-setup-client.ts']
 				}
@@ -24,7 +28,11 @@ export default defineConfig({
 					name: 'server',
 					environment: 'node',
 					include: ['src/**/*.{test,spec}.{js,ts}'],
-					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}', 'src/lib/components/**/*.{test,spec}.{js,ts}', 'src/routes/**/*.svelte.{test,spec}.{js,ts}'],
+					exclude: [
+						'src/**/*.svelte.{test,spec}.{js,ts}',
+						'src/lib/components/**/*.{test,spec}.{js,ts}',
+						'src/routes/**/*.svelte.{test,spec}.{js,ts}'
+					],
 					setupFiles: ['./vitest-setup-server.ts']
 				}
 			}

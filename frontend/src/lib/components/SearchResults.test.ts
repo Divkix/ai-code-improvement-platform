@@ -102,7 +102,7 @@ describe('SearchResults', () => {
 		// Check that results are displayed
 		expect(screen.getByText('Button.tsx')).toBeInTheDocument();
 		expect(screen.getByText('helpers.ts')).toBeInTheDocument();
-		
+
 		// Check that code content is displayed
 		expect(screen.getByText(/export function Button/)).toBeInTheDocument();
 		expect(screen.getByText(/export function formatDate/)).toBeInTheDocument();
