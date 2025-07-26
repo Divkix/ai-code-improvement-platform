@@ -5,7 +5,10 @@
 	import { authStore } from '$lib/stores/auth';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Sheet from '$lib/components/ui/sheet/index.js';
-	import { Menu, Loader2 } from '@lucide/svelte';
+	import * as NavigationMenu from '$lib/components/ui/navigation-menu/index.js';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
+	import { Toaster } from '$lib/components/ui/sonner/index.js';
+	import { Menu } from '@lucide/svelte';
 	import '../app.css';
 	let { children } = $props();
 
@@ -36,62 +39,110 @@
 	});
 </script>
 
-<div class="min-h-screen bg-gray-50">
-	<nav class="border-b border-gray-200 bg-white shadow-sm">
-		<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-			<div class="flex h-16 justify-between">
+<div class="min-h-screen bg-background">
+	<header
+		class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+	>
+		<div class="container mx-auto px-4 sm:px-6 lg:px-8">
+			<div class="flex h-16 items-center justify-between">
 				<div class="flex items-center">
-					<div class="flex-shrink-0">
-						<a href="/" class="text-xl font-semibold text-gray-900">GitHub Analyzer</a>
-					</div>
+					<a href="/" class="mr-6 flex items-center space-x-2">
+						<span class="text-xl font-bold">GitHub Analyzer</span>
+					</a>
 					{#if $authStore.isAuthenticated}
-						<div class="hidden md:ml-10 md:flex md:space-x-2">
-							<Button variant="ghost" size="sm" href="/">Dashboard</Button>
-							<Button variant="ghost" size="sm" href="/repositories">Repositories</Button>
-							<Button variant="ghost" size="sm" href="/search">Search</Button>
-							<Button variant="ghost" size="sm" href="/chat">Chat</Button>
-						</div>
+						<NavigationMenu.Root class="hidden md:flex">
+							<NavigationMenu.List>
+								<NavigationMenu.Item>
+									<NavigationMenu.Link
+										href="/"
+										class="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
+									>
+										Dashboard
+									</NavigationMenu.Link>
+								</NavigationMenu.Item>
+								<NavigationMenu.Item>
+									<NavigationMenu.Link
+										href="/repositories"
+										class="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
+									>
+										Repositories
+									</NavigationMenu.Link>
+								</NavigationMenu.Item>
+								<NavigationMenu.Item>
+									<NavigationMenu.Link
+										href="/search"
+										class="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
+									>
+										Search
+									</NavigationMenu.Link>
+								</NavigationMenu.Item>
+								<NavigationMenu.Item>
+									<NavigationMenu.Link
+										href="/chat"
+										class="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
+									>
+										Chat
+									</NavigationMenu.Link>
+								</NavigationMenu.Item>
+							</NavigationMenu.List>
+						</NavigationMenu.Root>
 					{/if}
 				</div>
 				<div class="flex items-center space-x-4">
 					{#if $authStore.isAuthenticated}
 						<Sheet.Root bind:open={mobileMenuOpen}>
-							<Sheet.Trigger
-								class="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none md:hidden"
-							>
-								<Menu class="h-6 w-6" />
-								<span class="sr-only">Open main menu</span>
+							<Sheet.Trigger>
+								<Button variant="ghost" size="icon" class="md:hidden">
+									<Menu class="h-5 w-5" />
+									<span class="sr-only">Toggle menu</span>
+								</Button>
 							</Sheet.Trigger>
 							<Sheet.Content side="left">
 								<Sheet.Header>
 									<Sheet.Title>Navigation</Sheet.Title>
 								</Sheet.Header>
-								<div class="mt-4 flex flex-col space-y-2">
-									<Button variant="ghost" href="/" onclick={() => (mobileMenuOpen = false)}>
+								<div class="mt-6 flex flex-col space-y-3">
+									<Button
+										variant="ghost"
+										href="/"
+										onclick={() => (mobileMenuOpen = false)}
+										class="justify-start"
+									>
 										Dashboard
 									</Button>
 									<Button
 										variant="ghost"
 										href="/repositories"
 										onclick={() => (mobileMenuOpen = false)}
+										class="justify-start"
 									>
 										Repositories
 									</Button>
-									<Button variant="ghost" href="/search" onclick={() => (mobileMenuOpen = false)}>
+									<Button
+										variant="ghost"
+										href="/search"
+										onclick={() => (mobileMenuOpen = false)}
+										class="justify-start"
+									>
 										Search
 									</Button>
-									<Button variant="ghost" href="/chat" onclick={() => (mobileMenuOpen = false)}>
+									<Button
+										variant="ghost"
+										href="/chat"
+										onclick={() => (mobileMenuOpen = false)}
+										class="justify-start"
+									>
 										Chat
 									</Button>
 								</div>
 							</Sheet.Content>
 						</Sheet.Root>
 
-						<span class="hidden text-sm text-gray-700 sm:block"
-							>Welcome, {$authStore.user?.name}</span
-						>
+						<span class="hidden text-sm text-muted-foreground sm:block">
+							Welcome, {$authStore.user?.name}
+						</span>
 						<Button
-							variant="ghost"
+							variant="outline"
 							size="sm"
 							onclick={() => {
 								authStore.logout();
@@ -105,18 +156,23 @@
 				</div>
 			</div>
 		</div>
-	</nav>
+	</header>
 
-	<main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+	<main class="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
 		{#if $authStore.isLoading}
-			<div class="flex h-96 items-center justify-center">
-				<div class="flex items-center justify-center">
-					<Loader2 class="h-8 w-8 animate-spin" />
-					<span class="ml-2">Authenticating...</span>
+			<div class="mx-auto max-w-4xl space-y-4">
+				<Skeleton class="h-12 w-full" />
+				<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+					<Skeleton class="h-32 w-full" />
+					<Skeleton class="h-32 w-full" />
+					<Skeleton class="h-32 w-full" />
 				</div>
+				<Skeleton class="h-64 w-full" />
 			</div>
 		{:else}
 			{@render children()}
 		{/if}
 	</main>
 </div>
+
+<Toaster />

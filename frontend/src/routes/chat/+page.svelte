@@ -272,7 +272,7 @@
 			<span class="text-gray-400">|</span>
 			<h1 class="text-lg font-medium text-gray-700">AI Chat</h1>
 		</div>
-		
+
 		<div class="ml-auto flex items-center space-x-6">
 			<div class="flex items-center space-x-3">
 				<Label class="text-sm font-medium text-gray-600">Repository:</Label>
@@ -306,7 +306,9 @@
 					</Select.Root>
 				{/if}
 			</div>
-			<a href="/" class="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">← Back to Dashboard</a>
+			<a href="/" class="text-sm whitespace-nowrap text-gray-500 hover:text-gray-700"
+				>← Back to Dashboard</a
+			>
 		</div>
 	</div>
 

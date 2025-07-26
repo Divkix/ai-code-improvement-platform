@@ -7,7 +7,8 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Alert from '$lib/components/ui/alert/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { Loader2, TrendingUp } from '@lucide/svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
+	import { TrendingUp } from '@lucide/svelte';
 
 	Chart.register(...registerables);
 
@@ -171,10 +172,74 @@
 </svelte:head>
 
 {#if loading}
-	<div class="flex h-96 items-center justify-center">
-		<div class="text-center">
-			<Loader2 class="h-8 w-8 animate-spin" />
-			<p class="mt-4 text-muted-foreground">Loading dashboard data...</p>
+	<div class="space-y-6">
+		<!-- Stats Cards Skeleton -->
+		<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+			<Card.Root>
+				<Card.Content class="p-6">
+					<div class="space-y-2">
+						<Skeleton class="h-4 w-20" />
+						<Skeleton class="h-8 w-16" />
+					</div>
+				</Card.Content>
+			</Card.Root>
+			<Card.Root>
+				<Card.Content class="p-6">
+					<div class="space-y-2">
+						<Skeleton class="h-4 w-20" />
+						<Skeleton class="h-8 w-16" />
+					</div>
+				</Card.Content>
+			</Card.Root>
+			<Card.Root>
+				<Card.Content class="p-6">
+					<div class="space-y-2">
+						<Skeleton class="h-4 w-20" />
+						<Skeleton class="h-8 w-16" />
+					</div>
+				</Card.Content>
+			</Card.Root>
+			<Card.Root>
+				<Card.Content class="p-6">
+					<div class="space-y-2">
+						<Skeleton class="h-4 w-20" />
+						<Skeleton class="h-8 w-16" />
+					</div>
+				</Card.Content>
+			</Card.Root>
+		</div>
+
+		<!-- Chart and Activity Skeleton -->
+		<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+			<Card.Root>
+				<Card.Header>
+					<Skeleton class="h-6 w-32" />
+				</Card.Header>
+				<Card.Content>
+					<Skeleton class="h-64 w-full" />
+				</Card.Content>
+			</Card.Root>
+			<Card.Root>
+				<Card.Header>
+					<Skeleton class="h-6 w-40" />
+				</Card.Header>
+				<Card.Content>
+					<div class="space-y-4">
+						<div class="space-y-2">
+							<Skeleton class="h-4 w-full" />
+							<Skeleton class="h-3 w-24" />
+						</div>
+						<div class="space-y-2">
+							<Skeleton class="h-4 w-full" />
+							<Skeleton class="h-3 w-24" />
+						</div>
+						<div class="space-y-2">
+							<Skeleton class="h-4 w-full" />
+							<Skeleton class="h-3 w-24" />
+						</div>
+					</div>
+				</Card.Content>
+			</Card.Root>
 		</div>
 	</div>
 {:else if error}

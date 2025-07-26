@@ -9,6 +9,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Progress } from '$lib/components/ui/progress';
 	import { Separator } from '$lib/components/ui/separator';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { RefreshCw, Play, Loader2, Check, X, AlertCircle, Clock, Zap } from '@lucide/svelte';
 
 	export let repositoryId: string;
@@ -163,9 +164,26 @@
 	</Card.Header>
 	<Card.Content class="space-y-4">
 		{#if loading && !status}
-			<div class="flex flex-col items-center space-y-2 py-8 text-muted-foreground">
-				<Loader2 class="h-8 w-8 animate-spin" />
-				<p>Loading embedding status...</p>
+			<div class="space-y-4">
+				<div class="flex items-center justify-between">
+					<Skeleton class="h-6 w-20" />
+					<Skeleton class="h-4 w-16" />
+				</div>
+				<Skeleton class="h-2 w-full" />
+				<div class="grid grid-cols-3 gap-4">
+					<div class="space-y-2">
+						<Skeleton class="h-3 w-16" />
+						<Skeleton class="h-6 w-12" />
+					</div>
+					<div class="space-y-2">
+						<Skeleton class="h-3 w-16" />
+						<Skeleton class="h-6 w-12" />
+					</div>
+					<div class="space-y-2">
+						<Skeleton class="h-3 w-16" />
+						<Skeleton class="h-6 w-12" />
+					</div>
+				</div>
 			</div>
 		{:else if error}
 			<div class="flex flex-col items-center space-y-4 py-6 text-center">

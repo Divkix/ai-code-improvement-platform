@@ -11,6 +11,8 @@
 	import type { components } from '$lib/api/types';
 	import { onDestroy } from 'svelte';
 	import { generateGitHubUrl, openGitHubUrl } from '$lib/utils/github';
+	import * as Card from '$lib/components/ui/card/index.js';
+	import * as Alert from '$lib/components/ui/alert/index.js';
 
 	// Generic response shape used for API client calls
 	type ApiResponse = { error?: { message?: string }; data?: unknown };
@@ -276,22 +278,23 @@
 	/>
 </svelte:head>
 
-<div class="search-page">
-	<div class="search-header">
-		<div class="header-content">
-			<h1>Search Code</h1>
-			<p class="search-description">
-				Find functions, classes, variables, and any code patterns across all your repositories.
-			</p>
-		</div>
+<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+	<!-- Search Header -->
+	<div class="mb-12 text-center">
+		<h1 class="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">Search Code</h1>
+		<p class="mx-auto mt-3 max-w-2xl text-lg text-muted-foreground sm:mt-4">
+			Find functions, classes, variables, and any code patterns across all your repositories.
+		</p>
 	</div>
 
-	<div class="search-container">
+	<div class="mx-auto max-w-4xl">
 		{#if pipelineStats && pipelineStats.pending + pipelineStats.processing > 0}
-			<div class="embedding-banner" role="status" aria-live="polite">
-				⚡ Vector embeddings are currently being generated for your repositories. Results may be
-				incomplete until processing finishes.
-			</div>
+			<Alert.Root class="mb-6">
+				<Alert.Description>
+					⚡ Vector embeddings are currently being generated for your repositories. Results may be
+					incomplete until processing finishes.
+				</Alert.Description>
+			</Alert.Root>
 		{/if}
 
 		<!-- Search Input -->
@@ -337,182 +340,89 @@
 
 	<!-- Search Tips -->
 	{#if !searchQuery && !loading}
-		<div class="search-tips">
-			<h3>Search Tips</h3>
-			<div class="tips-grid">
-				<div class="tip-card">
-					<h4>🔍 Function Names</h4>
-					<p>
-						Search for specific functions like <code>getUserData</code> or
-						<code>calculateTotal</code>
-					</p>
-				</div>
-				<div class="tip-card">
-					<h4>🏗️ Class Names</h4>
-					<p>
-						Find classes with names like <code>UserService</code> or <code>DatabaseConnection</code>
-					</p>
-				</div>
-				<div class="tip-card">
-					<h4>📝 Code Patterns</h4>
-					<p>Search for patterns like <code>async function</code> or <code>try catch</code></p>
-				</div>
-				<div class="tip-card">
-					<h4>🔤 Variable Names</h4>
-					<p>Find variables like <code>apiKey</code> or <code>databaseUrl</code></p>
-				</div>
-				<div class="tip-card">
-					<h4>🎯 Specific Terms</h4>
-					<p>Search for keywords like <code>authentication</code> or <code>validation</code></p>
-				</div>
-				<div class="tip-card">
-					<h4>⚙️ Use Filters</h4>
-					<p>Narrow results by programming language, file type, or repository</p>
-				</div>
+		<div class="mx-auto mt-12 max-w-4xl">
+			<h3 class="mb-8 text-center text-2xl font-semibold">Search Tips</h3>
+			<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+				<Card.Root class="transition-shadow hover:shadow-md">
+					<Card.Header>
+						<Card.Title class="text-base">🔍 Function Names</Card.Title>
+					</Card.Header>
+					<Card.Content>
+						<p class="text-sm text-muted-foreground">
+							Search for specific functions like <code class="rounded bg-muted px-1 py-0.5 text-xs"
+								>getUserData</code
+							>
+							or
+							<code class="rounded bg-muted px-1 py-0.5 text-xs">calculateTotal</code>
+						</p>
+					</Card.Content>
+				</Card.Root>
+
+				<Card.Root class="transition-shadow hover:shadow-md">
+					<Card.Header>
+						<Card.Title class="text-base">🏗️ Class Names</Card.Title>
+					</Card.Header>
+					<Card.Content>
+						<p class="text-sm text-muted-foreground">
+							Find classes with names like <code class="rounded bg-muted px-1 py-0.5 text-xs"
+								>UserService</code
+							>
+							or <code class="rounded bg-muted px-1 py-0.5 text-xs">DatabaseConnection</code>
+						</p>
+					</Card.Content>
+				</Card.Root>
+
+				<Card.Root class="transition-shadow hover:shadow-md">
+					<Card.Header>
+						<Card.Title class="text-base">📝 Code Patterns</Card.Title>
+					</Card.Header>
+					<Card.Content>
+						<p class="text-sm text-muted-foreground">
+							Search for patterns like <code class="rounded bg-muted px-1 py-0.5 text-xs"
+								>async function</code
+							>
+							or <code class="rounded bg-muted px-1 py-0.5 text-xs">try catch</code>
+						</p>
+					</Card.Content>
+				</Card.Root>
+
+				<Card.Root class="transition-shadow hover:shadow-md">
+					<Card.Header>
+						<Card.Title class="text-base">🔤 Variable Names</Card.Title>
+					</Card.Header>
+					<Card.Content>
+						<p class="text-sm text-muted-foreground">
+							Find variables like <code class="rounded bg-muted px-1 py-0.5 text-xs">apiKey</code>
+							or <code class="rounded bg-muted px-1 py-0.5 text-xs">databaseUrl</code>
+						</p>
+					</Card.Content>
+				</Card.Root>
+
+				<Card.Root class="transition-shadow hover:shadow-md">
+					<Card.Header>
+						<Card.Title class="text-base">🎯 Specific Terms</Card.Title>
+					</Card.Header>
+					<Card.Content>
+						<p class="text-sm text-muted-foreground">
+							Search for keywords like <code class="rounded bg-muted px-1 py-0.5 text-xs"
+								>authentication</code
+							>
+							or <code class="rounded bg-muted px-1 py-0.5 text-xs">validation</code>
+						</p>
+					</Card.Content>
+				</Card.Root>
+
+				<Card.Root class="transition-shadow hover:shadow-md">
+					<Card.Header>
+						<Card.Title class="text-base">⚙️ Use Filters</Card.Title>
+					</Card.Header>
+					<Card.Content>
+						<p class="text-sm text-muted-foreground">
+							Narrow results by programming language, file type, or repository
+						</p>
+					</Card.Content>
+				</Card.Root>
 			</div>
 		</div>
 	{/if}
 </div>
-
-<style>
-	.search-page {
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: 24px;
-		min-height: calc(100vh - 80px);
-	}
-
-	.search-header {
-		text-align: center;
-		margin-bottom: 48px;
-	}
-
-	.header-content h1 {
-		font-size: 36px;
-		font-weight: 700;
-		color: #1f2937;
-		margin: 0 0 12px 0;
-	}
-
-	.search-description {
-		font-size: 18px;
-		color: #6b7280;
-		margin: 0;
-		max-width: 600px;
-		margin-left: auto;
-		margin-right: auto;
-	}
-
-	.search-container {
-		max-width: 900px;
-		margin: 0 auto;
-	}
-
-	.search-tips {
-		max-width: 900px;
-		margin: 48px auto 0;
-		text-align: center;
-	}
-
-	.search-tips h3 {
-		font-size: 24px;
-		font-weight: 600;
-		color: #1f2937;
-		margin: 0 0 24px 0;
-	}
-
-	.tips-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-		gap: 20px;
-		margin-top: 24px;
-	}
-
-	.tip-card {
-		background: white;
-		border: 1px solid #e5e7eb;
-		border-radius: 12px;
-		padding: 20px;
-		text-align: left;
-		transition: all 0.2s;
-	}
-
-	.tip-card:hover {
-		border-color: #3b82f6;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-	}
-
-	.tip-card h4 {
-		font-size: 16px;
-		font-weight: 600;
-		color: #1f2937;
-		margin: 0 0 8px 0;
-	}
-
-	.tip-card p {
-		font-size: 14px;
-		color: #6b7280;
-		line-height: 1.5;
-		margin: 0;
-	}
-
-	.tip-card code {
-		background-color: #f3f4f6;
-		color: #1f2937;
-		padding: 2px 4px;
-		border-radius: 3px;
-		font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-		font-size: 13px;
-	}
-
-	/* Mobile responsiveness */
-	@media (max-width: 768px) {
-		.search-page {
-			padding: 16px;
-		}
-
-		.header-content h1 {
-			font-size: 28px;
-		}
-
-		.search-description {
-			font-size: 16px;
-		}
-
-		.tips-grid {
-			grid-template-columns: 1fr;
-			gap: 16px;
-		}
-
-		.search-tips {
-			margin-top: 32px;
-		}
-
-		.search-tips h3 {
-			font-size: 20px;
-		}
-	}
-
-	/* High contrast mode support */
-	@media (prefers-contrast: high) {
-		.tip-card {
-			border-color: #000;
-		}
-
-		.tip-card:hover {
-			border-color: #0066cc;
-		}
-
-		.tip-card code {
-			background-color: #e0e0e0;
-			color: #000;
-		}
-	}
-
-	/* Reduced motion support */
-	@media (prefers-reduced-motion: reduce) {
-		.tip-card {
-			transition: none;
-		}
-	}
-</style>

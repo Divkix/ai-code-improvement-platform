@@ -19,6 +19,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Loader2, Github, Plus, FolderGit2 } from '@lucide/svelte';
+	import { toast } from 'svelte-sonner';
 
 	let user = $state<User | null>(null);
 	let repositories = $state<Repository[]>([]);
@@ -66,6 +67,9 @@
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load repositories';
 			console.error('Error loading repositories:', err);
+			toast.error('Failed to load repositories', {
+				description: err instanceof Error ? err.message : 'An unexpected error occurred'
+			});
 		} finally {
 			loading = false;
 		}
@@ -161,8 +165,15 @@
 
 			// Start polling if the new repository is importing
 			manageProgressPolling();
+
+			toast.success('Repository added successfully', {
+				description: `${parsed.fullName} has been imported and is being processed.`
+			});
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to create repository';
+			toast.error('Failed to add repository', {
+				description: err instanceof Error ? err.message : 'An unexpected error occurred'
+			});
 		}
 	}
 
@@ -202,8 +213,14 @@
 		try {
 			await deleteRepository(repo.id);
 			repositories = repositories.filter((r) => r.id !== repo.id);
+			toast.success('Repository deleted', {
+				description: `${repo.name} has been removed from your repositories.`
+			});
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to delete repository';
+			toast.error('Failed to delete repository', {
+				description: err instanceof Error ? err.message : 'An unexpected error occurred'
+			});
 		}
 	}
 
@@ -292,8 +309,15 @@
 
 			// Start polling if the new repository is importing
 			manageProgressPolling();
+
+			toast.success('Repository imported successfully', {
+				description: `${githubRepo.fullName} has been imported and is being processed.`
+			});
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to import repository';
+			toast.error('Failed to import repository', {
+				description: err instanceof Error ? err.message : 'An unexpected error occurred'
+			});
 		}
 	}
 </script>
