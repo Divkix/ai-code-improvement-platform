@@ -300,7 +300,8 @@
 			});
 
 			repositories = [{ ...newRepo, isPrivate: newRepo.isPrivate ?? false }, ...repositories];
-			closeGitHubBrowser();
+			// Close whichever modal is open. closeAddModal resets both modal flags.
+			closeAddModal();
 			error = '';
 
 			// Start polling if the new repository is importing
@@ -462,7 +463,7 @@
 								</div>
 								{#if repo.status === 'importing'}
 									<div class="mt-2 flex items-center text-xs text-blue-600">
-										<svg class="mr-2 -ml-1 h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
+										<svg class="-ml-1 mr-2 h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
 											<circle
 												class="opacity-25"
 												cx="12"
@@ -485,21 +486,21 @@
 
 						<div class="mb-4 grid grid-cols-2 gap-4">
 							<div>
-								<dt class="text-xs font-medium tracking-wide text-gray-500 uppercase">Language</dt>
+								<dt class="text-xs font-medium uppercase tracking-wide text-gray-500">Language</dt>
 								<dd class="text-sm text-gray-900">{repo.primaryLanguage || 'Unknown'}</dd>
 							</div>
 							<div>
-								<dt class="text-xs font-medium tracking-wide text-gray-500 uppercase">
+								<dt class="text-xs font-medium uppercase tracking-wide text-gray-500">
 									Lines of Code
 								</dt>
 								<dd class="text-sm text-gray-900">{getLinesOfCode(repo).toLocaleString()}</dd>
 							</div>
 							<div>
-								<dt class="text-xs font-medium tracking-wide text-gray-500 uppercase">Progress</dt>
+								<dt class="text-xs font-medium uppercase tracking-wide text-gray-500">Progress</dt>
 								<dd class="text-sm text-gray-900">{repo.importProgress}%</dd>
 							</div>
 							<div>
-								<dt class="text-xs font-medium tracking-wide text-gray-500 uppercase">
+								<dt class="text-xs font-medium uppercase tracking-wide text-gray-500">
 									Last Updated
 								</dt>
 								<dd class="text-sm text-gray-900">{getLastAnalyzed(repo)}</dd>
@@ -532,7 +533,7 @@
 	<div class="fixed inset-0 z-50 overflow-y-auto">
 		<div class="flex min-h-screen items-center justify-center p-4">
 			<div
-				class="bg-opacity-10 fixed inset-0 bg-black"
+				class="fixed inset-0 bg-black bg-opacity-10"
 				onclick={closeAddModal}
 				onkeydown={closeAddModal}
 				role="button"
@@ -600,7 +601,7 @@
 								type="url"
 								id="githubUrl"
 								bind:value={githubUrl}
-								class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
+								class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
 								placeholder="https://github.com/owner/repository or owner/repository"
 								required
 							/>
@@ -636,7 +637,7 @@
 	<div class="fixed inset-0 z-50 overflow-y-auto">
 		<div class="flex min-h-screen items-center justify-center p-4">
 			<div
-				class="bg-opacity-10 fixed inset-0 bg-black"
+				class="fixed inset-0 bg-black bg-opacity-10"
 				onclick={closeGitHubBrowser}
 				onkeydown={closeGitHubBrowser}
 				role="button"
