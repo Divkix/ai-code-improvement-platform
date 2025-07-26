@@ -173,7 +173,7 @@
 </svelte:head>
 
 {#if loading}
-	<div class="space-y-6">
+	<div class="space-y-6" data-testid="loading-skeleton">
 		<!-- Stats Cards Skeleton -->
 		<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
 			<Card.Root>
@@ -254,7 +254,7 @@
 		</Alert.Description>
 	</Alert.Root>
 {:else if stats}
-	<div class="space-y-6">
+	<div class="space-y-6" data-testid="dashboard-stats">
 		<Card.Root class="overflow-hidden border-0 bg-gradient-to-r from-blue-600 to-purple-600">
 			<Card.Content class="p-8">
 				<div class="grid grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-6">

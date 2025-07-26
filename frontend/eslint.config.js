@@ -36,5 +36,12 @@ export default ts.config(
 				svelteConfig
 			}
 		}
+	},
+	{
+		files: ['**/*.test.*', '**/__tests__/**'],
+		rules: {
+			'@typescript-eslint/no-explicit-any': 'off',
+			'@typescript-eslint/no-unused-vars': 'off'
+		}
 	}
 );

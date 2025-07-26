@@ -1,13 +1,66 @@
 import { page } from '@vitest/browser/context';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Page from './+page.svelte';
+import { mockDashboardStats, mockActivityItems, mockTrendDataPoints } from '$lib/test-utils';
+
+// Mock Chart.js
+vi.mock('chart.js', () => ({
+	Chart: vi.fn().mockImplementation(() => ({
+		destroy: vi.fn(),
+		update: vi.fn(),
+		render: vi.fn()
+	})),
+	registerables: []
+}));
+
+// Mock API hooks with successful responses by default
+vi.mock('$lib/api/hooks', () => ({
+	getDashboardStats: vi.fn().mockResolvedValue(mockDashboardStats),
+	getDashboardActivity: vi.fn().mockResolvedValue(mockActivityItems),
+	getDashboardTrends: vi.fn().mockResolvedValue(mockTrendDataPoints)
+}));
 
 describe('/+page.svelte', () => {
-	it('should render h1', async () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it('should render dashboard stats after loading', async () => {
 		render(Page);
 
-		const heading = page.getByRole('heading', { level: 1 });
-		await expect.element(heading).toBeInTheDocument();
+		// Wait for loading to complete and content to appear
+		await page.waitForSelector('[data-testid="dashboard-stats"]', { timeout: 10000 });
+
+		// Check that dashboard stats are displayed
+		const statsSection = page.getByTestId('dashboard-stats');
+		await expect.element(statsSection).toBeInTheDocument();
+
+		// Verify repository count is displayed
+		const repoCount = page.getByText('5');
+		await expect.element(repoCount).toBeInTheDocument();
+	});
+
+	it('should show loading state initially', async () => {
+		render(Page);
+
+		// Should show skeleton loading initially - check for any skeleton element
+		const loadingIndicator = page.locator('[data-testid="loading-skeleton"], .animate-pulse');
+		await expect.element(loadingIndicator.first()).toBeInTheDocument();
+	});
+
+	it('should display formatted metrics correctly', async () => {
+		render(Page);
+
+		// Wait for content to load
+		await page.waitForSelector('[data-testid="dashboard-stats"]', { timeout: 10000 });
+
+		// Check for formatted code chunks count (12.5K)
+		const codeChunks = page.getByText('12.5K');
+		await expect.element(codeChunks).toBeInTheDocument();
+
+		// Check for cost savings
+		const costSavings = page.getByText('15K');
+		await expect.element(costSavings).toBeInTheDocument();
 	});
 });
