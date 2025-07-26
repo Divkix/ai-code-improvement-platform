@@ -18,7 +18,7 @@
 		Loader2,
 		Sparkles,
 		ArrowUpDown
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 
 	interface Props {
 		results?: SearchResponse | null;

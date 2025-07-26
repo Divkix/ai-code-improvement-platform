@@ -1,4 +1,4 @@
-// ABOUTME: Authentication store using Svelte stores for user state management
+// ABOUTME: Authentication store using Svelte 5 runes with store compatibility for user state management
 // ABOUTME: Handles token storage, user data, and authentication state throughout the app
 
 import { writable } from 'svelte/store';
@@ -28,17 +28,36 @@ const loggedOutState: AuthState = {
 	isLoading: false
 };
 
-// Create the auth store
+// Create the auth store - using hybrid approach for compatibility
 function createAuthStore() {
 	const { subscribe, set, update } = writable<AuthState>(initialState);
+	
+	// Internal state for direct access (Svelte 5 style)
+	let _currentState = $state<AuthState>(initialState);
+	
+	// Sync the writable store with the rune state
+	subscribe((value) => {
+		_currentState = value;
+	});
+	
+	// Helper to update both store and state
+	const updateState = (newState: AuthState) => {
+		set(newState);
+		_currentState = newState;
+	};
 
 	return {
 		subscribe,
+		
+		// Direct state access (Svelte 5 style)
+		get current() {
+			return _currentState;
+		},
 
 		// Initialize auth state from localStorage
 		init: () => {
 			if (!browser) {
-				set(loggedOutState);
+				updateState(loggedOutState);
 				return;
 			}
 
@@ -49,12 +68,12 @@ function createAuthStore() {
 				try {
 					const user = JSON.parse(userStr);
 					setAuthToken(token);
-					update((state) => ({
-						...state,
+					updateState({
+						..._currentState,
 						user,
 						token,
 						isAuthenticated: true
-					}));
+					});
 
 					// Validate the token against the backend. This will set isLoading to false.
 					authStore.validateToken();
@@ -64,13 +83,13 @@ function createAuthStore() {
 				}
 			} else {
 				// No token found, so the user is not authenticated.
-				set(loggedOutState);
+				updateState(loggedOutState);
 			}
 		},
 
 		// Login user
 		login: async (email: string, password: string) => {
-			update((state) => ({ ...state, isLoading: true }));
+			updateState({ ..._currentState, isLoading: true });
 
 			try {
 				const { data, error } = await apiClient.POST('/api/auth/login', {
@@ -88,17 +107,17 @@ function createAuthStore() {
 					setAuthToken(data.token);
 				}
 
-				update((state) => ({
-					...state,
+				updateState({
+					..._currentState,
 					user: data.user,
 					token: data.token,
 					isAuthenticated: true,
 					isLoading: false
-				}));
+				});
 
 				return data;
 			} catch (error) {
-				update((state) => ({ ...state, isLoading: false }));
+				updateState({ ..._currentState, isLoading: false });
 				throw error;
 			}
 		},
@@ -110,7 +129,7 @@ function createAuthStore() {
 				localStorage.removeItem('auth_user');
 				setAuthToken(null);
 			}
-			set(loggedOutState);
+			updateState(loggedOutState);
 		},
 
 		// Validate current token
@@ -123,7 +142,7 @@ function createAuthStore() {
 				}
 
 				// Token is valid, update user info and set loading to false.
-				update((state) => ({ ...state, user: data, isLoading: false }));
+				updateState({ ..._currentState, user: data, isLoading: false });
 			} catch (error) {
 				console.error('Token validation failed:', error);
 				// Token is invalid, log the user out.
@@ -137,7 +156,7 @@ function createAuthStore() {
 				localStorage.setItem('auth_user', JSON.stringify(user));
 			}
 
-			update((state) => ({ ...state, user }));
+			updateState({ ..._currentState, user });
 		},
 
 		// Set user information (used by GitHub OAuth callbacks)
@@ -146,7 +165,7 @@ function createAuthStore() {
 				localStorage.setItem('auth_user', JSON.stringify(user));
 			}
 
-			update((state) => ({ ...state, user }));
+			updateState({ ..._currentState, user });
 		}
 	};
 }

@@ -31,8 +31,9 @@
 	let importMethod = $state<'url' | 'github'>('github');
 	let pollingInterval: ReturnType<typeof setInterval> | null = null;
 
-	// Subscribe to auth store to get current user
-	authStore.subscribe((auth) => {
+	// Watch for auth store changes to get current user
+	$effect(() => {
+		const auth = authStore.current;
 		if (
 			auth.user &&
 			(!user || user.id !== auth.user.id || user.githubConnected !== auth.user.githubConnected)

@@ -102,8 +102,8 @@
 					<Label for="remember-me" class="text-sm font-normal">Remember me</Label>
 				</div>
 
-				<Button type="submit" disabled={$authStore.isLoading} class="w-full">
-					{$authStore.isLoading ? 'Signing in...' : 'Sign in'}
+				<Button type="submit" disabled={authStore.current.isLoading} class="w-full">
+					{authStore.current.isLoading ? 'Signing in...' : 'Sign in'}
 				</Button>
 
 				<div class="text-center">
