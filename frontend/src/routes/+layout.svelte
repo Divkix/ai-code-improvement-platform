@@ -19,11 +19,25 @@
 		authStore.init();
 	}
 
+	// Subscribe to auth store reactively
+	let authState = $state({
+		user: null,
+		token: null,
+		isAuthenticated: false,
+		isLoading: true
+	});
+	$effect(() => {
+		const unsubscribe = authStore.subscribe((state) => {
+			authState = state;
+		});
+		return unsubscribe;
+	});
+
 	// This effect is the single source of truth for auth-based navigation.
 	$effect(() => {
-		if (!browser || authStore.current.isLoading) return; // Wait for the auth check to complete
+		if (!browser || !authState || authState.isLoading) return; // Wait for the auth check to complete
 
-		const { isAuthenticated } = authStore.current;
+		const { isAuthenticated } = authState;
 		const path = $page.url.pathname;
 		const isAuthRoute = path.startsWith('/auth');
 
@@ -49,7 +63,7 @@
 					<a href="/" class="mr-6 flex items-center space-x-2">
 						<span class="text-xl font-bold">GitHub Analyzer</span>
 					</a>
-					{#if authStore.current.isAuthenticated}
+					{#if authState?.isAuthenticated}
 						<NavigationMenu.Root class="hidden md:flex">
 							<NavigationMenu.List>
 								<NavigationMenu.Item>
@@ -89,7 +103,7 @@
 					{/if}
 				</div>
 				<div class="flex items-center space-x-4">
-					{#if authStore.current.isAuthenticated}
+					{#if authState?.isAuthenticated}
 						<Sheet.Root bind:open={mobileMenuOpen}>
 							<Sheet.Trigger>
 								<Button variant="ghost" size="icon" class="md:hidden">
@@ -139,7 +153,7 @@
 						</Sheet.Root>
 
 						<span class="hidden text-sm text-muted-foreground sm:block">
-							Welcome, {authStore.current.user?.name}
+							Welcome, {authState?.user?.name}
 						</span>
 						<Button
 							variant="outline"
@@ -150,7 +164,7 @@
 						>
 							Logout
 						</Button>
-					{:else if !authStore.current.isLoading && $page.url.pathname !== '/auth/login'}
+					{:else if !authState?.isLoading && $page.url.pathname !== '/auth/login'}
 						<Button href="/auth/login">Login</Button>
 					{/if}
 				</div>
@@ -159,7 +173,7 @@
 	</header>
 
 	<main class="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
-		{#if authStore.current.isLoading}
+		{#if authState?.isLoading}
 			<div class="mx-auto max-w-4xl space-y-4">
 				<Skeleton class="h-12 w-full" />
 				<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
