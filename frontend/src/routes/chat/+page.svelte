@@ -19,6 +19,7 @@
 	let renamingSessionId = $state<string | null>(null);
 	let renameInputValue = $state('');
 	let activeDropdownId = $state<string | null>(null);
+	let dropdownPosition = $state({ top: 0, left: 0 });
 
 	// Subscribe to chat store
 	let chatState = $state($chatStore);
@@ -133,8 +134,20 @@
 		renameInputValue = '';
 	}
 
-	function toggleDropdown(sessionId: string) {
-		activeDropdownId = activeDropdownId === sessionId ? null : sessionId;
+	function toggleDropdown(sessionId: string, event?: MouseEvent) {
+		if (activeDropdownId === sessionId) {
+			activeDropdownId = null;
+		} else {
+			activeDropdownId = sessionId;
+			if (event) {
+				const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+				// Position the menu just below the button and right-aligned
+				dropdownPosition = {
+					top: rect.bottom + window.scrollY,
+					left: rect.right - 128 + window.scrollX // 128px = w-32
+				};
+			}
+		}
 	}
 
 	function closeDropdown() {
@@ -288,7 +301,7 @@
 					<select
 						id="repo-select"
 						bind:value={selectedRepo}
-						class="rounded-md border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+						class="rounded-md border border-gray-300 px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
 					>
 						<option value="">All repositories</option>
 						{#each repositories as repo (repo.id)}
@@ -373,7 +386,7 @@
 										</button>
 										<div class="relative flex-shrink-0">
 											<button
-												onclick={() => toggleDropdown(session.id)}
+												onclick={(e) => toggleDropdown(session.id, e)}
 												class="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
 												aria-label="More options"
 											>
@@ -386,9 +399,12 @@
 											{#if activeDropdownId === session.id}
 												<!-- svelte-ignore a11y_click_events_have_key_events -->
 												<!-- svelte-ignore a11y_no_static_element_interactions -->
+												<!-- overlay -->
 												<div class="fixed inset-0 z-10" onclick={closeDropdown}></div>
+												<!-- dropdown menu positioned using fixed coordinates -->
 												<div
-													class="absolute right-0 z-20 mt-1 w-32 rounded-md border border-gray-200 bg-white shadow-lg"
+													class="fixed z-20 w-32 rounded-md border border-gray-200 bg-white shadow-lg"
+													style="top: {dropdownPosition.top}px; left: {dropdownPosition.left}px;"
 												>
 													<div class="py-1">
 														<button
@@ -523,15 +539,15 @@
 									{#if message.content}
 										{#if hasMarkdownFormatting(message.content)}
 											{#await parseMarkdown(message.content)}
-												<div class="text-sm whitespace-pre-wrap">{message.content}</div>
+												<div class="whitespace-pre-wrap text-sm">{message.content}</div>
 											{:then parsedContent}
 												<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 												<div class="markdown-content text-sm">{@html parsedContent}</div>
 											{:catch}
-												<div class="text-sm whitespace-pre-wrap">{message.content}</div>
+												<div class="whitespace-pre-wrap text-sm">{message.content}</div>
 											{/await}
 										{:else}
-											<div class="text-sm whitespace-pre-wrap">{message.content}</div>
+											<div class="whitespace-pre-wrap text-sm">{message.content}</div>
 										{/if}
 									{:else if message.role === 'assistant'}
 										<div class="flex items-center space-x-2">
@@ -581,7 +597,7 @@
 					<input
 						bind:value={inputText}
 						placeholder="Ask about the code..."
-						class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50"
+						class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
 						disabled={!canSendMessage}
 						autocomplete="off"
 					/>
