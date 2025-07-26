@@ -266,15 +266,16 @@
 <!-- Fullscreen chat container that bypasses layout constraints -->
 <div class="fixed inset-0 z-50 bg-white">
 	<!-- Custom header for fullscreen mode -->
-	<div class="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4">
+	<div class="flex h-16 items-center border-b border-gray-200 bg-white px-6">
 		<div class="flex items-center space-x-3">
 			<a href="/" class="text-xl font-semibold text-gray-900">GitHub Analyzer</a>
 			<span class="text-gray-400">|</span>
 			<h1 class="text-lg font-medium text-gray-700">AI Chat</h1>
 		</div>
-		<div class="flex items-center space-x-4">
-			<div class="flex items-center space-x-2">
-				<Label class="text-sm font-medium">Repository:</Label>
+		
+		<div class="ml-auto flex items-center space-x-6">
+			<div class="flex items-center space-x-3">
+				<Label class="text-sm font-medium text-gray-600">Repository:</Label>
 				{#if repositoriesLoading}
 					<div class="flex items-center space-x-2">
 						<Loader2 class="h-4 w-4 animate-spin" />
@@ -288,11 +289,13 @@
 						bind:value={selectedRepo}
 						onValueChange={(v) => (selectedRepo = v || '')}
 					>
-						<Select.Trigger class="w-48">
-							{selectedRepo
-								? repositories.find((r) => r.id === selectedRepo)?.fullName ||
-									'Repository not found'
-								: 'All repositories'}
+						<Select.Trigger class="w-64 min-w-0">
+							<span class="truncate">
+								{selectedRepo
+									? repositories.find((r) => r.id === selectedRepo)?.fullName ||
+										'Repository not found'
+									: 'All repositories'}
+							</span>
 						</Select.Trigger>
 						<Select.Content>
 							<Select.Item value="">All repositories</Select.Item>
@@ -303,7 +306,7 @@
 					</Select.Root>
 				{/if}
 			</div>
-			<a href="/" class="text-sm text-gray-500 hover:text-gray-700">← Back to Dashboard</a>
+			<a href="/" class="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">← Back to Dashboard</a>
 		</div>
 	</div>
 
