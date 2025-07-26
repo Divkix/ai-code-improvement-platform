@@ -541,6 +541,12 @@
 		<Dialog.Header>
 			<Dialog.Title>Browse GitHub Repositories</Dialog.Title>
 		</Dialog.Header>
-		<GitHubRepositoryBrowser {user} onRepositoryImport={handleGitHubRepositoryImport} />
+		{#if user}
+			<GitHubRepositoryBrowser {user} onRepositoryImport={handleGitHubRepositoryImport} />
+		{:else}
+			<div class="flex items-center justify-center p-8">
+				<p class="text-muted-foreground">Loading user information...</p>
+			</div>
+		{/if}
 	</Dialog.Content>
 </Dialog.Root>

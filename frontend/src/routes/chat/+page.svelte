@@ -283,7 +283,11 @@
 				{:else if repositories.length === 0}
 					<span class="text-sm text-muted-foreground">No repositories found</span>
 				{:else}
-					<Select.Root bind:selected={selectedRepo}>
+					<Select.Root
+						type="single"
+						bind:value={selectedRepo}
+						onValueChange={(v) => (selectedRepo = v || '')}
+					>
 						<Select.Trigger class="w-48">
 							{selectedRepo
 								? repositories.find((r) => r.id === selectedRepo)?.fullName ||
@@ -363,13 +367,8 @@
 										</button>
 										<div class="relative flex-shrink-0">
 											<DropdownMenu.Root>
-												<DropdownMenu.Trigger asChild let:builder>
-													<Button
-														builders={[builder]}
-														variant="ghost"
-														size="sm"
-														class="h-8 w-8 p-0"
-													>
+												<DropdownMenu.Trigger>
+													<Button variant="ghost" size="sm" class="h-8 w-8 p-0">
 														<MoreHorizontal class="h-4 w-4" />
 													</Button>
 												</DropdownMenu.Trigger>
