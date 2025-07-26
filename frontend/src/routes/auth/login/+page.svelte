@@ -56,7 +56,7 @@
 				<Alert.Title>Demo Access Available</Alert.Title>
 				<Alert.Description>
 					<p class="mb-2">Use these credentials to explore the AI-powered code analyzer:</p>
-					<div class="mt-2 rounded border bg-background p-3 font-mono text-xs">
+					<div class="bg-background mt-2 rounded border p-3 font-mono text-xs">
 						<div><strong>Email:</strong> demo@github-analyzer.com</div>
 						<div><strong>Password:</strong> demo123456</div>
 					</div>
@@ -80,6 +80,7 @@
 					<Input
 						id="email"
 						type="email"
+						name="email"
 						bind:value={email}
 						required
 						placeholder="Enter your email"
@@ -91,6 +92,7 @@
 					<Input
 						id="password"
 						type="password"
+						name="password"
 						bind:value={password}
 						required
 						placeholder="Enter your password"
@@ -107,7 +109,7 @@
 				</Button>
 
 				<div class="text-center">
-					<p class="text-sm text-muted-foreground">
+					<p class="text-muted-foreground text-sm">
 						Experience the power of AI-powered code analysis with the demo account above.
 					</p>
 				</div>

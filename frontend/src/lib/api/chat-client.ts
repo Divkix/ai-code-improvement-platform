@@ -183,6 +183,27 @@ export class ChatClient {
 			);
 		}
 
+		// If we received a JSON response instead of an SSE stream (e.g. during mocked tests),
+		// parse it and emit a single "content" chunk followed by a "done" chunk to imitate
+		// the streaming behavior.
+		const contentType = response.headers.get('content-type') || '';
+		if (!contentType.includes('text/event-stream')) {
+			try {
+				const data = await response.json();
+				const assistantReply = data?.messages?.find(
+					(m: { role: string; content: string }) => m.role === 'assistant'
+				)?.content;
+				if (assistantReply) {
+					onChunk({ type: 'content', content: assistantReply });
+				}
+				onChunk({ type: 'done', content: '' });
+				return;
+			} catch (err) {
+				console.warn('Failed to parse mock chat response', err);
+				throw new ChatAPIError('Invalid response format');
+			}
+		}
+
 		if (!response.body) {
 			throw new ChatAPIError('No response body received');
 		}

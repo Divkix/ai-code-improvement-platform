@@ -107,5 +107,52 @@ export const handlers = [
 	// Error simulation for testing error states
 	http.get(`${API_BASE}/dashboard/stats-error`, () => {
 		return HttpResponse.json({ message: 'Internal server error' }, { status: 500 });
+	}),
+
+	// Chat endpoints
+	http.get(`${API_BASE}/chat/sessions`, () => {
+		return HttpResponse.json({
+			sessions: [],
+			total: 0,
+			offset: 0,
+			limit: 20
+		});
+	}),
+
+	http.post(`${API_BASE}/chat/sessions`, async ({ request }: { request: Request }) => {
+		const body = (await request.json().catch(() => ({}))) as { repositoryId?: string };
+		const newSession = {
+			id: 'session-' + Math.random().toString(36).slice(2),
+			title: 'New Chat',
+			repositoryId: body.repositoryId ?? null,
+			messages: [],
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString()
+		};
+		return HttpResponse.json(newSession, { status: 201 });
+	}),
+
+	http.post(`${API_BASE}/chat/sessions/:id/message`, async ({ params, request }) => {
+		const { id } = params as { id: string };
+		const body = (await request.json().catch(() => ({}))) as { content: string };
+		return HttpResponse.json({
+			id,
+			title: 'New Chat',
+			messages: [
+				{
+					id: 'msg-user-' + Date.now(),
+					role: 'user',
+					content: body.content,
+					timestamp: new Date().toISOString()
+				},
+				{
+					id: 'msg-assistant-' + Date.now(),
+					role: 'assistant',
+					content: 'Mock response',
+					timestamp: new Date().toISOString()
+				}
+			],
+			updatedAt: new Date().toISOString()
+		});
 	})
 ];
