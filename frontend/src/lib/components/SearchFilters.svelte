@@ -74,7 +74,7 @@
 	$: hasActiveFilters = selectedLanguage || selectedFileType || selectedRepository;
 </script>
 
-<div class="bg-card mb-6 rounded-lg border p-6">
+<div class="mb-6 rounded-lg border bg-card p-6">
 	<div class="mb-4 flex items-center justify-between">
 		<h3 class="text-base font-semibold">Filters</h3>
 		{#if hasActiveFilters}
@@ -87,7 +87,7 @@
 	<div class="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
 		<!-- Language Filter -->
 		<div class="space-y-2">
-			<label class="text-foreground text-sm font-medium" for={languageSelectId}>
+			<label class="text-sm font-medium text-foreground" for={languageSelectId}>
 				Programming Language
 			</label>
 			<Select.Root
@@ -114,7 +114,7 @@
 
 		<!-- File Type Filter -->
 		<div class="space-y-2">
-			<label class="text-foreground text-sm font-medium" for={fileTypeSelectId}> File Type </label>
+			<label class="text-sm font-medium text-foreground" for={fileTypeSelectId}> File Type </label>
 			<Select.Root
 				type="single"
 				bind:value={selectedFileType}
@@ -140,7 +140,7 @@
 		<!-- Repository Filter -->
 		{#if repositories.length > 0}
 			<div class="space-y-2">
-				<label class="text-foreground text-sm font-medium" for={repoSelectId}> Repository </label>
+				<label class="text-sm font-medium text-foreground" for={repoSelectId}> Repository </label>
 				<Select.Root
 					type="single"
 					bind:value={selectedRepository}
@@ -169,7 +169,7 @@
 	<!-- Active Filters Display -->
 	{#if hasActiveFilters}
 		<div class="border-t pt-4">
-			<span class="text-muted-foreground mb-2 block text-sm font-medium">Active filters:</span>
+			<span class="mb-2 block text-sm font-medium text-muted-foreground">Active filters:</span>
 			<div class="flex flex-wrap gap-2">
 				{#if selectedLanguage}
 					<Badge variant="secondary" class="gap-1">
@@ -177,7 +177,7 @@
 						<Button
 							variant="ghost"
 							size="sm"
-							class="hover:text-destructive-foreground hover:bg-destructive h-4 w-4 p-0"
+							class="hover:text-destructive-foreground h-4 w-4 p-0 hover:bg-destructive"
 							onclick={() => {
 								selectedLanguage = '';
 								dispatch('languageChange', '');
@@ -195,7 +195,7 @@
 						<Button
 							variant="ghost"
 							size="sm"
-							class="hover:text-destructive-foreground hover:bg-destructive h-4 w-4 p-0"
+							class="hover:text-destructive-foreground h-4 w-4 p-0 hover:bg-destructive"
 							onclick={() => {
 								selectedFileType = '';
 								dispatch('fileTypeChange', '');
@@ -214,7 +214,7 @@
 						<Button
 							variant="ghost"
 							size="sm"
-							class="hover:text-destructive-foreground hover:bg-destructive h-4 w-4 p-0"
+							class="hover:text-destructive-foreground h-4 w-4 p-0 hover:bg-destructive"
 							onclick={() => {
 								selectedRepository = '';
 								dispatch('repositoryChange', '');

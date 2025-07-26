@@ -3,7 +3,6 @@
 
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
 	import SearchBox from '$lib/components/SearchBox.svelte';
 	import SearchResults from '$lib/components/SearchResults.svelte';
 	import SearchFilters from '$lib/components/SearchFilters.svelte';
@@ -11,6 +10,7 @@
 	import type { SearchResponse } from '$lib/api/search-types';
 	import type { components } from '$lib/api/types';
 	import { onDestroy } from 'svelte';
+	import { generateGitHubUrl, openGitHubUrl } from '$lib/utils/github';
 
 	// Generic response shape used for API client calls
 	type ApiResponse = { error?: { message?: string }; data?: unknown };
@@ -244,10 +244,21 @@
 
 	function handleResultSelect(event: CustomEvent) {
 		const result = event.detail;
-		// Navigate to the repository file view with line highlighting
-		const encodedPath = encodeURIComponent(result.filePath);
-		const url = `/repositories/${result.repositoryId}/files?path=${encodedPath}&line=${result.startLine}&endLine=${result.endLine}`;
-		goto(url);
+		// Find the repository information from availableRepositories
+		const repository = availableRepositories.find((repo) => repo.id === result.repositoryId);
+
+		if (repository) {
+			// Generate GitHub URL with line highlighting
+			const githubUrl = generateGitHubUrl(
+				repository,
+				result.filePath,
+				result.startLine,
+				result.endLine
+			);
+			openGitHubUrl(githubUrl);
+		} else {
+			console.error('Repository not found for ID:', result.repositoryId);
+		}
 	}
 
 	function handleRetry() {

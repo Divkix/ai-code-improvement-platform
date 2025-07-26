@@ -18,11 +18,11 @@ export function generateGitHubUrl(
 	endLine?: number
 ): string {
 	const baseUrl = `https://github.com/${repository.owner}/${repository.name}/blob/main/${filePath}`;
-	
+
 	if (!startLine) {
 		return baseUrl;
 	}
-	
+
 	// GitHub uses #L format for line numbers
 	if (endLine && endLine !== startLine) {
 		return `${baseUrl}#L${startLine}-L${endLine}`;

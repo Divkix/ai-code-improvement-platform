@@ -10,6 +10,7 @@
 	import { searchClient } from '$lib/api/search-client';
 	import type { SearchResponse, SearchRequest } from '$lib/api/search-types';
 	import type { components } from '$lib/api/types';
+	import { generateGitHubUrl, openGitHubUrl } from '$lib/utils/github';
 
 	type Repository = components['schemas']['Repository'];
 
@@ -142,9 +143,19 @@
 
 	function handleResultSelect(event: CustomEvent) {
 		const result = event.detail;
-		// Navigate to the specific file/line (implementation depends on your routing setup)
-		console.log('Selected result in repository:', repository?.name, result);
-		// Example: navigate to `/repositories/${repositoryId}/files?path=${result.filePath}&line=${result.startLine}`
+
+		if (repository) {
+			// Generate GitHub URL with line highlighting
+			const githubUrl = generateGitHubUrl(
+				repository,
+				result.filePath,
+				result.startLine,
+				result.endLine
+			);
+			openGitHubUrl(githubUrl);
+		} else {
+			console.error('Repository not loaded');
+		}
 	}
 
 	function handleRetry() {

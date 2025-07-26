@@ -5,7 +5,6 @@
 	import { createEventDispatcher } from 'svelte';
 	import { debounce } from '../utils/debounce';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { Input } from '$lib/components/ui/input/index.js';
 	import { Search, X, BookOpen, Sparkles, ArrowUpDown, Loader2 } from '@lucide/svelte';
 
 	export let value = '';
@@ -105,7 +104,7 @@
 <div class="w-full max-w-2xl">
 	<!-- Search Mode Selector -->
 	{#if showModeSelector}
-		<div class="bg-muted mb-3 flex gap-1 rounded-lg p-1" role="radiogroup" aria-label="Search mode">
+		<div class="mb-3 flex gap-1 rounded-lg bg-muted p-1" role="radiogroup" aria-label="Search mode">
 			<Button
 				variant={searchMode === 'text' ? 'default' : 'ghost'}
 				size="sm"
@@ -148,7 +147,7 @@
 	<div class="relative">
 		<!-- Native input to simplify event typings -->
 		<input
-			class="border-input bg-background shadow-xs ring-offset-background selection:bg-primary selection:text-primary-foreground placeholder:text-muted-foreground dark:bg-input/30 focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 flex h-9 w-full min-w-0 rounded-md border px-3 py-1 pl-10 pr-10 text-base outline-none transition-[color,box-shadow] focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+			class="flex h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 py-1 pr-10 pl-10 text-base shadow-xs ring-offset-background transition-[color,box-shadow] outline-none selection:bg-primary selection:text-primary-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:aria-invalid:ring-destructive/40"
 			type="text"
 			bind:value
 			on:input={handleInput}
@@ -162,7 +161,7 @@
 		/>
 
 		<!-- Search icon or loading spinner -->
-		<div class="text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 transform">
+		<div class="absolute top-1/2 left-3 -translate-y-1/2 transform text-muted-foreground">
 			{#if loading}
 				<Loader2 class="h-4 w-4 animate-spin" aria-label="Searching..." />
 			{:else}
@@ -175,7 +174,7 @@
 			<Button
 				variant="ghost"
 				size="sm"
-				class="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 transform p-0"
+				class="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 transform p-0"
 				onclick={handleClear}
 				aria-label="Clear search"
 				tabindex={-1}
