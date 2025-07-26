@@ -193,7 +193,7 @@ describe('API Client', () => {
 						query: 'test query',
 						repositoryId: 'repo-1',
 						vectorWeight: 0.8,
-						textWeight: 0.2,
+						textWeight: expect.closeTo(0.2, 5), // Use closeTo for floating point comparison
 						limit: 10,
 						offset: 0
 					}
@@ -217,7 +217,7 @@ describe('API Client', () => {
 						query: 'test query',
 						repositoryId: undefined,
 						vectorWeight: 0.7,
-						textWeight: 0.3,
+						textWeight: expect.closeTo(0.3, 5), // Use closeTo for floating point comparison
 						limit: 20,
 						offset: 0
 					}

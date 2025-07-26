@@ -12,7 +12,7 @@ export const handlers = [
 		return HttpResponse.json(mockDashboardStats);
 	}),
 
-	http.get(`${API_BASE}/dashboard/activity`, ({ request }) => {
+	http.get(`${API_BASE}/dashboard/activity`, ({ request }: { request: Request }) => {
 		const url = new URL(request.url);
 		const limit = url.searchParams.get('limit');
 		const limitNum = limit ? parseInt(limit, 10) : undefined;
@@ -21,7 +21,7 @@ export const handlers = [
 		return HttpResponse.json(items);
 	}),
 
-	http.get(`${API_BASE}/dashboard/trends`, ({ request }) => {
+	http.get(`${API_BASE}/dashboard/trends`, ({ request }: { request: Request }) => {
 		const url = new URL(request.url);
 		const days = url.searchParams.get('days');
 		const daysNum = days ? parseInt(days, 10) : undefined;
@@ -87,7 +87,7 @@ export const handlers = [
 	}),
 
 	// Auth endpoints
-	http.post(`${API_BASE}/auth/login`, async ({ request }) => {
+	http.post(`${API_BASE}/auth/login`, async ({ request }: { request: Request }) => {
 		const body = (await request.json()) as { email: string; password: string };
 
 		if (body.email === 'demo@github-analyzer.com' && body.password === 'demo123456') {

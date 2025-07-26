@@ -141,16 +141,21 @@ export function setupGlobalMocks() {
 
 	// Mock window.location (only in environments that have window)
 	if (typeof window !== 'undefined') {
-		Object.defineProperty(window, 'location', {
-			value: {
-				href: 'http://localhost:3000',
-				origin: 'http://localhost:3000',
-				pathname: '/',
-				search: '',
-				hash: ''
-			},
-			writable: true
-		});
+		try {
+			Object.defineProperty(window, 'location', {
+				value: {
+					href: 'http://localhost:3000',
+					origin: 'http://localhost:3000',
+					pathname: '/',
+					search: '',
+					hash: ''
+				},
+				writable: true,
+				configurable: true
+			});
+		} catch {
+			// Location might already be defined, skip
+		}
 	}
 }
 

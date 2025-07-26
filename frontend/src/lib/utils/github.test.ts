@@ -9,13 +9,14 @@ describe('GitHub utilities', () => {
 	describe('generateGitHubUrl', () => {
 		const mockRepository: Repository = {
 			id: '1',
+			userId: 'user-1',
 			name: 'test-repo',
 			owner: 'test-owner',
 			fullName: 'test-owner/test-repo',
 			description: 'Test repository',
 			status: 'ready',
-			importedAt: '2024-01-01T00:00:00Z',
-			githubUrl: 'https://github.com/test-owner/test-repo'
+			createdAt: '2024-01-01T00:00:00Z',
+			updatedAt: '2024-01-01T00:00:00Z'
 		};
 
 		it('should generate basic GitHub URL without line numbers', () => {
@@ -78,13 +79,14 @@ describe('GitHub utilities', () => {
 		it('should work with different repository structures', () => {
 			const specialRepo: Repository = {
 				id: '2',
+				userId: 'user-1',
 				name: 'special-repo',
 				owner: 'special-owner',
 				fullName: 'special-owner/special-repo',
 				description: 'Special repository',
 				status: 'ready',
-				importedAt: '2024-01-01T00:00:00Z',
-				githubUrl: 'https://github.com/special-owner/special-repo'
+				createdAt: '2024-01-01T00:00:00Z',
+				updatedAt: '2024-01-01T00:00:00Z'
 			};
 
 			const url = generateGitHubUrl(specialRepo, 'lib/core.js', 100, 200);
@@ -167,13 +169,14 @@ describe('GitHub utilities', () => {
 		it('should generate URL and open it', () => {
 			const mockRepository: Repository = {
 				id: '1',
+				userId: 'user-1',
 				name: 'integration-test',
 				owner: 'test-org',
 				fullName: 'test-org/integration-test',
 				description: 'Integration test repository',
 				status: 'ready',
-				importedAt: '2024-01-01T00:00:00Z',
-				githubUrl: 'https://github.com/test-org/integration-test'
+				createdAt: '2024-01-01T00:00:00Z',
+				updatedAt: '2024-01-01T00:00:00Z'
 			};
 
 			const url = generateGitHubUrl(mockRepository, 'src/app.ts', 15, 25);

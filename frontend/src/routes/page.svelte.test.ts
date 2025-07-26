@@ -1,6 +1,6 @@
 import { page } from '@vitest/browser/context';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render } from 'vitest-browser-svelte';
+import { render, waitFor } from 'vitest-browser-svelte';
 import Page from './+page.svelte';
 import { mockDashboardStats, mockActivityItems, mockTrendDataPoints } from '$lib/test-utils';
 
@@ -30,7 +30,10 @@ describe('/+page.svelte', () => {
 		render(Page);
 
 		// Wait for loading to complete and content to appear
-		await page.waitForSelector('[data-testid="dashboard-stats"]', { timeout: 10000 });
+		await waitFor(() => {
+			const statsSection = page.getByTestId('dashboard-stats');
+			expect.element(statsSection).toBeInTheDocument();
+		});
 
 		// Check that dashboard stats are displayed
 		const statsSection = page.getByTestId('dashboard-stats');
@@ -45,15 +48,18 @@ describe('/+page.svelte', () => {
 		render(Page);
 
 		// Should show skeleton loading initially - check for any skeleton element
-		const loadingIndicator = page.locator('[data-testid="loading-skeleton"], .animate-pulse');
-		await expect.element(loadingIndicator.first()).toBeInTheDocument();
+		const loadingIndicator = page.getByTestId('loading-skeleton');
+		await expect.element(loadingIndicator).toBeInTheDocument();
 	});
 
 	it('should display formatted metrics correctly', async () => {
 		render(Page);
 
 		// Wait for content to load
-		await page.waitForSelector('[data-testid="dashboard-stats"]', { timeout: 10000 });
+		await waitFor(() => {
+			const statsSection = page.getByTestId('dashboard-stats');
+			expect.element(statsSection).toBeInTheDocument();
+		});
 
 		// Check for formatted code chunks count (12.5K)
 		const codeChunks = page.getByText('12.5K');
