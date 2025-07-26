@@ -9,9 +9,6 @@
 	theme={mode.current}
 	richColors
 	class="toaster group"
-	toastOptions={{
-		class: 'bg-popover text-popover-foreground border border-border',
-		descriptionClass: 'text-muted-foreground'
-	}}
+	style="--normal-bg: var(--color-popover); --normal-text: var(--color-popover-foreground); --normal-border: var(--color-border); --error-bg: var(--color-destructive); --error-text: var(--color-popover-foreground); --success-bg: var(--color-secondary); --success-text: var(--color-popover-foreground);"
 	{...restProps}
 />
