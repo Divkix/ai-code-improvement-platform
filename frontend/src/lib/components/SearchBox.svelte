@@ -5,6 +5,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { debounce } from '../utils/debounce';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
 	import { Search, X, BookOpen, Sparkles, ArrowUpDown, Loader2 } from '@lucide/svelte';
 
 	export let value = '';
@@ -145,19 +146,18 @@
 	{/if}
 
 	<div class="relative">
-		<!-- Native input to simplify event typings -->
-		<input
-			class="flex h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 py-1 pr-10 pl-10 text-base shadow-xs ring-offset-background transition-[color,box-shadow] outline-none selection:bg-primary selection:text-primary-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:aria-invalid:ring-destructive/40"
+		<Input
 			type="text"
 			bind:value
-			on:input={handleInput}
-			on:keydown={handleKeydown}
-			on:focus={handleFocus}
-			on:blur={handleBlur}
+			oninput={handleInput}
+			onkeydown={handleKeydown}
+			onfocus={handleFocus}
+			onblur={handleBlur}
 			{placeholder}
 			{disabled}
 			autocomplete="off"
 			spellcheck="false"
+			class="pr-10 pl-10"
 		/>
 
 		<!-- Search icon or loading spinner -->

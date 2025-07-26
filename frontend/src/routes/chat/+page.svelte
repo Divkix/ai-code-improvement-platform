@@ -6,6 +6,13 @@
 	import { parseMarkdown, hasMarkdownFormatting } from '$lib/utils/markdown';
 	import type { Repository } from '$lib/api';
 	import type { components } from '$lib/api/types';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
+	import * as Select from '$lib/components/ui/select/index.js';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+	import * as Alert from '$lib/components/ui/alert/index.js';
+	import { Loader2, MessageCircle, Edit, Trash2, Plus, MoreHorizontal } from '@lucide/svelte';
 
 	type ChatSession = components['schemas']['ChatSession'];
 	type ChatMessage = components['schemas']['ChatMessage'];
@@ -18,8 +25,6 @@
 	let messagesContainer: HTMLElement;
 	let renamingSessionId = $state<string | null>(null);
 	let renameInputValue = $state('');
-	let activeDropdownId = $state<string | null>(null);
-	let dropdownPosition = $state({ top: 0, left: 0 });
 
 	// Subscribe to chat store
 	let chatState = $state($chatStore);
@@ -132,26 +137,6 @@
 	function cancelRenaming() {
 		renamingSessionId = null;
 		renameInputValue = '';
-	}
-
-	function toggleDropdown(sessionId: string, event?: MouseEvent) {
-		if (activeDropdownId === sessionId) {
-			activeDropdownId = null;
-		} else {
-			activeDropdownId = sessionId;
-			if (event) {
-				const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-				// Position the menu just below the button and right-aligned
-				dropdownPosition = {
-					top: rect.bottom + window.scrollY,
-					left: rect.right - 128 + window.scrollX // 128px = w-32
-				};
-			}
-		}
-	}
-
-	function closeDropdown() {
-		activeDropdownId = null;
 	}
 
 	async function saveRename(sessionId: string) {
@@ -289,25 +274,29 @@
 		</div>
 		<div class="flex items-center space-x-4">
 			<div class="flex items-center space-x-2">
-				<label for="repo-select" class="text-sm font-medium text-gray-700">Repository:</label>
+				<Label class="text-sm font-medium">Repository:</Label>
 				{#if repositoriesLoading}
 					<div class="flex items-center space-x-2">
-						<div class="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>
-						<span class="text-sm text-gray-500">Loading...</span>
+						<Loader2 class="h-4 w-4 animate-spin" />
+						<span class="text-sm text-muted-foreground">Loading...</span>
 					</div>
 				{:else if repositories.length === 0}
-					<span class="text-sm text-gray-500">No repositories found</span>
+					<span class="text-sm text-muted-foreground">No repositories found</span>
 				{:else}
-					<select
-						id="repo-select"
-						bind:value={selectedRepo}
-						class="rounded-md border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-					>
-						<option value="">All repositories</option>
-						{#each repositories as repo (repo.id)}
-							<option value={repo.id}>{repo.fullName}</option>
-						{/each}
-					</select>
+					<Select.Root bind:selected={selectedRepo}>
+						<Select.Trigger class="w-48">
+							{selectedRepo
+								? repositories.find((r) => r.id === selectedRepo)?.fullName ||
+									'Repository not found'
+								: 'All repositories'}
+						</Select.Trigger>
+						<Select.Content>
+							<Select.Item value="">All repositories</Select.Item>
+							{#each repositories as repo (repo.id)}
+								<Select.Item value={repo.id}>{repo.fullName}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
 				{/if}
 			</div>
 			<a href="/" class="text-sm text-gray-500 hover:text-gray-700">← Back to Dashboard</a>
@@ -322,22 +311,20 @@
 				<div class="flex items-center justify-between">
 					<h3 class="text-lg font-medium text-gray-900">Chat Sessions</h3>
 				</div>
-				<button
-					onclick={createNewSession}
-					class="mt-2 w-full rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-					disabled={chatState.loading}
-				>
+				<Button onclick={createNewSession} class="mt-2 w-full" disabled={chatState.loading}>
 					{#if chatState.loading}
+						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 						Creating...
 					{:else}
+						<Plus class="mr-2 h-4 w-4" />
 						New Chat
 					{/if}
-				</button>
+				</Button>
 			</div>
 			<div class="flex-1 overflow-y-auto p-4">
 				{#if chatState.sessionsLoading}
 					<div class="flex items-center justify-center py-8">
-						<div class="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600"></div>
+						<Loader2 class="h-6 w-6 animate-spin" />
 					</div>
 				{:else if chatState.sessions.length === 0}
 					<p class="py-8 text-center text-gray-500">No chat sessions yet</p>
@@ -353,25 +340,15 @@
 								{#if renamingSessionId === session.id}
 									<!-- Rename mode -->
 									<div class="space-y-2">
-										<input
+										<Input
 											bind:value={renameInputValue}
 											onkeydown={(e) => handleRenameKeydown(e, session.id)}
-											class="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
 											placeholder="Enter new name..."
+											class="text-sm"
 										/>
 										<div class="flex justify-end space-x-2">
-											<button
-												onclick={cancelRenaming}
-												class="text-xs text-gray-500 hover:text-gray-700"
-											>
-												Cancel
-											</button>
-											<button
-												onclick={() => saveRename(session.id)}
-												class="text-xs text-blue-600 hover:text-blue-800"
-											>
-												Save
-											</button>
+											<Button variant="ghost" size="sm" onclick={cancelRenaming}>Cancel</Button>
+											<Button size="sm" onclick={() => saveRename(session.id)}>Save</Button>
 										</div>
 									</div>
 								{:else}
@@ -385,75 +362,33 @@
 											<div class="text-xs text-gray-500">{formatTime(session.updatedAt)}</div>
 										</button>
 										<div class="relative flex-shrink-0">
-											<button
-												onclick={(e) => toggleDropdown(session.id, e)}
-												class="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-												aria-label="More options"
-											>
-												<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-													<path
-														d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
-													/>
-												</svg>
-											</button>
-											{#if activeDropdownId === session.id}
-												<!-- svelte-ignore a11y_click_events_have_key_events -->
-												<!-- svelte-ignore a11y_no_static_element_interactions -->
-												<!-- overlay -->
-												<div class="fixed inset-0 z-10" onclick={closeDropdown}></div>
-												<!-- dropdown menu positioned using fixed coordinates -->
-												<div
-													class="fixed z-20 w-32 rounded-md border border-gray-200 bg-white shadow-lg"
-													style="top: {dropdownPosition.top}px; left: {dropdownPosition.left}px;"
-												>
-													<div class="py-1">
-														<button
-															onclick={() => {
-																startRenaming(session.id, session.title);
-																closeDropdown();
-															}}
-															class="flex w-full items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-														>
-															<svg
-																class="mr-2 h-4 w-4"
-																fill="none"
-																viewBox="0 0 24 24"
-																stroke="currentColor"
-															>
-																<path
-																	stroke-linecap="round"
-																	stroke-linejoin="round"
-																	stroke-width="2"
-																	d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-																/>
-															</svg>
-															Edit
-														</button>
-														<button
-															onclick={() => {
-																deleteSession(session.id);
-																closeDropdown();
-															}}
-															class="flex w-full items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-														>
-															<svg
-																class="mr-2 h-4 w-4"
-																fill="none"
-																viewBox="0 0 24 24"
-																stroke="currentColor"
-															>
-																<path
-																	stroke-linecap="round"
-																	stroke-linejoin="round"
-																	stroke-width="2"
-																	d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-																/>
-															</svg>
-															Delete
-														</button>
-													</div>
-												</div>
-											{/if}
+											<DropdownMenu.Root>
+												<DropdownMenu.Trigger asChild let:builder>
+													<Button
+														builders={[builder]}
+														variant="ghost"
+														size="sm"
+														class="h-8 w-8 p-0"
+													>
+														<MoreHorizontal class="h-4 w-4" />
+													</Button>
+												</DropdownMenu.Trigger>
+												<DropdownMenu.Content>
+													<DropdownMenu.Item
+														onclick={() => startRenaming(session.id, session.title)}
+													>
+														<Edit class="mr-2 h-4 w-4" />
+														Edit
+													</DropdownMenu.Item>
+													<DropdownMenu.Item
+														onclick={() => deleteSession(session.id)}
+														class="text-destructive"
+													>
+														<Trash2 class="mr-2 h-4 w-4" />
+														Delete
+													</DropdownMenu.Item>
+												</DropdownMenu.Content>
+											</DropdownMenu.Root>
 										</div>
 									</div>
 								{/if}
@@ -479,52 +414,27 @@
 
 			<div bind:this={messagesContainer} class="flex-1 space-y-4 overflow-y-auto p-4">
 				{#if chatState.error}
-					<div class="rounded-lg border border-red-200 bg-red-50 p-4">
-						<div class="flex">
-							<svg
-								class="h-5 w-5 text-red-400"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
+					<Alert.Root variant="destructive">
+						<Alert.Description>
+							<p>{chatState.error}</p>
+							<Button
+								variant="link"
+								size="sm"
+								onclick={() => chatActions.setError(null)}
+								class="mt-1 h-auto p-0 text-xs underline"
 							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-								/>
-							</svg>
-							<div class="ml-3">
-								<p class="text-sm text-red-800">{chatState.error}</p>
-								<button
-									onclick={() => chatActions.setError(null)}
-									class="mt-1 text-xs text-red-600 underline hover:text-red-800"
-								>
-									Dismiss
-								</button>
-							</div>
-						</div>
-					</div>
+								Dismiss
+							</Button>
+						</Alert.Description>
+					</Alert.Root>
 				{/if}
 
 				{#if currentMessages.length === 0 && !chatState.loading}
 					<div class="flex h-full items-center justify-center">
 						<div class="text-center">
-							<svg
-								class="mx-auto h-12 w-12 text-gray-400"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.126-.98L3 20l1.98-5.126A8.955 8.955 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z"
-								/>
-							</svg>
-							<h3 class="mt-2 text-sm font-medium text-gray-900">Start a conversation</h3>
-							<p class="mt-1 text-sm text-gray-500">Ask me anything about your code!</p>
+							<MessageCircle class="mx-auto h-12 w-12 text-muted-foreground" />
+							<h3 class="mt-2 text-sm font-medium">Start a conversation</h3>
+							<p class="mt-1 text-sm text-muted-foreground">Ask me anything about your code!</p>
 						</div>
 					</div>
 				{:else}
@@ -551,10 +461,8 @@
 										{/if}
 									{:else if message.role === 'assistant'}
 										<div class="flex items-center space-x-2">
-											<div
-												class="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"
-											></div>
-											<span class="text-sm text-gray-600">Analyzing code...</span>
+											<Loader2 class="h-4 w-4 animate-spin" />
+											<span class="text-sm text-muted-foreground">Analyzing code...</span>
 										</div>
 									{/if}
 								</div>
@@ -577,16 +485,18 @@
 
 			{#if showSuggestedQuestions}
 				<div class="border-t border-gray-200 p-4">
-					<p class="mb-2 text-sm font-medium text-gray-700">Try asking:</p>
+					<p class="mb-2 text-sm font-medium">Try asking:</p>
 					<div class="flex flex-wrap gap-2">
 						{#each suggestedQuestions as question (question)}
-							<button
+							<Button
+								variant="secondary"
+								size="sm"
 								onclick={() => askSuggested(question)}
-								class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 hover:bg-gray-200 disabled:opacity-50"
 								disabled={!canSendMessage}
+								class="rounded-full"
 							>
 								{question}
-							</button>
+							</Button>
 						{/each}
 					</div>
 				</div>
@@ -594,26 +504,23 @@
 
 			<div class="border-t border-gray-200 p-4">
 				<form onsubmit={sendMessage} class="flex space-x-2">
-					<input
+					<Input
 						bind:value={inputText}
 						placeholder="Ask about the code..."
-						class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50"
 						disabled={!canSendMessage}
 						autocomplete="off"
+						class="flex-1"
 					/>
-					<button
-						type="submit"
-						disabled={!canSendMessage || !inputText.trim()}
-						class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-					>
+					<Button type="submit" disabled={!canSendMessage || !inputText.trim()}>
 						{#if chatState.streaming}
 							Stop
 						{:else if chatState.loading}
+							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 							Sending...
 						{:else}
 							Send
 						{/if}
-					</button>
+					</Button>
 				</form>
 			</div>
 		</div>

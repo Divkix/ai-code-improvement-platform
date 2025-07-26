@@ -2,6 +2,13 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { authStore } from '$lib/stores/auth';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
+	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
+	import * as Alert from '$lib/components/ui/alert/index.js';
+	import * as Card from '$lib/components/ui/card/index.js';
+	import { Info } from '@lucide/svelte';
 	let email = $state('');
 	let password = $state('');
 	let error = $state('');
@@ -38,101 +45,73 @@
 </svelte:head>
 
 <div class="mx-auto mt-16 max-w-md">
-	<div class="rounded-lg bg-white px-6 py-8 shadow">
-		<div class="text-center">
-			<h2 class="mb-6 text-2xl font-bold text-gray-900">Sign in to your account</h2>
-		</div>
+	<Card.Root>
+		<Card.Header class="text-center">
+			<Card.Title class="text-2xl">Sign in to your account</Card.Title>
+		</Card.Header>
 
-		<div class="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
-			<div class="flex items-start">
-				<div class="flex-shrink-0">
-					<svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-						<path
-							fill-rule="evenodd"
-							d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-							clip-rule="evenodd"
-						></path>
-					</svg>
-				</div>
-				<div class="ml-3 flex-1">
-					<h3 class="text-sm font-medium text-blue-800">Demo Access Available</h3>
-					<div class="mt-2 text-sm text-blue-700">
-						<p class="mb-2">Use these credentials to explore the AI-powered code analyzer:</p>
-						<div class="rounded border border-blue-300 bg-white p-3 font-mono text-xs">
-							<div><strong>Email:</strong> demo@github-analyzer.com</div>
-							<div><strong>Password:</strong> demo123456</div>
-						</div>
+		<Card.Content class="space-y-6">
+			<Alert.Root class="mb-6">
+				<Info class="h-4 w-4" />
+				<Alert.Title>Demo Access Available</Alert.Title>
+				<Alert.Description>
+					<p class="mb-2">Use these credentials to explore the AI-powered code analyzer:</p>
+					<div class="mt-2 rounded border bg-background p-3 font-mono text-xs">
+						<div><strong>Email:</strong> demo@github-analyzer.com</div>
+						<div><strong>Password:</strong> demo123456</div>
 					</div>
 					<div class="mt-3">
-						<button
-							type="button"
-							onclick={useDemoCredentials}
-							class="text-sm font-medium text-blue-600 hover:text-blue-500"
-						>
+						<Button variant="link" size="sm" onclick={useDemoCredentials} class="h-auto p-0">
 							Fill demo credentials →
-						</button>
+						</Button>
 					</div>
+				</Alert.Description>
+			</Alert.Root>
+
+			<form onsubmit={handleLogin} class="space-y-6">
+				{#if error}
+					<Alert.Root variant="destructive">
+						<Alert.Description>{error}</Alert.Description>
+					</Alert.Root>
+				{/if}
+
+				<div class="space-y-2">
+					<Label for="email">Email address</Label>
+					<Input
+						id="email"
+						type="email"
+						bind:value={email}
+						required
+						placeholder="Enter your email"
+					/>
 				</div>
-			</div>
-		</div>
 
-		<form onsubmit={handleLogin} class="space-y-6">
-			{#if error}
-				<div class="rounded border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-					{error}
+				<div class="space-y-2">
+					<Label for="password">Password</Label>
+					<Input
+						id="password"
+						type="password"
+						bind:value={password}
+						required
+						placeholder="Enter your password"
+					/>
 				</div>
-			{/if}
 
-			<div>
-				<label for="email" class="mb-2 block text-sm font-medium text-gray-700">
-					Email address
-				</label>
-				<input
-					id="email"
-					type="email"
-					bind:value={email}
-					required
-					class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
-					placeholder="Enter your email"
-				/>
-			</div>
+				<div class="flex items-center space-x-2">
+					<Checkbox id="remember-me" />
+					<Label for="remember-me" class="text-sm font-normal">Remember me</Label>
+				</div>
 
-			<div>
-				<label for="password" class="mb-2 block text-sm font-medium text-gray-700">
-					Password
-				</label>
-				<input
-					id="password"
-					type="password"
-					bind:value={password}
-					required
-					class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
-					placeholder="Enter your password"
-				/>
-			</div>
+				<Button type="submit" disabled={$authStore.isLoading} class="w-full">
+					{$authStore.isLoading ? 'Signing in...' : 'Sign in'}
+				</Button>
 
-			<div class="flex items-center">
-				<input
-					id="remember-me"
-					type="checkbox"
-					class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-				/>
-				<label for="remember-me" class="ml-2 block text-sm text-gray-900"> Remember me </label>
-			</div>
-
-			<button
-				type="submit"
-				disabled={$authStore.isLoading}
-				class="flex w-full justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-			>
-				{$authStore.isLoading ? 'Signing in...' : 'Sign in'}
-			</button>
-
-			<div class="text-center">
-				<p class="text-sm text-gray-500">
-					Experience the power of AI-powered code analysis with the demo account above.
-				</p>
-			</div>
-		</form>
-	</div>
+				<div class="text-center">
+					<p class="text-sm text-muted-foreground">
+						Experience the power of AI-powered code analysis with the demo account above.
+					</p>
+				</div>
+			</form>
+		</Card.Content>
+	</Card.Root>
 </div>
