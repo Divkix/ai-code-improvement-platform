@@ -53,9 +53,9 @@
 	});
 </script>
 
-<div class="bg-background min-h-screen">
+<div class="min-h-screen bg-background">
 	<header
-		class="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur"
+		class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
 	>
 		<div class="container mx-auto px-4 sm:px-6 lg:px-8">
 			<div class="flex h-16 items-center justify-between">
@@ -69,7 +69,7 @@
 								<NavigationMenu.Item>
 									<NavigationMenu.Link
 										href="/"
-										class="bg-background hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+										class="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
 									>
 										Dashboard
 									</NavigationMenu.Link>
@@ -77,7 +77,7 @@
 								<NavigationMenu.Item>
 									<NavigationMenu.Link
 										href="/repositories"
-										class="bg-background hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+										class="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
 									>
 										Repositories
 									</NavigationMenu.Link>
@@ -85,7 +85,7 @@
 								<NavigationMenu.Item>
 									<NavigationMenu.Link
 										href="/search"
-										class="bg-background hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+										class="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
 									>
 										Search
 									</NavigationMenu.Link>
@@ -93,7 +93,7 @@
 								<NavigationMenu.Item>
 									<NavigationMenu.Link
 										href="/chat"
-										class="bg-background hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+										class="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
 									>
 										Chat
 									</NavigationMenu.Link>
@@ -152,7 +152,7 @@
 							</Sheet.Content>
 						</Sheet.Root>
 
-						<span class="text-muted-foreground hidden text-sm sm:block">
+						<span class="hidden text-sm text-muted-foreground sm:block">
 							Welcome, {authState?.user?.name}
 						</span>
 						<Button

@@ -378,12 +378,12 @@
 	{#if loading}
 		<div class="py-12 text-center">
 			<Loader2 class="mx-auto h-8 w-8 animate-spin" />
-			<p class="text-muted-foreground mt-2">Loading repositories...</p>
+			<p class="mt-2 text-muted-foreground">Loading repositories...</p>
 		</div>
 	{:else if !repositories || repositories.length === 0}
 		<Card.Root class="py-12">
 			<Card.Content class="text-center">
-				<div class="text-muted-foreground mx-auto mb-4 h-12 w-12">
+				<div class="mx-auto mb-4 h-12 w-12 text-muted-foreground">
 					<FolderGit2 class="h-12 w-12" />
 				</div>
 				<Card.Title class="text-sm">No repositories</Card.Title>
@@ -406,8 +406,8 @@
 						<div class="flex items-center justify-between">
 							<div class="flex items-center">
 								<div class="flex-shrink-0">
-									<div class="bg-muted flex h-8 w-8 items-center justify-center rounded-full">
-										<FolderGit2 class="text-muted-foreground h-4 w-4" />
+									<div class="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+										<FolderGit2 class="h-4 w-4 text-muted-foreground" />
 									</div>
 								</div>
 								<div class="ml-3">
@@ -416,7 +416,7 @@
 											href="https://github.com/{repo.fullName}"
 											target="_blank"
 											rel="noopener noreferrer"
-											class="hover:text-primary transition-colors"
+											class="transition-colors hover:text-primary"
 										>
 											{repo.name}
 										</a>
@@ -431,7 +431,7 @@
 					</Card.Header>
 
 					<Card.Content>
-						<p class="text-muted-foreground mb-4 text-sm">{repo.description || 'No description'}</p>
+						<p class="mb-4 text-sm text-muted-foreground">{repo.description || 'No description'}</p>
 
 						<!-- Import Progress Bar for importing repositories -->
 						{#if repo.status === 'importing' || repo.status === 'pending'}
@@ -440,11 +440,11 @@
 									<span class="text-xs font-medium">
 										{repo.status === 'pending' ? 'Preparing import...' : 'Importing repository...'}
 									</span>
-									<span class="text-muted-foreground text-xs">{repo.importProgress}%</span>
+									<span class="text-xs text-muted-foreground">{repo.importProgress}%</span>
 								</div>
 								<Progress value={repo.importProgress} class="w-full" />
 								{#if repo.status === 'importing'}
-									<div class="text-primary mt-2 flex items-center text-xs">
+									<div class="mt-2 flex items-center text-xs text-primary">
 										<Loader2 class="mr-2 h-3 w-3 animate-spin" />
 										Processing repository files...
 									</div>
@@ -454,25 +454,25 @@
 
 						<div class="mb-4 grid grid-cols-2 gap-4">
 							<div>
-								<dt class="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+								<dt class="text-xs font-medium tracking-wide text-muted-foreground uppercase">
 									Language
 								</dt>
 								<dd class="text-sm">{repo.primaryLanguage || 'Unknown'}</dd>
 							</div>
 							<div>
-								<dt class="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+								<dt class="text-xs font-medium tracking-wide text-muted-foreground uppercase">
 									Lines of Code
 								</dt>
 								<dd class="text-sm">{getLinesOfCode(repo).toLocaleString()}</dd>
 							</div>
 							<div>
-								<dt class="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+								<dt class="text-xs font-medium tracking-wide text-muted-foreground uppercase">
 									Progress
 								</dt>
 								<dd class="text-sm">{repo.importProgress}%</dd>
 							</div>
 							<div>
-								<dt class="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+								<dt class="text-xs font-medium tracking-wide text-muted-foreground uppercase">
 									Last Updated
 								</dt>
 								<dd class="text-sm">{getLastAnalyzed(repo)}</dd>
@@ -540,7 +540,7 @@
 						required
 						class="mt-1"
 					/>
-					<p class="text-muted-foreground mt-1 text-xs">
+					<p class="mt-1 text-xs text-muted-foreground">
 						Enter a GitHub repository URL or owner/repository format
 					</p>
 				</div>

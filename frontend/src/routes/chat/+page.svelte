@@ -281,10 +281,10 @@
 					{#if repositoriesLoading}
 						<div class="flex items-center space-x-2">
 							<Loader2 class="h-4 w-4 animate-spin" />
-							<span class="text-muted-foreground text-sm">Loading...</span>
+							<span class="text-sm text-muted-foreground">Loading...</span>
 						</div>
 					{:else if repositories.length === 0}
-						<span class="text-muted-foreground text-sm">No repositories found</span>
+						<span class="text-sm text-muted-foreground">No repositories found</span>
 					{:else}
 						<Select.Root
 							type="single"
@@ -308,7 +308,7 @@
 						</Select.Root>
 					{/if}
 				</div>
-				<a href="/" class="whitespace-nowrap text-sm text-gray-500 hover:text-gray-700"
+				<a href="/" class="text-sm whitespace-nowrap text-gray-500 hover:text-gray-700"
 					>← Back to Dashboard</a
 				>
 			</div>
@@ -332,7 +332,7 @@
 						{/if}
 					</Button>
 				</Sidebar.Header>
-				<Sidebar.Content class="flex-1 overflow-y-auto px-4 pb-4 pt-0">
+				<Sidebar.Content class="flex-1 overflow-y-auto px-4 pt-0 pb-4">
 					{#if chatState.sessionsLoading}
 						<div class="flex items-center justify-center py-8">
 							<Loader2 class="h-6 w-6 animate-spin" />
@@ -440,9 +440,9 @@
 					{#if currentMessages.length === 0 && !chatState.loading}
 						<div class="flex h-full items-center justify-center">
 							<div class="text-center">
-								<MessageCircle class="text-muted-foreground mx-auto h-12 w-12" />
+								<MessageCircle class="mx-auto h-12 w-12 text-muted-foreground" />
 								<h3 class="mt-2 text-sm font-medium">Start a conversation</h3>
-								<p class="text-muted-foreground mt-1 text-sm">Ask me anything about your code!</p>
+								<p class="mt-1 text-sm text-muted-foreground">Ask me anything about your code!</p>
 							</div>
 						</div>
 					{:else}
@@ -457,20 +457,20 @@
 										{#if message.content}
 											{#if hasMarkdownFormatting(message.content)}
 												{#await parseMarkdown(message.content)}
-													<div class="whitespace-pre-wrap text-sm">{message.content}</div>
+													<div class="text-sm whitespace-pre-wrap">{message.content}</div>
 												{:then parsedContent}
 													<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 													<div class="markdown-content text-sm">{@html parsedContent}</div>
 												{:catch}
-													<div class="whitespace-pre-wrap text-sm">{message.content}</div>
+													<div class="text-sm whitespace-pre-wrap">{message.content}</div>
 												{/await}
 											{:else}
-												<div class="whitespace-pre-wrap text-sm">{message.content}</div>
+												<div class="text-sm whitespace-pre-wrap">{message.content}</div>
 											{/if}
 										{:else if message.role === 'assistant'}
 											<div class="flex items-center space-x-2">
 												<Loader2 class="h-4 w-4 animate-spin" />
-												<span class="text-muted-foreground text-sm">Analyzing code...</span>
+												<span class="text-sm text-muted-foreground">Analyzing code...</span>
 											</div>
 										{/if}
 									</div>

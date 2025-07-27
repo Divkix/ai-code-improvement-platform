@@ -184,8 +184,8 @@
 <div class="repository-search-page">
 	{#if repositoryLoading}
 		<div class="repository-loading flex flex-col items-center py-16">
-			<Loader2 class="text-muted-foreground h-8 w-8 animate-spin" />
-			<p class="text-muted-foreground mt-4">Loading repository...</p>
+			<Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
+			<p class="mt-4 text-muted-foreground">Loading repository...</p>
 		</div>
 	{:else if repositoryError}
 		<Alert.Root variant="destructive" class="my-8">
