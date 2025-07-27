@@ -18,6 +18,7 @@ import (
 	"github-analyzer/internal/database"
 	"github-analyzer/internal/generated"
 	"github-analyzer/internal/handlers"
+	"github-analyzer/internal/logger"
 	"github-analyzer/internal/middleware"
 	"github-analyzer/internal/server"
 	"github-analyzer/internal/services"
@@ -30,42 +31,56 @@ func main() {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
+	// Initialize structured logger
+	structuredLogger := logger.NewStructuredLogger(logger.Config{
+		Level:  cfg.Logging.Level,
+		Format: cfg.Logging.Format,
+		Output: cfg.Logging.Output,
+	})
+
+	// Log startup with correlation ID
+	startupCorrelationID := "startup"
+	structuredLogger.WithCorrelation(startupCorrelationID).WithFields(map[string]interface{}{
+		"version": "1.0.0",
+		"mode":    cfg.Server.Mode,
+	}).Info("Starting GitHub Analyzer backend server")
+
 	// Set Gin mode
 	gin.SetMode(cfg.Server.Mode)
 
-	// Initialize MongoDB
-	mongoDB, err := database.NewMongoDB(cfg.Database.MongoURI, cfg.Database.DBName)
+	// Initialize MongoDB with connection pooling
+	mongoDB, err := database.NewMongoDBWithConfig(cfg.Database.MongoURI, cfg.Database.DBName, cfg.Database)
 	if err != nil {
-		log.Fatalf("Failed to connect to MongoDB: %v", err)
+		structuredLogger.WithError(startupCorrelationID, err).Fatal("Failed to connect to MongoDB")
 	}
 	defer func() {
 		if err := mongoDB.Close(); err != nil {
-			log.Printf("Error closing MongoDB connection: %v", err)
+			structuredLogger.WithError(startupCorrelationID, err).Error("Error closing MongoDB connection")
 		}
 	}()
 
 	// Initialize Qdrant
 	qdrant, err := database.NewQdrant(cfg.Database.QdrantURL, cfg.Database.QdrantAPIKey)
 	if err != nil {
-		log.Fatalf("Failed to connect to Qdrant: %v", err)
+		structuredLogger.WithError(startupCorrelationID, err).Fatal("Failed to connect to Qdrant")
 	}
 	defer func() {
 		if err := qdrant.Close(); err != nil {
-			log.Printf("Error closing Qdrant connection: %v", err)
+			structuredLogger.WithError(startupCorrelationID, err).Error("Error closing Qdrant connection")
 		}
 	}()
 
 	// Test initial connections
 	if err := mongoDB.Ping(); err != nil {
-		log.Printf("Warning: MongoDB connection failed: %v", err)
+		structuredLogger.WithError(startupCorrelationID, err).Warn("MongoDB connection failed")
 	} else {
-		log.Println("✅ MongoDB connected successfully")
+		structuredLogger.WithCorrelation(startupCorrelationID).Info("MongoDB connected successfully")
 	}
 
 	if err := qdrant.Ping(); err != nil {
-		log.Printf("Warning: Qdrant connection failed: %v", err)
+		structuredLogger.WithError(startupCorrelationID, err).Warn("Qdrant connection failed")
 	} else {
-		log.Println("✅ Qdrant connected successfully")
+		structuredLogger.WithCorrelation(startupCorrelationID).Info("Qdrant connected successfully")
 	}
 
 	// Initialize MongoDB collections and indexes
@@ -133,15 +148,32 @@ func main() {
 
 	// Create Gin router
 	router := gin.New()
-	router.Use(gin.Logger())
+	
+	// Add structured middleware in order
+	router.Use(middleware.CorrelationMiddleware())
+	router.Use(middleware.StructuredLoggingMiddleware(structuredLogger))
 	router.Use(gin.Recovery())
+	
+	// Add rate limiting middleware
+	rateLimitConfig := middleware.RateLimiterConfig{
+		RequestsPerSecond: cfg.RateLimit.RequestsPerSecond,
+		BurstSize:         cfg.RateLimit.BurstSize,
+		Enabled:           cfg.RateLimit.Enabled,
+	}
+	router.Use(middleware.RateLimitMiddleware(rateLimitConfig, structuredLogger))
 
 	// CORS configuration
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = []string{"http://localhost:3000", "http://localhost:5173", "*"}
+	corsConfig.AllowOrigins = []string{"http://localhost:3000", "http://localhost:5173"}
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
-	corsConfig.AllowHeaders = []string{"Origin", "Content-Type", "Authorization"}
+	corsConfig.AllowHeaders = []string{"Origin", "Content-Type", "Authorization", "X-Correlation-ID"}
 	router.Use(cors.New(corsConfig))
+
+	structuredLogger.WithCorrelation(startupCorrelationID).WithFields(map[string]interface{}{
+		"rate_limit_enabled": cfg.RateLimit.Enabled,
+		"requests_per_second": cfg.RateLimit.RequestsPerSecond,
+		"burst_size": cfg.RateLimit.BurstSize,
+	}).Info("Middleware configured successfully")
 
 	// Custom middleware configuration
 	middlewareFunc := func(c *gin.Context) {
@@ -234,12 +266,14 @@ func main() {
 
 	// Start server
 	address := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
-	log.Printf("🚀 Server starting on %s", address)
-	log.Printf("📚 API Documentation (Swagger UI): http://%s/docs/", address)
-	log.Printf("📋 OpenAPI Specification: http://%s/api/openapi.yaml", address)
-	log.Printf("🏥 Health Check: http://%s/health", address)
+	structuredLogger.WithCorrelation(startupCorrelationID).WithFields(map[string]interface{}{
+		"address":           address,
+		"docs_url":         fmt.Sprintf("http://%s/docs/", address),
+		"openapi_url":      fmt.Sprintf("http://%s/api/openapi.yaml", address),
+		"health_check_url": fmt.Sprintf("http://%s/health", address),
+	}).Info("Server starting")
 
 	if err := router.Run(address); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+		structuredLogger.WithError(startupCorrelationID, err).Fatal("Failed to start server")
 	}
 }

@@ -12,12 +12,14 @@ require (
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/qdrant/go-client v1.15.1
 	github.com/sashabaranov/go-openai v1.40.5
+	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
 	go.mongodb.org/mongo-driver v1.17.4
 	golang.org/x/crypto v0.40.0
 	golang.org/x/oauth2 v0.30.0
+	golang.org/x/time v0.12.0
 )
 
 require (

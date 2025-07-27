@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -17,6 +18,8 @@ type Config struct {
 	JWT            JWTConfig
 	GitHub         GitHubConfig
 	AI             AIConfig
+	Logging        LoggingConfig
+	RateLimit      RateLimitConfig
 }
 
 type ServerConfig struct {
@@ -33,6 +36,13 @@ type DatabaseConfig struct {
 	QdrantCollectionName   string
 	VectorDimension        int
 	EnableQdrantRepoFilter bool // if true, attach repositoryId payload filter in Qdrant queries
+	
+	// MongoDB Connection Pooling Configuration
+	MaxPoolSize         uint64        // Maximum number of connections in the pool
+	MinPoolSize         uint64        // Minimum number of connections in the pool
+	MaxIdleTime         time.Duration // Maximum time a connection can be idle
+	ConnectTimeout      time.Duration // Timeout for establishing connections
+	ServerSelectionTimeout time.Duration // Timeout for server selection
 }
 
 type CodeProcessingConfig struct {
@@ -77,6 +87,18 @@ type AIConfig struct {
 	ChatVectorWeight  float64 // Weight given to ANN similarity vs. BM-25 text search in hybrid retrieval
 }
 
+type LoggingConfig struct {
+	Level  string // debug, info, warn, error
+	Format string // json, text
+	Output string // stdout, stderr, file
+}
+
+type RateLimitConfig struct {
+	Enabled           bool    // Whether rate limiting is enabled
+	RequestsPerSecond float64 // Number of requests allowed per second
+	BurstSize         int     // Burst capacity for short bursts
+}
+
 func Load() (*Config, error) {
 	// Load .env file if it exists
 	_ = godotenv.Load() // Ignore error as .env file is optional
@@ -95,6 +117,13 @@ func Load() (*Config, error) {
 			QdrantCollectionName:   getEnv("QDRANT_COLLECTION_NAME", "codechunks"),
 			VectorDimension:        getEnvInt("VECTOR_DIMENSION", 1024),
 			EnableQdrantRepoFilter: getEnv("ENABLE_QDRANT_REPO_FILTER", "true") != "false",
+			
+			// MongoDB Connection Pooling
+			MaxPoolSize:            uint64(getEnvInt("MONGODB_MAX_POOL_SIZE", 100)),
+			MinPoolSize:            uint64(getEnvInt("MONGODB_MIN_POOL_SIZE", 5)),
+			MaxIdleTime:            getEnvDuration("MONGODB_MAX_IDLE_TIME", 30*time.Second),
+			ConnectTimeout:         getEnvDuration("MONGODB_CONNECT_TIMEOUT", 10*time.Second),
+			ServerSelectionTimeout: getEnvDuration("MONGODB_SERVER_SELECTION_TIMEOUT", 5*time.Second),
 		},
 		CodeProcessing: CodeProcessingConfig{
 			ChunkSize:         getEnvInt("CHUNK_SIZE", 30),
@@ -123,6 +152,16 @@ func Load() (*Config, error) {
 			MaxPromptLength:   getEnvInt("MAX_PROMPT_LENGTH", 12000),
 			ChatContextChunks: getEnvInt("CHAT_CONTEXT_CHUNKS", 8),
 			ChatVectorWeight:  getEnvFloat("CHAT_VECTOR_WEIGHT", 0.7),
+		},
+		Logging: LoggingConfig{
+			Level:  getEnv("LOG_LEVEL", "info"),
+			Format: getEnv("LOG_FORMAT", "json"),
+			Output: getEnv("LOG_OUTPUT", "stdout"),
+		},
+		RateLimit: RateLimitConfig{
+			Enabled:           getEnv("RATE_LIMIT_ENABLED", "true") != "false",
+			RequestsPerSecond: getEnvFloat("RATE_LIMIT_REQUESTS_PER_SECOND", 10.0),
+			BurstSize:         getEnvInt("RATE_LIMIT_BURST_SIZE", 20),
 		},
 	}
 
@@ -179,6 +218,15 @@ func getEnvFloat(key string, defaultValue float64) float64 {
 	if value := os.Getenv(key); value != "" {
 		if floatVal, err := strconv.ParseFloat(value, 64); err == nil {
 			return floatVal
+		}
+	}
+	return defaultValue
+}
+
+func getEnvDuration(key string, defaultValue time.Duration) time.Duration {
+	if value := os.Getenv(key); value != "" {
+		if duration, err := time.ParseDuration(value); err == nil {
+			return duration
 		}
 	}
 	return defaultValue

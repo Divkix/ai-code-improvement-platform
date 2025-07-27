@@ -11,6 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"github-analyzer/internal/config"
 )
 
 type MongoDB struct {
@@ -19,18 +21,40 @@ type MongoDB struct {
 }
 
 func NewMongoDB(uri, dbName string) (*MongoDB, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	return NewMongoDBWithConfig(uri, dbName, config.DatabaseConfig{
+		ConnectTimeout:         10 * time.Second,
+		MaxPoolSize:           100,
+		MinPoolSize:           5,
+		MaxIdleTime:           30 * time.Second,
+		ServerSelectionTimeout: 5 * time.Second,
+	})
+}
+
+func NewMongoDBWithConfig(uri, dbName string, cfg config.DatabaseConfig) (*MongoDB, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.ConnectTimeout)
 	defer cancel()
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
+	// Configure client options with connection pooling
+	clientOptions := options.Client().
+		ApplyURI(uri).
+		SetMaxPoolSize(cfg.MaxPoolSize).
+		SetMinPoolSize(cfg.MinPoolSize).
+		SetMaxConnIdleTime(cfg.MaxIdleTime).
+		SetConnectTimeout(cfg.ConnectTimeout).
+		SetServerSelectionTimeout(cfg.ServerSelectionTimeout)
+
+	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to connect to MongoDB: %w", err)
 	}
 
 	// Test the connection
 	if err := client.Ping(ctx, nil); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to ping MongoDB: %w", err)
 	}
+
+	log.Printf("MongoDB connected with pool configuration: max=%d, min=%d, idle_timeout=%s", 
+		cfg.MaxPoolSize, cfg.MinPoolSize, cfg.MaxIdleTime)
 
 	return &MongoDB{
 		client: client,
@@ -56,6 +80,16 @@ func (m *MongoDB) Ping() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	return m.client.Ping(ctx, nil)
+}
+
+// GetPoolStats returns connection pool statistics for monitoring
+func (m *MongoDB) GetPoolStats() map[string]interface{} {
+	// Note: MongoDB Go driver doesn't expose detailed pool stats directly
+	// This is a placeholder for future monitoring capabilities
+	return map[string]interface{}{
+		"client_connected": true,
+		"database_name":    m.dbName,
+	}
 }
 
 // EnsureIndexes creates all required indexes for the application
