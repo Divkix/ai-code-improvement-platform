@@ -268,7 +268,7 @@
 <Sidebar.Provider>
 	<div class="fixed inset-0 z-50 bg-white">
 		<!-- Custom header for fullscreen mode -->
-		<div class="flex h-16 items-center border-b border-gray-200 bg-white px-6">
+		<div class="relative z-20 flex h-16 items-center border-b border-gray-200 bg-white px-6">
 			<div class="flex items-center space-x-3">
 				<a href="/" class="text-xl font-semibold text-gray-900">GitHub Analyzer</a>
 				<span class="text-gray-400">|</span>
@@ -318,7 +318,7 @@
 		<div class="flex h-[calc(100vh-4rem)]">
 			<!-- Chat Sessions Sidebar -->
 			<Sidebar.Root>
-				<Sidebar.Header class="border-b border-gray-200 p-4">
+				<Sidebar.Header class="overflow-hidden border-b border-gray-200 p-4">
 					<div class="flex items-center justify-between">
 						<h3 class="text-lg font-medium text-gray-900">Chat Sessions</h3>
 					</div>
@@ -332,13 +332,13 @@
 						{/if}
 					</Button>
 				</Sidebar.Header>
-				<Sidebar.Content class="flex-1 overflow-y-auto p-4">
+				<Sidebar.Content class="flex-1 overflow-y-auto px-4 pb-4 pt-0">
 					{#if chatState.sessionsLoading}
 						<div class="flex items-center justify-center py-8">
 							<Loader2 class="h-6 w-6 animate-spin" />
 						</div>
 					{:else if chatState.sessions.length === 0}
-						<p class="py-8 text-center text-gray-500">No chat sessions yet</p>
+						<p class="text-center text-gray-500">No chat sessions yet</p>
 					{:else}
 						<Sidebar.Menu>
 							{#each chatState.sessions as session (session.id)}
