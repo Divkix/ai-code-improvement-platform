@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github-analyzer/internal/logger"
+	"acip.divkix.me/internal/logger"
 )
 
 // StructuredLoggingMiddleware logs HTTP requests and responses with correlation IDs

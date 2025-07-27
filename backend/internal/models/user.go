@@ -6,7 +6,7 @@ package models
 import (
 	"time"
 
-	"github-analyzer/internal/generated"
+	"acip.divkix.me/internal/generated"
 	"github.com/oapi-codegen/runtime/types"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

@@ -24,7 +24,7 @@ test.describe('Chat Load Testing', () => {
 			await Promise.all(
 				pages.map(async (page) => {
 					await page.goto('/auth/login');
-					await page.fill('input[name="email"]', 'demo@github-analyzer.com');
+					await page.fill('input[name="email"]', 'demo@acip.com');
 					await page.fill('input[name="password"]', 'demo123456');
 					await page.click('button[type="submit"]');
 					await page.waitForURL('/');
@@ -100,7 +100,7 @@ test.describe('Chat Load Testing', () => {
 		try {
 			// Login
 			await page.goto('/auth/login');
-			await page.fill('input[name="email"]', 'demo@github-analyzer.com');
+			await page.fill('input[name="email"]', 'demo@acip.com');
 			await page.fill('input[name="password"]', 'demo123456');
 			await page.click('button[type="submit"]');
 			await page.waitForURL('/');
@@ -163,7 +163,7 @@ test.describe('Chat Load Testing', () => {
 		try {
 			// Login
 			await page.goto('/auth/login');
-			await page.fill('input[name="email"]', 'demo@github-analyzer.com');
+			await page.fill('input[name="email"]', 'demo@acip.com');
 			await page.fill('input[name="password"]', 'demo123456');
 			await page.click('button[type="submit"]');
 			await page.waitForURL('/');

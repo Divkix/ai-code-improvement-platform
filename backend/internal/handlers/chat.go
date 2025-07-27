@@ -18,10 +18,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github-analyzer/internal/generated"
-	"github-analyzer/internal/middleware"
-	"github-analyzer/internal/models"
-	"github-analyzer/internal/services"
+	"acip.divkix.me/internal/generated"
+	"acip.divkix.me/internal/middleware"
+	"acip.divkix.me/internal/models"
+	"acip.divkix.me/internal/services"
 )
 
 // ChatHandler handles chat-related HTTP requests

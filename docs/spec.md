@@ -71,7 +71,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - MONGODB_URI=mongodb://mongodb:27017/github-analyzer
+      - MONGODB_URI=mongodb://mongodb:27017/acip.divkix.me
       - QDRANT_URL=http://qdrant:6333
       - JWT_SECRET=${JWT_SECRET}
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
@@ -794,7 +794,7 @@ VOYAGE_API_KEY=your-voyage-api-key
 LLM_API_KEY=your-llm-api-key
 
 # MongoDB (if not using default)
-MONGODB_URI=mongodb://localhost:27017/github-analyzer
+MONGODB_URI=mongodb://localhost:27017/acip.divkix.me
 
 # Qdrant (if not using default)
 QDRANT_URL=http://localhost:6333

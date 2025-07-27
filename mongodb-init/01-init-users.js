@@ -3,13 +3,13 @@
 
 print('🚀 Initializing MongoDB for ACIP...');
 
-// Switch to the github-analyzer database
-db = db.getSiblingDB('github-analyzer');
+// Switch to the acip database
+db = db.getSiblingDB('acip');
 
 // Create demo user with hashed password (bcrypt hash of "demo123456")
 // Hash generated using Go bcrypt.GenerateFromPassword with DefaultCost (10)
 const demoUser = {
-    email: 'demo@github-analyzer.com',
+    email: 'demo@acip.com',
     password: '$2a$10$Q2kiuLcrSrXLHLBkEoJIz.ZeBfQE5iEt6vqgNQDC0PiIgeGVO0I9O',
     name: 'Demo User',
     createdAt: new Date(),
@@ -30,7 +30,7 @@ if (existingUser) {
         print('❌ Failed to create demo user');
         throw new Error('Failed to insert demo user into the database');
     }
-    print('📧 Login with: demo@github-analyzer.com / demo123456');
+    print('📧 Login with: demo@acip.com / demo123456');
 }
 
 // Create index on email for better performance

@@ -56,9 +56,9 @@ func TestLoad_WithDefaults(t *testing.T) {
 	assert.Equal(t, "0.0.0.0", config.Server.Host)
 	assert.Equal(t, "debug", config.Server.Mode)
 
-	assert.Equal(t, "mongodb://localhost:27017/github-analyzer", config.Database.MongoURI)
+	assert.Equal(t, "mongodb://localhost:27017/acip.divkix.me", config.Database.MongoURI)
 	assert.Equal(t, "http://localhost:6334", config.Database.QdrantURL)
-	assert.Equal(t, "github-analyzer", config.Database.DBName)
+	assert.Equal(t, "acip.divkix.me", config.Database.DBName)
 	assert.Equal(t, "codechunks", config.Database.QdrantCollectionName)
 	assert.Equal(t, 1024, config.Database.VectorDimension)
 	assert.True(t, config.Database.EnableQdrantRepoFilter)

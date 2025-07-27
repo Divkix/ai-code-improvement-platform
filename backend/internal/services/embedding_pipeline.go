@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github-analyzer/internal/config"
-	"github-analyzer/internal/database"
+	"acip.divkix.me/internal/config"
+	"acip.divkix.me/internal/database"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

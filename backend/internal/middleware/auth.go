@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github-analyzer/internal/auth"
+	"acip.divkix.me/internal/auth"
 	"github.com/gin-gonic/gin"
 )
 

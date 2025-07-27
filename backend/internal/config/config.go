@@ -104,10 +104,10 @@ func Load() (*Config, error) {
 			Mode: getEnv("GIN_MODE", "debug"),
 		},
 		Database: DatabaseConfig{
-			MongoURI:               getEnv("MONGODB_URI", "mongodb://localhost:27017/github-analyzer"),
+			MongoURI:               getEnv("MONGODB_URI", "mongodb://localhost:27017/acip.divkix.me"),
 			QdrantURL:              getEnv("QDRANT_URL", "http://localhost:6334"),
 			QdrantAPIKey:           getEnv("QDRANT_API_KEY", ""),
-			DBName:                 getEnv("DB_NAME", "github-analyzer"),
+			DBName:                 getEnv("DB_NAME", "acip.divkix.me"),
 			QdrantCollectionName:   getEnv("QDRANT_COLLECTION_NAME", "codechunks"),
 			VectorDimension:        getEnvInt("VECTOR_DIMENSION", 1024),
 			EnableQdrantRepoFilter: getEnv("ENABLE_QDRANT_REPO_FILTER", "true") != "false",

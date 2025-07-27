@@ -15,8 +15,8 @@ import (
 	"log"
 	"time"
 
-	"github-analyzer/internal/models"
-	"github-analyzer/internal/utils"
+	"acip.divkix.me/internal/models"
+	"acip.divkix.me/internal/utils"
 
 	"github.com/google/go-github/v73/github"
 	"go.mongodb.org/mongo-driver/mongo"

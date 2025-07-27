@@ -6,9 +6,9 @@ package handlers
 import (
 	"net/http"
 
-	"github-analyzer/internal/generated"
-	"github-analyzer/internal/middleware"
-	"github-analyzer/internal/services"
+	"acip.divkix.me/internal/generated"
+	"acip.divkix.me/internal/middleware"
+	"acip.divkix.me/internal/services"
 	"github.com/gin-gonic/gin"
 )
 

@@ -3,9 +3,9 @@
 package server
 
 import (
-	"github-analyzer/internal/generated"
-	"github-analyzer/internal/handlers"
-	"github-analyzer/internal/services"
+	"acip.divkix.me/internal/generated"
+	"acip.divkix.me/internal/handlers"
+	"acip.divkix.me/internal/services"
 
 	"github.com/gin-gonic/gin"
 )

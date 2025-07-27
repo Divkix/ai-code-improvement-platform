@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
+	"acip.divkix.me/internal/database"
+	"acip.divkix.me/internal/generated"
 	"github.com/gin-gonic/gin"
-	"github-analyzer/internal/database"
-	"github-analyzer/internal/generated"
 )
 
 type HealthHandler struct {

@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github-analyzer/internal/models"
-	"github-analyzer/internal/services"
+	"acip.divkix.me/internal/models"
+	"acip.divkix.me/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"

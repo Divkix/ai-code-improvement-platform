@@ -28,7 +28,7 @@ services:
       - mongodb_data:/data/db
       - ./mongodb-init:/docker-entrypoint-initdb.d:ro
     environment:
-      - MONGO_INITDB_DATABASE=github-analyzer
+      - MONGO_INITDB_DATABASE=acip
 
   qdrant:
     image: qdrant/qdrant:latest

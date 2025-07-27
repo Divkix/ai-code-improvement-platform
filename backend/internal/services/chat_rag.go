@@ -15,9 +15,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"github-analyzer/internal/config"
-	"github-analyzer/internal/models"
-	"github-analyzer/internal/prompts"
+	"acip.divkix.me/internal/config"
+	"acip.divkix.me/internal/models"
+	"acip.divkix.me/internal/prompts"
 )
 
 // ChatRAGService handles RAG pipeline for chat conversations

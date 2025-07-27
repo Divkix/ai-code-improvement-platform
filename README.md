@@ -108,7 +108,7 @@ make backend-dev
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | 8080 | HTTP listen port |
-| `MONGODB_URI` | mongodb://localhost:27017/github-analyzer | Mongo connection string |
+| `MONGODB_URI` | mongodb://localhost:27017/acip | Mongo connection string |
 | `QDRANT_URL` | http://localhost:6334 | Qdrant gRPC/HTTP base |
 | `JWT_SECRET` | *required* | HMAC secret for JWT tokens |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | – | GitHub OAuth credentials |

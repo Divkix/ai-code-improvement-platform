@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github-analyzer/internal/middleware"
-	"github-analyzer/internal/services"
+	"acip.divkix.me/internal/middleware"
+	"acip.divkix.me/internal/services"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/oauth2"

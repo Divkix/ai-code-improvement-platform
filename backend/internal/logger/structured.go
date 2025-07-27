@@ -70,7 +70,7 @@ func NewStructuredLogger(cfg Config) *StructuredLogger {
 func (l *StructuredLogger) WithCorrelation(correlationID string) *logrus.Entry {
 	return l.WithFields(logrus.Fields{
 		"correlation_id": correlationID,
-		"service":        "github-analyzer",
+		"service":        "acip.divkix.me",
 	})
 }
 
@@ -78,7 +78,7 @@ func (l *StructuredLogger) WithCorrelation(correlationID string) *logrus.Entry {
 func (l *StructuredLogger) WithRequest(correlationID, method, path, userAgent, clientIP string) *logrus.Entry {
 	return l.WithFields(logrus.Fields{
 		"correlation_id": correlationID,
-		"service":        "github-analyzer",
+		"service":        "acip.divkix.me",
 		"http_method":    method,
 		"http_path":      path,
 		"user_agent":     userAgent,
@@ -90,7 +90,7 @@ func (l *StructuredLogger) WithRequest(correlationID, method, path, userAgent, c
 func (l *StructuredLogger) WithError(correlationID string, err error) *logrus.Entry {
 	return l.WithFields(logrus.Fields{
 		"correlation_id": correlationID,
-		"service":        "github-analyzer",
+		"service":        "acip.divkix.me",
 		"error":          err.Error(),
 	})
 }
@@ -99,7 +99,7 @@ func (l *StructuredLogger) WithError(correlationID string, err error) *logrus.En
 func (l *StructuredLogger) WithUser(correlationID, userID, email string) *logrus.Entry {
 	return l.WithFields(logrus.Fields{
 		"correlation_id": correlationID,
-		"service":        "github-analyzer",
+		"service":        "acip.divkix.me",
 		"user_id":        userID,
 		"user_email":     email,
 	})
@@ -109,7 +109,7 @@ func (l *StructuredLogger) WithUser(correlationID, userID, email string) *logrus
 func (l *StructuredLogger) WithDatabase(correlationID, operation, collection string) *logrus.Entry {
 	return l.WithFields(logrus.Fields{
 		"correlation_id": correlationID,
-		"service":        "github-analyzer",
+		"service":        "acip.divkix.me",
 		"db_operation":   operation,
 		"db_collection":  collection,
 	})

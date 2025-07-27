@@ -13,9 +13,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github-analyzer/internal/config"
-	"github-analyzer/internal/database"
-	"github-analyzer/internal/models"
+	"acip.divkix.me/internal/config"
+	"acip.divkix.me/internal/database"
+	"acip.divkix.me/internal/models"
 )
 
 // SearchService handles code search operations

@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	"github-analyzer/internal/auth"
+	"acip.divkix.me/internal/auth"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

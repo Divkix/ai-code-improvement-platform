@@ -7,7 +7,7 @@ test.describe('Chat Interface', () => {
 	test.beforeEach(async ({ page }) => {
 		// Navigate to login and authenticate with demo user
 		await page.goto('/auth/login');
-		await page.fill('input[name="email"]', 'demo@github-analyzer.com');
+		await page.fill('input[name="email"]', 'demo@acip.com');
 		await page.fill('input[name="password"]', 'demo123456');
 		await page.click('button[type="submit"]');
 		await page.waitForURL('/');
@@ -260,7 +260,7 @@ test.describe('Chat Interface', () => {
 test.describe('Chat Performance', () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto('/auth/login');
-		await page.fill('input[name="email"]', 'demo@github-analyzer.com');
+		await page.fill('input[name="email"]', 'demo@acip.com');
 		await page.fill('input[name="password"]', 'demo123456');
 		await page.click('button[type="submit"]');
 		await page.waitForURL('/');

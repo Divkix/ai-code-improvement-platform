@@ -9,9 +9,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github-analyzer/internal/config"
-	"github-analyzer/internal/models"
-	"github-analyzer/internal/utils"
+	"acip.divkix.me/internal/config"
+	"acip.divkix.me/internal/models"
+	"acip.divkix.me/internal/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 

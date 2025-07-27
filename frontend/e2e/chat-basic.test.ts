@@ -16,7 +16,7 @@ test.describe('Chat Interface - Basic', () => {
 
 		if (currentUrl.includes('/auth/login')) {
 			// Login with demo credentials
-			await page.fill('input[name="email"]', 'demo@github-analyzer.com');
+			await page.fill('input[name="email"]', 'demo@acip.com');
 			await page.fill('input[name="password"]', 'demo123456');
 			await page.click('button[type="submit"]');
 
@@ -39,7 +39,7 @@ test.describe('Chat Interface - Basic', () => {
 
 		// Login first
 		await page.goto('/auth/login');
-		await page.fill('input[name="email"]', 'demo@github-analyzer.com');
+		await page.fill('input[name="email"]', 'demo@acip.com');
 		await page.fill('input[name="password"]', 'demo123456');
 		await page.click('button[type="submit"]');
 		await page.waitForURL(/(?:\/|\/dashboard)/, { timeout: 10000 });
@@ -62,7 +62,7 @@ test.describe('Chat Interface - Basic', () => {
 
 		// Login
 		await page.goto('/auth/login');
-		await page.fill('input[name="email"]', 'demo@github-analyzer.com');
+		await page.fill('input[name="email"]', 'demo@acip.com');
 		await page.fill('input[name="password"]', 'demo123456');
 		await page.click('button[type="submit"]');
 		await page.waitForURL(/(?:\/|\/dashboard)/, { timeout: 10000 });
@@ -84,7 +84,7 @@ test.describe('Chat Interface - Basic', () => {
 
 		// Login
 		await page.goto('/auth/login');
-		await page.fill('input[name="email"]', 'demo@github-analyzer.com');
+		await page.fill('input[name="email"]', 'demo@acip.com');
 		await page.fill('input[name="password"]', 'demo123456');
 		await page.click('button[type="submit"]');
 		await page.waitForURL(/(?:\/|\/dashboard)/, { timeout: 10000 });
@@ -108,7 +108,7 @@ test.describe('Chat Interface - Basic', () => {
 
 		// Login
 		await page.goto('/auth/login');
-		await page.fill('input[name="email"]', 'demo@github-analyzer.com');
+		await page.fill('input[name="email"]', 'demo@acip.com');
 		await page.fill('input[name="password"]', 'demo123456');
 		await page.click('button[type="submit"]');
 		await page.waitForURL(/(?:\/|\/dashboard)/, { timeout: 10000 });
@@ -142,7 +142,7 @@ test.describe('Chat Interface - Basic', () => {
 
 		// Login
 		await page.goto('/auth/login');
-		await page.fill('input[name="email"]', 'demo@github-analyzer.com');
+		await page.fill('input[name="email"]', 'demo@acip.com');
 		await page.fill('input[name="password"]', 'demo123456');
 		await page.click('button[type="submit"]');
 		await page.waitForURL(/(?:\/|\/dashboard)/, { timeout: 10000 });
@@ -169,7 +169,7 @@ test.describe('Chat Interface - Basic', () => {
 
 		// Login
 		await page.goto('/auth/login');
-		await page.fill('input[name="email"]', 'demo@github-analyzer.com');
+		await page.fill('input[name="email"]', 'demo@acip.com');
 		await page.fill('input[name="password"]', 'demo123456');
 		await page.click('button[type="submit"]');
 		await page.waitForURL(/(?:\/|\/dashboard)/, { timeout: 10000 });

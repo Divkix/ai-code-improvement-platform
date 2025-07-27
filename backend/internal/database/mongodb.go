@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github-analyzer/internal/config"
+	"acip.divkix.me/internal/config"
 )
 
 type MongoDB struct {

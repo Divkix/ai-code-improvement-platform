@@ -73,7 +73,7 @@ All configuration is supplied via **environment variables** and parsed in `inter
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | 8080 | HTTP listen port |
-| `MONGODB_URI` | mongodb://mongo:27017/github-analyzer | Mongo connection string |
+| `MONGODB_URI` | mongodb://mongo:27017/acip | Mongo connection string |
 | `QDRANT_URL` | http://qdrant:6334 | Qdrant API base |
 | `JWT_SECRET` | – | HMAC secret for JWT tokens |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | – | GitHub OAuth credentials |

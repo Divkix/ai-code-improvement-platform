@@ -9,8 +9,8 @@ import (
 	"log"
 	"os"
 
-	"github-analyzer/internal/config"
-	"github-analyzer/internal/services"
+	"acip.divkix.me/internal/config"
+	"acip.divkix.me/internal/services"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -36,7 +36,7 @@ func main() {
 	// Connect to MongoDB
 	mongoURI := os.Getenv("MONGODB_URI")
 	if mongoURI == "" {
-		mongoURI = "mongodb://localhost:27017/github-analyzer"
+		mongoURI = "mongodb://localhost:27017/acip.divkix.me"
 	}
 
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(mongoURI))
@@ -49,7 +49,7 @@ func main() {
 		}
 	}()
 
-	db := client.Database("github-analyzer")
+	db := client.Database("acip.divkix.me")
 
 	// Load configuration
 	cfg, err := config.Load()

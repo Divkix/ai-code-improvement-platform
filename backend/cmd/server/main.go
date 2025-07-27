@@ -13,15 +13,15 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
-	"github-analyzer/internal/auth"
-	"github-analyzer/internal/config"
-	"github-analyzer/internal/database"
-	"github-analyzer/internal/generated"
-	"github-analyzer/internal/handlers"
-	"github-analyzer/internal/logger"
-	"github-analyzer/internal/middleware"
-	"github-analyzer/internal/server"
-	"github-analyzer/internal/services"
+	"acip.divkix.me/internal/auth"
+	"acip.divkix.me/internal/config"
+	"acip.divkix.me/internal/database"
+	"acip.divkix.me/internal/generated"
+	"acip.divkix.me/internal/handlers"
+	"acip.divkix.me/internal/logger"
+	"acip.divkix.me/internal/middleware"
+	"acip.divkix.me/internal/server"
+	"acip.divkix.me/internal/services"
 )
 
 func main() {

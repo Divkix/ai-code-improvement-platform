@@ -1,4 +1,4 @@
-module github-analyzer
+module acip.divkix.me
 
 go 1.24.5
 

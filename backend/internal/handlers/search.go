@@ -4,14 +4,14 @@
 package handlers
 
 import (
-    "net/http"
-    "strconv"
-    "strings"
-    
-    "github.com/gin-gonic/gin"
-    
-    "github-analyzer/internal/models"
-    "github-analyzer/internal/services"
+	"net/http"
+	"strconv"
+	"strings"
+
+	"github.com/gin-gonic/gin"
+
+	"acip.divkix.me/internal/models"
+	"acip.divkix.me/internal/services"
 )
 
 // SearchHandler handles search-related HTTP requests

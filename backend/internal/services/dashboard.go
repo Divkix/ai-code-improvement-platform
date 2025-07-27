@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github-analyzer/internal/models"
+	"acip.divkix.me/internal/models"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

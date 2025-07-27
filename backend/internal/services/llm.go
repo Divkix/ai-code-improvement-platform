@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github-analyzer/internal/config"
+	"acip.divkix.me/internal/config"
 
 	"github.com/sashabaranov/go-openai"
 )

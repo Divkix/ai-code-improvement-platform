@@ -251,7 +251,7 @@ Copy `.env.example` to `.env` and configure the required variables:
 JWT_SECRET=your-secret-key
 
 # Database connections
-MONGODB_URI=mongodb://mongodb:27017/github-analyzer  # Use 'mongodb' for Docker
+MONGODB_URI=mongodb://mongodb:27017/acip  # Use 'mongodb' for Docker
 QDRANT_URL=http://localhost:6334
 
 # AI Services
@@ -282,7 +282,7 @@ VITE_API_URL=http://localhost:8080
 A demo user is automatically created on application startup:
 
 **Login Credentials:**
-- **Email:** demo@github-analyzer.com
+- **Email:** demo@acip.com
 - **Password:** demo123456
 
 No user registration is available - access is managed by administrators.
