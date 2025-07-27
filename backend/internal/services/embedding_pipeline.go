@@ -53,7 +53,7 @@ func NewEmbeddingPipeline(embeddingService *EmbeddingService, mongoDB *database.
 		mongoDB:          mongoDB,
 		config:           config,
 		jobQueue:         make(chan EmbeddingJob, 100), // Buffer for 100 jobs
-		workers:          3, // Process 3 repositories concurrently
+		workers:          config.CodeProcessing.EmbeddingWorkersNum,
 		shutdownChan:     make(chan struct{}),
 		running:          false,
 	}

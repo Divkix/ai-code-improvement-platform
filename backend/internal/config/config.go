@@ -48,6 +48,7 @@ type CodeProcessingConfig struct {
 	ChunkSize         int // Lines per chunk
 	OverlapSize       int // Lines to overlap between chunks
 	EmbeddingBatchSize int // Number of chunks to process per embedding batch
+	EmbeddingWorkersNum int // Number of concurrent workers for embedding pipeline
 }
 
 type JWTConfig struct {
@@ -123,6 +124,7 @@ func Load() (*Config, error) {
 			ChunkSize:         getEnvInt("CHUNK_SIZE", 30),
 			OverlapSize:       getEnvInt("CHUNK_OVERLAP_SIZE", 10),
 			EmbeddingBatchSize: getEnvInt("EMBEDDING_BATCH_SIZE", 50),
+			EmbeddingWorkersNum: getEnvInt("EMBEDDING_WORKERS_NUM", 3),
 		},
 		JWT: JWTConfig{
 			Secret: getEnv("JWT_SECRET", ""),
