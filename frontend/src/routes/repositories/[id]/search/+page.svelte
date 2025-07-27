@@ -11,6 +11,12 @@
 	import type { SearchResponse, SearchRequest } from '$lib/api/search-types';
 	import type { components } from '$lib/api/types';
 	import { generateGitHubUrl, openGitHubUrl } from '$lib/utils/github';
+	// shadcn-svelte components
+	import { Button } from '$lib/components/ui/button/index.js';
+	import * as Alert from '$lib/components/ui/alert/index.js';
+	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
+	// Icons
+	import { Loader2 } from '@lucide/svelte';
 
 	type Repository = components['schemas']['Repository'];
 
@@ -177,26 +183,40 @@
 
 <div class="repository-search-page">
 	{#if repositoryLoading}
-		<div class="repository-loading">
-			<div class="spinner"></div>
-			<p>Loading repository...</p>
+		<div class="repository-loading flex flex-col items-center py-16">
+			<Loader2 class="text-muted-foreground h-8 w-8 animate-spin" />
+			<p class="text-muted-foreground mt-4">Loading repository...</p>
 		</div>
 	{:else if repositoryError}
-		<div class="repository-error">
-			<h2>Error Loading Repository</h2>
-			<p>{repositoryError}</p>
-			<button class="retry-button" onclick={loadRepositoryData}> Try Again </button>
-		</div>
+		<Alert.Root variant="destructive" class="my-8">
+			<Alert.Title>Error Loading Repository</Alert.Title>
+			<Alert.Description>
+				<p>{repositoryError}</p>
+				<Button variant="outline" size="sm" class="mt-3" onclick={loadRepositoryData}>
+					Try Again
+				</Button>
+			</Alert.Description>
+		</Alert.Root>
 	{:else if repository}
 		<!-- Repository Header -->
 		<div class="repository-header">
-			<nav class="breadcrumb">
-				<a href="/repositories" class="breadcrumb-link">Repositories</a>
-				<span class="breadcrumb-separator">/</span>
-				<a href="/repositories/{repository.id}" class="breadcrumb-link">{repository.name}</a>
-				<span class="breadcrumb-separator">/</span>
-				<span class="breadcrumb-current">Search</span>
-			</nav>
+			<Breadcrumb.Root>
+				<Breadcrumb.List>
+					<Breadcrumb.Item>
+						<Breadcrumb.Link href="/repositories">Repositories</Breadcrumb.Link>
+					</Breadcrumb.Item>
+					<Breadcrumb.Separator />
+					<Breadcrumb.Item>
+						<Breadcrumb.Link href="/repositories/{repository.id}">
+							{repository.name}
+						</Breadcrumb.Link>
+					</Breadcrumb.Item>
+					<Breadcrumb.Separator />
+					<Breadcrumb.Item>
+						<Breadcrumb.Page>Search</Breadcrumb.Page>
+					</Breadcrumb.Item>
+				</Breadcrumb.List>
+			</Breadcrumb.Root>
 
 			<div class="header-content">
 				<h1>Search in {repository.name}</h1>
@@ -307,92 +327,8 @@
 		min-height: calc(100vh - 80px);
 	}
 
-	.repository-loading {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		padding: 64px 20px;
-		text-align: center;
-	}
-
-	.repository-loading .spinner {
-		width: 32px;
-		height: 32px;
-		border: 3px solid #e5e7eb;
-		border-top: 3px solid #3b82f6;
-		border-radius: 50%;
-		animation: spin 1s linear infinite;
-		margin-bottom: 16px;
-	}
-
-	.repository-loading p {
-		color: #6b7280;
-		font-size: 16px;
-	}
-
-	.repository-error {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		padding: 64px 20px;
-		text-align: center;
-		color: #dc2626;
-	}
-
-	.repository-error h2 {
-		margin: 0 0 8px 0;
-		font-size: 24px;
-		font-weight: 600;
-	}
-
-	.repository-error p {
-		color: #6b7280;
-		margin-bottom: 16px;
-	}
-
-	.retry-button {
-		background-color: #3b82f6;
-		color: white;
-		border: none;
-		padding: 8px 16px;
-		border-radius: 6px;
-		font-weight: 500;
-		cursor: pointer;
-		transition: background-color 0.2s;
-	}
-
-	.retry-button:hover {
-		background-color: #2563eb;
-	}
-
 	.repository-header {
 		margin-bottom: 48px;
-	}
-
-	.breadcrumb {
-		margin-bottom: 24px;
-		font-size: 14px;
-	}
-
-	.breadcrumb-link {
-		color: #3b82f6;
-		text-decoration: none;
-		transition: color 0.2s;
-	}
-
-	.breadcrumb-link:hover {
-		color: #1d4ed8;
-	}
-
-	.breadcrumb-separator {
-		margin: 0 8px;
-		color: #6b7280;
-	}
-
-	.breadcrumb-current {
-		color: #1f2937;
-		font-weight: 500;
 	}
 
 	.header-content h1 {
@@ -529,15 +465,6 @@
 		font-weight: 400;
 	}
 
-	@keyframes spin {
-		0% {
-			transform: rotate(0deg);
-		}
-		100% {
-			transform: rotate(360deg);
-		}
-	}
-
 	/* Mobile responsiveness */
 	@media (max-width: 768px) {
 		.repository-search-page {
@@ -570,10 +497,6 @@
 		.search-tips h3 {
 			font-size: 20px;
 		}
-
-		.breadcrumb {
-			font-size: 13px;
-		}
 	}
 
 	/* High contrast mode support */
@@ -604,10 +527,8 @@
 
 	/* Reduced motion support */
 	@media (prefers-reduced-motion: reduce) {
-		.tip-card,
-		.retry-button,
-		.breadcrumb-link,
-		.repository-loading .spinner {
+		.tip-card {
+			/* Reduced motion for tip-card */
 			transition: none;
 			animation: none;
 		}
