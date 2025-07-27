@@ -16,6 +16,14 @@ This is an AI-powered code analysis platform that helps development teams onboar
 - LLM: OpenAI-compatible (GPT-4o-mini default) or Claude 4 sonnet
 - Containerization: Docker Compose
 
+## Important Code Conventions
+
+- All code files MUST start with 2-line ABOUTME comments explaining the file's purpose
+- Use 4 spaces for indentation (not tabs)
+- NEVER use `--no-verify` when committing code
+- Always run `golangci-lint run` for Go linting after making changes
+- Match existing code style and formatting within each file
+
 ## Development Commands
 
 **Root Level (Make commands):**
@@ -227,57 +235,47 @@ Files are processed into optimal chunks for retrieval:
 
 ### Configuration Management
 Environment-based configuration in `internal/config/config.go`:
-- Supports both Voyage AI (`EMBEDDING_PROVIDER=voyage`) and local models (`EMBEDDING_PROVIDER=local`)
-- Vector dimensions configurable via `VECTOR_DIMENSION` (256, 512, 1024, 2048 for Voyage)
-- Database connections, API keys, and server settings all configurable
+- All configuration uses environment variables loaded from `.env` file
+- Key configs: `EMBEDDING_BASE_URL`, `LLM_BASE_URL`, `MONGODB_URI`, `QDRANT_URL`
+- Vector dimensions configurable via `VECTOR_DIMENSION` (256, 512, 768, 1024, 2048)
+- Chunking strategy: `CHUNK_SIZE` and `CHUNK_OVERLAP_SIZE` (default: 30/10 lines)
+- See `.env.example` for complete configuration reference
 
 ## Environment Setup
 
-Required environment variables:
-```bash
-# Core Configuration
-JWT_SECRET=your-secret-key
-MONGODB_URI=mongodb://localhost:27017/github-analyzer
-QDRANT_URL=http://localhost:6334
-QDRANT_API_KEY=your-qdrant-api-key  # Optional: for managed Qdrant instances
-LLM_CONTEXT_LENGTH=32000    # Max tokens for LLM context
+Copy `.env.example` to `.env` and configure the required variables:
 
-# GitHub OAuth
+**Essential Variables (Must be set):**
+```bash
+# Authentication
+JWT_SECRET=your-secret-key
+
+# Database connections
+MONGODB_URI=mongodb://mongodb:27017/github-analyzer  # Use 'mongodb' for Docker
+QDRANT_URL=http://localhost:6334
+
+# AI Services
+EMBEDDING_BASE_URL=https://api.openai.com/v1
+EMBEDDING_MODEL=voyage-code-3
+EMBEDDING_API_KEY=your-api-key
+
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_MODEL=gpt-4o-mini
+LLM_API_KEY=your-api-key
+
+# GitHub OAuth (for repository import)
 GITHUB_CLIENT_ID=your-github-client-id
 GITHUB_CLIENT_SECRET=your-github-client-secret
 GITHUB_ENCRYPTION_KEY=your-16-24-32-byte-aes-key
 
-# AI Services - LLM (OpenAI-compatible or Anthropic)
-LLM_BASE_URL=https://api.openai.com/v1  # For OpenAI-compatible APIs
-LLM_MODEL=gpt-4o-mini                    # For OpenAI models
-LLM_API_KEY=your-llm-api-key             # OpenAI API key
-LLM_REQUEST_TIMEOUT=30s
-
-# For Anthropic Claude (alternative to OpenAI)
-ANTHROPIC_API_KEY=your-anthropic-key     # If using Claude instead
-
-# Embedding Provider (voyage or local)
-EMBEDDING_PROVIDER=voyage
-VOYAGE_API_KEY=your-voyage-api-key  # Required if EMBEDDING_PROVIDER=voyage
-LOCAL_EMBEDDING_URL=http://localhost:1234  # Required if EMBEDDING_PROVIDER=local
-LOCAL_EMBEDDING_MODEL=text-embedding-nomic-embed-text-v1.5  # For local provider
-
-# Vector Configuration
-VECTOR_DIMENSION=1024  # Must be 256, 512, 1024, or 2048 for Voyage
-QDRANT_COLLECTION_NAME=codechunks
-
-# Code Processing Configuration
-CHUNK_SIZE=30          # Lines per chunk (default: 30 for local models, 150 for Voyage)
-CHUNK_OVERLAP_SIZE=10  # Lines of overlap between chunks (default: 10 for local, 50 for Voyage)
-
-# Server Configuration (Optional)
-PORT=8080
-HOST=0.0.0.0
-GIN_MODE=debug
-
-# Frontend Configuration (.env in frontend/)
+# Frontend
 VITE_API_URL=http://localhost:8080
 ```
+
+**Important Notes:**
+- For Docker: Use `mongodb` as hostname, `localhost` for direct runs
+- Local embedding models: Set `EMBEDDING_BASE_URL=http://host.docker.internal:1234/v1`
+- See `.env.example` for complete configuration with defaults and comments
 
 ## Demo User Access
 
@@ -341,3 +339,35 @@ This is a fully implemented AI-powered code analysis platform with the following
 - Full test coverage for critical components
 
 The platform demonstrates enterprise-ready AI-powered code analysis with sophisticated RAG (Retrieval-Augmented Generation) capabilities for conversational code exploration.
+
+## Key File Locations
+
+**Backend Architecture:**
+- `cmd/server/main.go` - Main application entry point and dependency injection
+- `internal/server/server.go` - HTTP server implementation with route handlers
+- `internal/handlers/` - API endpoint handlers (auth, github, search, chat, etc.)
+- `internal/services/` - Business logic layer (embedding, repository, search, etc.)
+- `internal/models/` - Data models and MongoDB schemas
+- `internal/generated/` - Auto-generated API types from OpenAPI spec
+- `api/openapi.yaml` - OpenAPI specification (source of truth for API)
+
+**Frontend Architecture:**
+- `src/routes/` - SvelteKit page routes and API endpoints
+- `src/lib/components/` - Reusable Svelte components
+- `src/lib/api/` - API client and type definitions
+- `src/lib/stores/` - Svelte stores for state management
+
+**Configuration:**
+- `.env.example` - Complete environment variable reference
+- `docker-compose.yml` - Production container orchestration
+- `docker-compose.dev.yml` - Development with hot-reload
+- `Makefile` - Development commands and shortcuts
+
+## Troubleshooting
+
+**Common Issues:**
+1. **Tests failing after OpenAPI changes**: Run `make generate` to regenerate types
+2. **Frontend API errors**: Regenerate types with `bun run generate-api`
+3. **Docker networking**: Use `mongodb` hostname in Docker, `localhost` for direct runs
+4. **Embedding pipeline stuck**: Check Qdrant connection and vector dimensions match
+5. **Build failures**: Ensure `golangci-lint` is installed and run `make validate`

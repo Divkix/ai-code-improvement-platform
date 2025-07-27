@@ -1,6 +1,6 @@
 # Backend – AI Code Improvement Platform
 
-A production-ready Go (1.22) service that powers the AI Code Improvement Platform.  
+A production-ready Go (1.24+) service that powers the AI Code Improvement Platform.  
 It exposes a **type-safe REST API** (OpenAPI 3.1) for semantic code search, chat-based RAG, GitHub repository ingestion and dashboard analytics.  The backend is stateless and can run anywhere Docker is supported.
 
 ---
@@ -46,7 +46,7 @@ backend/
 
 ### Prerequisites
 
-- Go 1.22+
+- Go 1.24+
 - Docker / Docker Compose (for Mongo + Qdrant)
 - Make (optional but recommended)
 

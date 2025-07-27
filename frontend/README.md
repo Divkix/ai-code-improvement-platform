@@ -1,4 +1,4 @@
-# GitHub Analyzer Frontend
+# Frontend – AI Code Improvement Platform
 
 [![vite](https://img.shields.io/badge/SvelteKit-%23ff3e00.svg?logo=svelte&logoColor=white)](https://kit.svelte.dev/)  
 [![bun](https://img.shields.io/badge/Bun-1.0-blue?logo=bun)](https://bun.sh/)
@@ -18,18 +18,7 @@
 - [API Integration](#api-integration)
 - [Testing](#testing)
 
-## Testing
-
-```bash
-# Unit tests (Vitest)
-bun run test:unit
-
-# Component tests (Playwright component mode)
-bun run test:ct
-
-# End-to-end tests (Playwright)
-bun run test:e2e
-```
+## Overview
 
 AI-powered code analysis platform frontend built with SvelteKit and TypeScript. Features type-safe API integration with OpenAPI code generation.
 
@@ -38,7 +27,7 @@ AI-powered code analysis platform frontend built with SvelteKit and TypeScript. 
 - 🔐 **JWT Authentication** with automatic token management
 - 📊 **Dashboard** with repository analytics and metrics
 - 🔗 **GitHub Integration** with OAuth authentication
-- 💬 **AI Chat Interface** for code analysis (backend integration pending)
+- 💬 **AI Chat Interface** for code analysis with RAG-powered responses
 - 📱 **Responsive Design** with TailwindCSS
 - ⚡ **Type Safety** with OpenAPI-generated types
 - 🔧 **Real-time Data** from backend API
@@ -131,3 +120,16 @@ This frontend is designed to work with the backend API and features:
 - Automatic JWT token handling
 - Error handling with proper HTTP status codes
 - Real-time data synchronization
+
+## Testing
+
+```bash
+# Unit tests (Vitest)
+bun run test:unit
+
+# Component tests (Playwright component mode)
+bun run test:ct
+
+# End-to-end tests (Playwright)
+bun run test:e2e
+```
