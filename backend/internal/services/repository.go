@@ -31,6 +31,7 @@ const RepositoryCollection = "repositories"
 // RepositoryService provides repository-related operations
 type RepositoryService struct {
 	collection        *mongo.Collection
+	db                *mongo.Database
 	githubService     *GitHubService
 	userService       *UserService
 	embeddingPipeline *EmbeddingPipeline
@@ -41,6 +42,7 @@ type RepositoryService struct {
 func NewRepositoryService(db *mongo.Database, githubService *GitHubService, userService *UserService, embeddingPipeline *EmbeddingPipeline, config *config.Config) *RepositoryService {
 	return &RepositoryService{
 		collection:        db.Collection(RepositoryCollection),
+		db:                db,
 		githubService:     githubService,
 		userService:       userService,
 		embeddingPipeline: embeddingPipeline,
@@ -183,23 +185,102 @@ func (s *RepositoryService) UpdateRepository(ctx context.Context, userID primiti
 	return repo, nil
 }
 
-// DeleteRepository deletes a repository with user ownership check
+// DeleteRepository deletes a repository and all associated data (code chunks, vectors, chat sessions)
 func (s *RepositoryService) DeleteRepository(ctx context.Context, userID primitive.ObjectID, repoID string) error {
 	objectID, err := primitive.ObjectIDFromHex(repoID)
 	if err != nil {
 		return ErrRepositoryNotFound
 	}
 
+	// First verify the repository exists and belongs to the user
 	filter := bson.M{"_id": objectID, "userId": userID}
-	result, err := s.collection.DeleteOne(ctx, filter)
+	var repository models.Repository
+	err = s.collection.FindOne(ctx, filter).Decode(&repository)
 	if err != nil {
-		return err
+		if err == mongo.ErrNoDocuments {
+			return ErrRepositoryNotFound
+		}
+		return fmt.Errorf("failed to find repository: %w", err)
 	}
 
-	if result.DeletedCount == 0 {
-		return ErrRepositoryNotFound
+	log.Printf("Starting cascade deletion for repository %s (%s)", repository.Name, repository.ID.Hex())
+
+	// Use MongoDB session for transaction support
+	session, err := s.db.Client().StartSession()
+	if err != nil {
+		return fmt.Errorf("failed to start session: %w", err)
+	}
+	defer session.EndSession(ctx)
+
+	// Perform deletion operations in transaction
+	_, err = session.WithTransaction(ctx, func(sc mongo.SessionContext) (interface{}, error) {
+		var deletionCounts struct {
+			vectors      int
+			codeChunks   int64
+			chatSessions int64
+		}
+
+		// Step 1: Delete vectors from Qdrant (before deleting code chunks)
+		log.Printf("Deleting vectors from Qdrant for repository %s", objectID.Hex())
+		vectorCount, err := s.embeddingPipeline.DeleteRepositoryVectors(sc, objectID)
+		if err != nil {
+			log.Printf("Warning: Failed to delete vectors from Qdrant: %v", err)
+			// Continue with MongoDB cleanup even if Qdrant deletion fails
+		}
+		deletionCounts.vectors = vectorCount
+
+		// Step 2: Delete code chunks from MongoDB
+		log.Printf("Deleting code chunks from MongoDB for repository %s", objectID.Hex())
+		codeChunksCollection := s.db.Collection("codechunks")
+		chunkFilter := bson.M{"repositoryId": objectID}
+		chunkResult, err := codeChunksCollection.DeleteMany(sc, chunkFilter)
+		if err != nil {
+			return nil, fmt.Errorf("failed to delete code chunks: %w", err)
+		}
+		deletionCounts.codeChunks = chunkResult.DeletedCount
+
+		// Step 3: Delete chat sessions from MongoDB
+		log.Printf("Deleting chat sessions from MongoDB for repository %s", objectID.Hex())
+		chatSessionsCollection := s.db.Collection("chat_sessions")
+		sessionFilter := bson.M{"repositoryId": objectID}
+		sessionResult, err := chatSessionsCollection.DeleteMany(sc, sessionFilter)
+		if err != nil {
+			return nil, fmt.Errorf("failed to delete chat sessions: %w", err)
+		}
+		deletionCounts.chatSessions = sessionResult.DeletedCount
+
+		// Step 4: Delete embedding jobs from MongoDB
+		log.Printf("Deleting embedding jobs from MongoDB for repository %s", objectID.Hex())
+		embeddingJobsCollection := s.db.Collection("embedding_jobs")
+		jobFilter := bson.M{"repositoryId": objectID}
+		jobResult, err := embeddingJobsCollection.DeleteMany(sc, jobFilter)
+		if err != nil {
+			return nil, fmt.Errorf("failed to delete embedding jobs: %w", err)
+		}
+
+		// Step 5: Finally delete the repository itself
+		log.Printf("Deleting repository record from MongoDB for repository %s", objectID.Hex())
+		result, err := s.collection.DeleteOne(sc, filter)
+		if err != nil {
+			return nil, fmt.Errorf("failed to delete repository: %w", err)
+		}
+
+		if result.DeletedCount == 0 {
+			return nil, ErrRepositoryNotFound
+		}
+
+		log.Printf("Successfully deleted repository %s: %d vectors, %d code chunks, %d chat sessions, %d embedding jobs", 
+			objectID.Hex(), deletionCounts.vectors, deletionCounts.codeChunks, 
+			deletionCounts.chatSessions, jobResult.DeletedCount)
+
+		return nil, nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("transaction failed during repository deletion: %w", err)
 	}
 
+	log.Printf("Cascade deletion completed for repository %s", objectID.Hex())
 	return nil
 }
 

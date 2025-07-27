@@ -443,3 +443,52 @@ func (ep *EmbeddingPipeline) IsRunning() bool {
 	defer ep.mu.RUnlock()
 	return ep.running
 }
+
+// DeleteRepositoryVectors deletes all vector embeddings for a repository from Qdrant
+func (ep *EmbeddingPipeline) DeleteRepositoryVectors(ctx context.Context, repositoryID primitive.ObjectID) (int, error) {
+	// Get all code chunks for this repository to collect vector IDs
+	codeChunksCollection := ep.mongoDB.Database().Collection("codechunks")
+	
+	filter := bson.M{"repositoryId": repositoryID, "vectorId": bson.M{"$ne": ""}}
+	cursor, err := codeChunksCollection.Find(ctx, filter)
+	if err != nil {
+		return 0, fmt.Errorf("failed to find code chunks: %w", err)
+	}
+	defer func() {
+		if closeErr := cursor.Close(ctx); closeErr != nil {
+			log.Printf("Failed to close cursor: %v", closeErr)
+		}
+	}()
+	
+	var vectorIDs []string
+	for cursor.Next(ctx) {
+		var chunk struct {
+			VectorID string `bson:"vectorId"`
+		}
+		if err := cursor.Decode(&chunk); err != nil {
+			log.Printf("Failed to decode chunk: %v", err)
+			continue
+		}
+		if chunk.VectorID != "" {
+			vectorIDs = append(vectorIDs, chunk.VectorID)
+		}
+	}
+	
+	if err := cursor.Err(); err != nil {
+		return 0, fmt.Errorf("cursor error: %w", err)
+	}
+	
+	if len(vectorIDs) == 0 {
+		log.Printf("No vectors found for repository %s", repositoryID.Hex())
+		return 0, nil
+	}
+	
+	// Delete vectors from Qdrant
+	collectionName := ep.config.Database.QdrantCollectionName
+	if err := ep.embeddingService.qdrantClient.DeletePoints(ctx, collectionName, vectorIDs); err != nil {
+		return 0, fmt.Errorf("failed to delete vectors from Qdrant: %w", err)
+	}
+	
+	log.Printf("Deleted %d vectors from Qdrant for repository %s", len(vectorIDs), repositoryID.Hex())
+	return len(vectorIDs), nil
+}
