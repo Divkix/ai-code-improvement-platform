@@ -8,7 +8,9 @@
 	import type { components } from '$lib/api/types';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
+	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import * as Alert from '$lib/components/ui/alert/index.js';
@@ -420,76 +422,78 @@
 					</div>
 				</div>
 
-				<div bind:this={messagesContainer} class="flex-1 space-y-4 overflow-y-auto p-4">
-					{#if chatState.error}
-						<Alert.Root variant="destructive">
-							<Alert.Description>
-								<p>{chatState.error}</p>
-								<Button
-									variant="link"
-									size="sm"
-									onclick={() => chatActions.setError(null)}
-									class="mt-1 h-auto p-0 text-xs underline"
-								>
-									Dismiss
-								</Button>
-							</Alert.Description>
-						</Alert.Root>
-					{/if}
+				<ScrollArea class="flex-1 p-4">
+					<div bind:this={messagesContainer} class="space-y-4">
+						{#if chatState.error}
+							<Alert.Root variant="destructive">
+								<Alert.Description>
+									<p>{chatState.error}</p>
+									<Button
+										variant="link"
+										size="sm"
+										onclick={() => chatActions.setError(null)}
+										class="mt-1 h-auto p-0 text-xs underline"
+									>
+										Dismiss
+									</Button>
+								</Alert.Description>
+							</Alert.Root>
+						{/if}
 
-					{#if currentMessages.length === 0 && !chatState.loading}
-						<div class="flex h-full items-center justify-center">
-							<div class="text-center">
-								<MessageCircle class="mx-auto h-12 w-12 text-muted-foreground" />
-								<h3 class="mt-2 text-sm font-medium">Start a conversation</h3>
-								<p class="mt-1 text-sm text-muted-foreground">Ask me anything about your code!</p>
-							</div>
-						</div>
-					{:else}
-						{#each currentMessages as message, i (message.id || i)}
-							<div class="flex {message.role === 'user' ? 'justify-end' : 'justify-start'}">
-								<div
-									class="max-w-3xl {message.role === 'user'
-										? 'bg-blue-600 text-white'
-										: 'bg-gray-100 text-gray-900'} rounded-lg px-4 py-2"
-								>
-									<div class="prose prose-sm max-w-none">
-										{#if message.content}
-											{#if hasMarkdownFormatting(message.content)}
-												{#await parseMarkdown(message.content)}
-													<div class="text-sm whitespace-pre-wrap">{message.content}</div>
-												{:then parsedContent}
-													<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-													<div class="markdown-content text-sm">{@html parsedContent}</div>
-												{:catch}
-													<div class="text-sm whitespace-pre-wrap">{message.content}</div>
-												{/await}
-											{:else}
-												<div class="text-sm whitespace-pre-wrap">{message.content}</div>
-											{/if}
-										{:else if message.role === 'assistant'}
-											<div class="flex items-center space-x-2">
-												<Loader2 class="h-4 w-4 animate-spin" />
-												<span class="text-sm text-muted-foreground">Analyzing code...</span>
-											</div>
-										{/if}
-									</div>
-									{#if message.retrievedChunks && message.retrievedChunks.length > 0}
-										<div class="mt-2 text-xs opacity-70">
-											Analyzed {message.retrievedChunks.length} code chunks
-										</div>
-									{/if}
-									<div class="mt-1 flex items-center justify-between text-xs opacity-70">
-										<span>{formatTime(message.timestamp)}</span>
-										{#if message.tokensUsed}
-											<span>{message.tokensUsed} tokens</span>
-										{/if}
-									</div>
+						{#if currentMessages.length === 0 && !chatState.loading}
+							<div class="flex h-full items-center justify-center">
+								<div class="text-center">
+									<MessageCircle class="mx-auto h-12 w-12 text-muted-foreground" />
+									<h3 class="mt-2 text-sm font-medium">Start a conversation</h3>
+									<p class="mt-1 text-sm text-muted-foreground">Ask me anything about your code!</p>
 								</div>
 							</div>
-						{/each}
-					{/if}
-				</div>
+						{:else}
+							{#each currentMessages as message, i (message.id || i)}
+								<div class="flex {message.role === 'user' ? 'justify-end' : 'justify-start'}">
+									<div
+										class="max-w-3xl {message.role === 'user'
+											? 'bg-blue-600 text-white'
+											: 'bg-gray-100 text-gray-900'} rounded-lg px-4 py-2"
+									>
+										<div class="prose prose-sm max-w-none">
+											{#if message.content}
+												{#if hasMarkdownFormatting(message.content)}
+													{#await parseMarkdown(message.content)}
+														<div class="text-sm whitespace-pre-wrap">{message.content}</div>
+													{:then parsedContent}
+														<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+														<div class="markdown-content text-sm">{@html parsedContent}</div>
+													{:catch}
+														<div class="text-sm whitespace-pre-wrap">{message.content}</div>
+													{/await}
+												{:else}
+													<div class="text-sm whitespace-pre-wrap">{message.content}</div>
+												{/if}
+											{:else if message.role === 'assistant'}
+												<div class="flex items-center space-x-2">
+													<Loader2 class="h-4 w-4 animate-spin" />
+													<span class="text-sm text-muted-foreground">Analyzing code...</span>
+												</div>
+											{/if}
+										</div>
+										{#if message.retrievedChunks && message.retrievedChunks.length > 0}
+											<div class="mt-2 text-xs opacity-70">
+												Analyzed {message.retrievedChunks.length} code chunks
+											</div>
+										{/if}
+										<div class="mt-1 flex items-center justify-between text-xs opacity-70">
+											<span>{formatTime(message.timestamp)}</span>
+											{#if message.tokensUsed}
+												<span>{message.tokensUsed} tokens</span>
+											{/if}
+										</div>
+									</div>
+								</div>
+							{/each}
+						{/if}
+					</div>
+				</ScrollArea>
 
 				{#if showSuggestedQuestions}
 					<div class="border-t border-gray-200 p-4">
@@ -511,13 +515,20 @@
 				{/if}
 
 				<div class="border-t border-gray-200 p-4">
-					<form onsubmit={sendMessage} class="flex space-x-2">
-						<Input
+					<form onsubmit={sendMessage} class="flex items-end space-x-2">
+						<Textarea
 							bind:value={inputText}
-							placeholder="Ask about the code..."
+							placeholder="Ask about the code... (Press Shift+Enter for new line, Enter to send)"
 							disabled={!canSendMessage}
-							autocomplete="off"
-							class="flex-1"
+							class="max-h-[200px] min-h-[60px] flex-1 resize-none"
+							onkeydown={(e) => {
+								if (e.key === 'Enter' && !e.shiftKey) {
+									e.preventDefault();
+									if (inputText.trim() && canSendMessage) {
+										sendMessage(e);
+									}
+								}
+							}}
 						/>
 						<Button type="submit" disabled={!canSendMessage || !inputText.trim()}>
 							{#if chatState.streaming}

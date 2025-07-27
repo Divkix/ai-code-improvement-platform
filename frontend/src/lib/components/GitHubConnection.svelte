@@ -15,6 +15,8 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Github, Unlink, Loader2, Check, AlertCircle } from '@lucide/svelte';
+	import * as AlertDialog from '$lib/components/ui/alert-dialog';
+	import { toast } from 'svelte-sonner';
 
 	let { user }: { user: User } = $props();
 
@@ -49,11 +51,13 @@
 				};
 
 				success = 'GitHub account connected successfully!';
+				toast.success('GitHub account connected successfully!');
 
 				// Clean up the URL
 				replaceState(window.location.pathname, {});
 			} catch (err) {
 				error = err instanceof Error ? err.message : 'Failed to connect GitHub account';
+				toast.error(error);
 			} finally {
 				connecting = false;
 			}
@@ -74,19 +78,14 @@
 			window.location.href = auth_url;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to initiate GitHub connection';
+			toast.error(error);
 			connecting = false;
 		}
 	}
 
-	async function disconnectGitHub() {
-		if (
-			!confirm(
-				'Are you sure you want to disconnect your GitHub account? You will lose access to your GitHub repositories.'
-			)
-		) {
-			return;
-		}
+	let showDisconnectDialog = $state(false);
 
+	async function disconnectGitHub() {
 		try {
 			connecting = true;
 			error = '';
@@ -104,8 +103,11 @@
 			};
 
 			success = 'GitHub account disconnected successfully.';
+			toast.success('GitHub account disconnected successfully.');
+			showDisconnectDialog = false;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to disconnect GitHub account';
+			toast.error(error);
 		} finally {
 			connecting = false;
 		}
@@ -134,21 +136,42 @@
 					<div class="h-2 w-2 rounded-full bg-green-500"></div>
 					<span class="text-sm">Connected as <strong>{user.githubUsername}</strong></span>
 				</div>
-				<Button
-					variant="outline"
-					size="sm"
-					onclick={disconnectGitHub}
-					disabled={connecting}
-					class="text-destructive hover:text-destructive"
-				>
-					{#if connecting}
-						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
-						Disconnecting...
-					{:else}
-						<Unlink class="mr-2 h-4 w-4" />
-						Disconnect
-					{/if}
-				</Button>
+				<AlertDialog.Root bind:open={showDisconnectDialog}>
+					<AlertDialog.Trigger>
+						<Button
+							variant="outline"
+							size="sm"
+							disabled={connecting}
+							class="text-destructive hover:text-destructive"
+						>
+							{#if connecting}
+								<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+								Disconnecting...
+							{:else}
+								<Unlink class="mr-2 h-4 w-4" />
+								Disconnect
+							{/if}
+						</Button>
+					</AlertDialog.Trigger>
+					<AlertDialog.Content>
+						<AlertDialog.Header>
+							<AlertDialog.Title>Disconnect GitHub Account</AlertDialog.Title>
+							<AlertDialog.Description>
+								Are you sure you want to disconnect your GitHub account? You will lose access to
+								your GitHub repositories and any imported data.
+							</AlertDialog.Description>
+						</AlertDialog.Header>
+						<AlertDialog.Footer>
+							<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+							<AlertDialog.Action
+								onclick={disconnectGitHub}
+								class="text-destructive-foreground bg-destructive hover:bg-destructive/90"
+							>
+								Disconnect
+							</AlertDialog.Action>
+						</AlertDialog.Footer>
+					</AlertDialog.Content>
+				</AlertDialog.Root>
 			{:else}
 				<div class="flex items-center gap-2">
 					<div class="h-2 w-2 rounded-full bg-muted-foreground"></div>

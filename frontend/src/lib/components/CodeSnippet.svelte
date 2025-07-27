@@ -7,6 +7,7 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
+	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import { Check, Copy } from '@lucide/svelte';
 
 	interface Props {
@@ -138,22 +139,28 @@
 			{/if}
 		</div>
 
-		<Button
-			variant="outline"
-			size="sm"
-			onclick={copyToClipboard}
-			disabled={copying}
-			title="Copy to clipboard"
-			aria-label="Copy code to clipboard"
-		>
-			{#if copying}
-				<Check class="mr-2 h-4 w-4" />
-				Copied!
-			{:else}
-				<Copy class="mr-2 h-4 w-4" />
-				Copy
-			{/if}
-		</Button>
+		<Tooltip.Root>
+			<Tooltip.Trigger>
+				<Button
+					variant="outline"
+					size="sm"
+					onclick={copyToClipboard}
+					disabled={copying}
+					aria-label="Copy code to clipboard"
+				>
+					{#if copying}
+						<Check class="mr-2 h-4 w-4" />
+						Copied!
+					{:else}
+						<Copy class="mr-2 h-4 w-4" />
+						Copy
+					{/if}
+				</Button>
+			</Tooltip.Trigger>
+			<Tooltip.Content>
+				<p>{copying ? 'Copied to clipboard!' : 'Copy code to clipboard'}</p>
+			</Tooltip.Content>
+		</Tooltip.Root>
 	</Card.Header>
 	<Card.Content class="p-0">
 		<ScrollArea class="h-full max-h-96">
