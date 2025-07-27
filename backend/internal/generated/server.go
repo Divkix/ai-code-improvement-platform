@@ -61,6 +61,12 @@ type ServerInterface interface {
 	// Get user's GitHub repositories
 	// (GET /api/github/repositories)
 	GetGitHubRepositories(c *gin.Context, params GetGitHubRepositoriesParams)
+	// Get recent GitHub repositories
+	// (GET /api/github/repositories/recent)
+	GetRecentGitHubRepositories(c *gin.Context, params GetRecentGitHubRepositoriesParams)
+	// Search user's GitHub repositories
+	// (GET /api/github/repositories/search)
+	SearchGitHubRepositories(c *gin.Context, params SearchGitHubRepositoriesParams)
 	// Validate GitHub repository
 	// (GET /api/github/repositories/{owner}/{repo}/validate)
 	ValidateGitHubRepository(c *gin.Context, owner string, repo string)
@@ -489,6 +495,77 @@ func (siw *ServerInterfaceWrapper) GetGitHubRepositories(c *gin.Context) {
 	}
 
 	siw.Handler.GetGitHubRepositories(c, params)
+}
+
+// GetRecentGitHubRepositories operation middleware
+func (siw *ServerInterfaceWrapper) GetRecentGitHubRepositories(c *gin.Context) {
+
+	var err error
+
+	c.Set(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetRecentGitHubRepositoriesParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", c.Request.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter limit: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetRecentGitHubRepositories(c, params)
+}
+
+// SearchGitHubRepositories operation middleware
+func (siw *ServerInterfaceWrapper) SearchGitHubRepositories(c *gin.Context) {
+
+	var err error
+
+	c.Set(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SearchGitHubRepositoriesParams
+
+	// ------------- Required query parameter "q" -------------
+
+	if paramValue := c.Query("q"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Query argument q is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "q", c.Request.URL.Query(), &params.Q)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter q: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", c.Request.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter limit: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.SearchGitHubRepositories(c, params)
 }
 
 // ValidateGitHubRepository operation middleware
@@ -1218,6 +1295,8 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/api/dashboard/trends", wrapper.GetDashboardTrends)
 	router.GET(options.BaseURL+"/api/embedding/pipeline-stats", wrapper.GetEmbeddingPipelineStats)
 	router.GET(options.BaseURL+"/api/github/repositories", wrapper.GetGitHubRepositories)
+	router.GET(options.BaseURL+"/api/github/repositories/recent", wrapper.GetRecentGitHubRepositories)
+	router.GET(options.BaseURL+"/api/github/repositories/search", wrapper.SearchGitHubRepositories)
 	router.GET(options.BaseURL+"/api/github/repositories/:owner/:repo/validate", wrapper.ValidateGitHubRepository)
 	router.GET(options.BaseURL+"/api/health", wrapper.GetApiHealth)
 	router.GET(options.BaseURL+"/api/repositories", wrapper.GetRepositories)

@@ -144,6 +144,72 @@ func (s *GitHubService) GetUserRepositories(ctx context.Context, accessToken str
 	return ghRepos, nil
 }
 
+// SearchUserRepositories searches repositories for the authenticated user
+func (s *GitHubService) SearchUserRepositories(ctx context.Context, accessToken, query string, limit int) ([]*GitHubRepository, error) {
+	client := s.CreateClient(accessToken)
+
+	// Get the authenticated user to include them in the search
+	user, _, err := client.Users.Get(ctx, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get authenticated user: %w", err)
+	}
+
+	// Build search query to include user's repositories
+	searchQuery := fmt.Sprintf("%s user:%s", query, user.GetLogin())
+
+	// Search repositories
+	opt := &github.SearchOptions{
+		Sort:  "updated",
+		Order: "desc",
+		ListOptions: github.ListOptions{
+			PerPage: limit,
+		},
+	}
+
+	result, _, err := client.Search.Repositories(ctx, searchQuery, opt)
+	if err != nil {
+		if s.IsRateLimited(err) {
+			return nil, fmt.Errorf("github rate limit exceeded: %w", err)
+		}
+		return nil, fmt.Errorf("failed to search repositories: %w", err)
+	}
+
+	var ghRepos []*GitHubRepository
+	for _, repo := range result.Repositories {
+		ghRepos = append(ghRepos, s.convertToGitHubRepository(repo))
+	}
+
+	return ghRepos, nil
+}
+
+// GetRecentUserRepositories fetches the most recently updated repositories for the authenticated user
+func (s *GitHubService) GetRecentUserRepositories(ctx context.Context, accessToken string, limit int) ([]*GitHubRepository, error) {
+	client := s.CreateClient(accessToken)
+
+	opt := &github.RepositoryListByAuthenticatedUserOptions{
+		Visibility: "all",
+		Sort:       "updated",
+		ListOptions: github.ListOptions{
+			PerPage: limit,
+		},
+	}
+
+	repos, _, err := client.Repositories.ListByAuthenticatedUser(ctx, opt)
+	if err != nil {
+		if s.IsRateLimited(err) {
+			return nil, fmt.Errorf("github rate limit exceeded: %w", err)
+		}
+		return nil, fmt.Errorf("failed to fetch recent repositories: %w", err)
+	}
+
+	var ghRepos []*GitHubRepository
+	for _, repo := range repos {
+		ghRepos = append(ghRepos, s.convertToGitHubRepository(repo))
+	}
+
+	return ghRepos, nil
+}
+
 // GetRepositoryStatistics fetches detailed statistics for a repository
 func (s *GitHubService) GetRepositoryStatistics(ctx context.Context, accessToken, owner, repo string) (map[string]interface{}, error) {
 	client := s.CreateClient(accessToken)

@@ -283,6 +283,173 @@ func (h *GitHubHandler) GetGitHubRepositories(c *gin.Context) {
 	})
 }
 
+// SearchGitHubRepositories handles searching user's GitHub repositories
+func (h *GitHubHandler) SearchGitHubRepositories(c *gin.Context) {
+	userID, exists := middleware.GetUserIDFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "unauthorized",
+			"message": "User not found in context",
+		})
+		return
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "unauthorized",
+			"message": "Invalid user ID",
+		})
+		return
+	}
+
+	// Get query parameter
+	query := c.Query("q")
+	if query == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "invalid_request",
+			"message": "Query parameter 'q' is required",
+		})
+		return
+	}
+
+	// Parse limit parameter
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "6"))
+	if limit < 1 || limit > 20 {
+		limit = 6
+	}
+
+	// Get user and check GitHub connection
+	user, err := h.userService.GetByID(c.Request.Context(), objectID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "internal_error",
+			"message": "Failed to get user information",
+		})
+		return
+	}
+
+	if user.GitHubToken == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "github_not_connected",
+			"message": "GitHub account is not connected",
+		})
+		return
+	}
+
+	// Decrypt GitHub token
+	accessToken, err := h.githubService.DecryptToken(user.GitHubToken)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "internal_error",
+			"message": "Failed to decrypt GitHub token",
+		})
+		return
+	}
+
+	// Search repositories
+	repositories, err := h.githubService.SearchUserRepositories(c.Request.Context(), accessToken, query, limit)
+	if err != nil {
+		if h.githubService.IsRateLimited(err) {
+			c.JSON(http.StatusTooManyRequests, gin.H{
+				"error":   "rate_limited",
+				"message": "GitHub rate limit exceeded",
+			})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "github_error",
+			"message": "Failed to search repositories: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"repositories": repositories,
+		"query":        query,
+		"total":        len(repositories),
+	})
+}
+
+// GetRecentGitHubRepositories handles fetching recent user's GitHub repositories
+func (h *GitHubHandler) GetRecentGitHubRepositories(c *gin.Context) {
+	userID, exists := middleware.GetUserIDFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "unauthorized",
+			"message": "User not found in context",
+		})
+		return
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "unauthorized",
+			"message": "Invalid user ID",
+		})
+		return
+	}
+
+	// Parse limit parameter
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "6"))
+	if limit < 1 || limit > 20 {
+		limit = 6
+	}
+
+	// Get user and check GitHub connection
+	user, err := h.userService.GetByID(c.Request.Context(), objectID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "internal_error",
+			"message": "Failed to get user information",
+		})
+		return
+	}
+
+	if user.GitHubToken == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "github_not_connected",
+			"message": "GitHub account is not connected",
+		})
+		return
+	}
+
+	// Decrypt GitHub token
+	accessToken, err := h.githubService.DecryptToken(user.GitHubToken)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "internal_error",
+			"message": "Failed to decrypt GitHub token",
+		})
+		return
+	}
+
+	// Get recent repositories
+	repositories, err := h.githubService.GetRecentUserRepositories(c.Request.Context(), accessToken, limit)
+	if err != nil {
+		if h.githubService.IsRateLimited(err) {
+			c.JSON(http.StatusTooManyRequests, gin.H{
+				"error":   "rate_limited",
+				"message": "GitHub rate limit exceeded",
+			})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "github_error",
+			"message": "Failed to fetch recent repositories: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"repositories": repositories,
+		"total":        len(repositories),
+	})
+}
+
 // ValidateGitHubRepository handles validating a specific GitHub repository
 func (h *GitHubHandler) ValidateGitHubRepository(c *gin.Context) {
 	userID, exists := middleware.GetUserIDFromContext(c)

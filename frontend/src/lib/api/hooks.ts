@@ -8,6 +8,7 @@ import type {
 	Repository,
 	RepositoryListResponse,
 	GitHubRepositoriesResponse,
+	GitHubRepositorySearchResponse,
 	CreateRepositoryRequest,
 	UpdateRepositoryRequest,
 	GitHubOAuthRequest,
@@ -128,6 +129,31 @@ export async function validateGitHubRepository(owner: string, repo: string) {
 		}
 	});
 	if (error) throw new Error(error.message || 'Failed to validate GitHub repository');
+	return data;
+}
+
+export async function searchGitHubRepositories(
+	query: string,
+	limit?: number
+): Promise<GitHubRepositorySearchResponse> {
+	const { data, error } = await apiClient.GET('/api/github/repositories/search', {
+		params: {
+			query: { q: query, limit }
+		}
+	});
+	if (error) throw new Error(error.message || 'Failed to search GitHub repositories');
+	return data;
+}
+
+export async function getRecentGitHubRepositories(
+	limit?: number
+): Promise<GitHubRepositorySearchResponse> {
+	const { data, error } = await apiClient.GET('/api/github/repositories/recent', {
+		params: {
+			query: limit ? { limit } : undefined
+		}
+	});
+	if (error) throw new Error(error.message || 'Failed to fetch recent GitHub repositories');
 	return data;
 }
 

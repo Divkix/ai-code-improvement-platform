@@ -104,6 +104,14 @@ func (s *Server) ValidateGitHubRepository(c *gin.Context, owner string, repo str
 	s.github.ValidateGitHubRepository(c)
 }
 
+func (s *Server) SearchGitHubRepositories(c *gin.Context, params generated.SearchGitHubRepositoriesParams) {
+	s.github.SearchGitHubRepositories(c)
+}
+
+func (s *Server) GetRecentGitHubRepositories(c *gin.Context, params generated.GetRecentGitHubRepositoriesParams) {
+	s.github.GetRecentGitHubRepositories(c)
+}
+
 // Repository endpoints
 func (s *Server) GetRepositories(c *gin.Context, params generated.GetRepositoriesParams) {
 	s.repository.GetRepositories(c)

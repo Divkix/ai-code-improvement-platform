@@ -148,6 +148,12 @@ type ClientInterface interface {
 	// GetGitHubRepositories request
 	GetGitHubRepositories(ctx context.Context, params *GetGitHubRepositoriesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetRecentGitHubRepositories request
+	GetRecentGitHubRepositories(ctx context.Context, params *GetRecentGitHubRepositoriesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SearchGitHubRepositories request
+	SearchGitHubRepositories(ctx context.Context, params *SearchGitHubRepositoriesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ValidateGitHubRepository request
 	ValidateGitHubRepository(ctx context.Context, owner string, repo string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -469,6 +475,30 @@ func (c *Client) GetEmbeddingPipelineStats(ctx context.Context, reqEditors ...Re
 
 func (c *Client) GetGitHubRepositories(ctx context.Context, params *GetGitHubRepositoriesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetGitHubRepositoriesRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetRecentGitHubRepositories(ctx context.Context, params *GetRecentGitHubRepositoriesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetRecentGitHubRepositoriesRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SearchGitHubRepositories(ctx context.Context, params *SearchGitHubRepositoriesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSearchGitHubRepositoriesRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -1442,6 +1472,116 @@ func NewGetGitHubRepositoriesRequest(server string, params *GetGitHubRepositorie
 		if params.Page != nil {
 
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetRecentGitHubRepositoriesRequest generates requests for GetRecentGitHubRepositories
+func NewGetRecentGitHubRepositoriesRequest(server string, params *GetRecentGitHubRepositoriesParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/github/repositories/recent")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewSearchGitHubRepositoriesRequest generates requests for SearchGitHubRepositories
+func NewSearchGitHubRepositoriesRequest(server string, params *SearchGitHubRepositoriesParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/github/repositories/search")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "q", runtime.ParamLocationQuery, params.Q); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -2730,6 +2870,12 @@ type ClientWithResponsesInterface interface {
 	// GetGitHubRepositoriesWithResponse request
 	GetGitHubRepositoriesWithResponse(ctx context.Context, params *GetGitHubRepositoriesParams, reqEditors ...RequestEditorFn) (*GetGitHubRepositoriesResponse, error)
 
+	// GetRecentGitHubRepositoriesWithResponse request
+	GetRecentGitHubRepositoriesWithResponse(ctx context.Context, params *GetRecentGitHubRepositoriesParams, reqEditors ...RequestEditorFn) (*GetRecentGitHubRepositoriesResponse, error)
+
+	// SearchGitHubRepositoriesWithResponse request
+	SearchGitHubRepositoriesWithResponse(ctx context.Context, params *SearchGitHubRepositoriesParams, reqEditors ...RequestEditorFn) (*SearchGitHubRepositoriesResponse, error)
+
 	// ValidateGitHubRepositoryWithResponse request
 	ValidateGitHubRepositoryWithResponse(ctx context.Context, owner string, repo string, reqEditors ...RequestEditorFn) (*ValidateGitHubRepositoryResponse, error)
 
@@ -3197,6 +3343,57 @@ func (r GetGitHubRepositoriesResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetGitHubRepositoriesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetRecentGitHubRepositoriesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *GitHubRepositorySearchResponse
+	JSON401      *Error
+	JSON429      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r GetRecentGitHubRepositoriesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetRecentGitHubRepositoriesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type SearchGitHubRepositoriesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *GitHubRepositorySearchResponse
+	JSON400      *Error
+	JSON401      *Error
+	JSON429      *Error
+	JSON500      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r SearchGitHubRepositoriesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SearchGitHubRepositoriesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -3979,6 +4176,24 @@ func (c *ClientWithResponses) GetGitHubRepositoriesWithResponse(ctx context.Cont
 		return nil, err
 	}
 	return ParseGetGitHubRepositoriesResponse(rsp)
+}
+
+// GetRecentGitHubRepositoriesWithResponse request returning *GetRecentGitHubRepositoriesResponse
+func (c *ClientWithResponses) GetRecentGitHubRepositoriesWithResponse(ctx context.Context, params *GetRecentGitHubRepositoriesParams, reqEditors ...RequestEditorFn) (*GetRecentGitHubRepositoriesResponse, error) {
+	rsp, err := c.GetRecentGitHubRepositories(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetRecentGitHubRepositoriesResponse(rsp)
+}
+
+// SearchGitHubRepositoriesWithResponse request returning *SearchGitHubRepositoriesResponse
+func (c *ClientWithResponses) SearchGitHubRepositoriesWithResponse(ctx context.Context, params *SearchGitHubRepositoriesParams, reqEditors ...RequestEditorFn) (*SearchGitHubRepositoriesResponse, error) {
+	rsp, err := c.SearchGitHubRepositories(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSearchGitHubRepositoriesResponse(rsp)
 }
 
 // ValidateGitHubRepositoryWithResponse request returning *ValidateGitHubRepositoryResponse
@@ -4877,6 +5092,107 @@ func ParseGetGitHubRepositoriesResponse(rsp *http.Response) (*GetGitHubRepositor
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetRecentGitHubRepositoriesResponse parses an HTTP response from a GetRecentGitHubRepositoriesWithResponse call
+func ParseGetRecentGitHubRepositoriesResponse(rsp *http.Response) (*GetRecentGitHubRepositoriesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetRecentGitHubRepositoriesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GitHubRepositorySearchResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSearchGitHubRepositoriesResponse parses an HTTP response from a SearchGitHubRepositoriesWithResponse call
+func ParseSearchGitHubRepositoriesResponse(rsp *http.Response) (*SearchGitHubRepositoriesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SearchGitHubRepositoriesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GitHubRepositorySearchResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
 		var dest Error

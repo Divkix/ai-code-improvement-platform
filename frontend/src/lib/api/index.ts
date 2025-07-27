@@ -16,6 +16,8 @@ export type CreateRepositoryRequest = components['schemas']['CreateRepositoryReq
 export type UpdateRepositoryRequest = components['schemas']['UpdateRepositoryRequest'];
 export type GitHubRepository = components['schemas']['GitHubRepository'];
 export type GitHubRepositoriesResponse = components['schemas']['GitHubRepositoriesResponse'];
+export type GitHubRepositorySearchResponse =
+	components['schemas']['GitHubRepositorySearchResponse'];
 export type RepositoryListResponse = components['schemas']['RepositoryListResponse'];
 export type ApiError = components['schemas']['Error'];
 export type GitHubOAuthRequest = components['schemas']['GitHubOAuthRequest'];

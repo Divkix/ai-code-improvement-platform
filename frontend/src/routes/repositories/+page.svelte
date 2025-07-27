@@ -16,20 +16,14 @@
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as Alert from '$lib/components/ui/alert/index.js';
 	import { Progress } from '$lib/components/ui/progress/index.js';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
-	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
-	import { Loader2, Github, Plus, FolderGit2 } from '@lucide/svelte';
+	import { Loader2, Github, FolderGit2 } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 
 	let user = $state<User | null>(null);
 	let repositories = $state<Repository[]>([]);
 	let loading = $state(true);
 	let error = $state('');
-	let showAddModal = $state(false);
 	let showGitHubBrowser = $state(false);
-	let githubUrl = $state('');
-	let importMethod = $state<'url' | 'github'>('github');
 	let pollingInterval: ReturnType<typeof setInterval> | null = null;
 
 	// Watch for auth store changes to get current user
@@ -139,74 +133,6 @@
 		}
 	}
 
-	async function handleAddRepository(event: Event) {
-		event.preventDefault();
-		if (!githubUrl.trim()) {
-			error = 'Please enter a GitHub repository URL';
-			return;
-		}
-
-		try {
-			// Parse GitHub URL to extract owner and repo name
-			const parsed = parseGitHubUrl(githubUrl);
-			if (!parsed) {
-				error = 'Invalid GitHub repository URL. Please use format: https://github.com/owner/repo';
-				return;
-			}
-
-			const newRepo = await createRepository({
-				name: parsed.name,
-				owner: parsed.owner,
-				fullName: parsed.fullName,
-				isPrivate: false // We'll assume public for now since we can't detect this from URL
-			});
-			repositories = [{ ...newRepo, isPrivate: newRepo.isPrivate ?? false }, ...repositories];
-			showAddModal = false;
-			githubUrl = '';
-			error = '';
-
-			// Start polling if the new repository is importing
-			manageProgressPolling();
-
-			toast.success('Repository added successfully', {
-				description: `${parsed.fullName} has been imported and is being processed.`
-			});
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to create repository';
-			toast.error('Failed to add repository', {
-				description: err instanceof Error ? err.message : 'An unexpected error occurred'
-			});
-		}
-	}
-
-	function parseGitHubUrl(url: string): { owner: string; name: string; fullName: string } | null {
-		try {
-			// Handle different GitHub URL formats
-			const cleanUrl = url.trim().replace(/\.git$/, '');
-			let match;
-
-			// Match https://github.com/owner/repo
-			match = cleanUrl.match(/https?:\/\/github\.com\/([^/]+)\/([^/]+)/);
-			if (match) {
-				const owner = match[1];
-				const name = match[2];
-				return { owner, name, fullName: `${owner}/${name}` };
-			}
-
-			// Match owner/repo format
-			match = cleanUrl.match(/^([^/]+)\/([^/]+)$/);
-			if (match) {
-				const owner = match[1];
-				const name = match[2];
-				return { owner, name, fullName: `${owner}/${name}` };
-			}
-
-			return null;
-		} catch {
-			return null;
-		}
-	}
-
 	async function handleDeleteRepository(repo: Repository) {
 		if (!confirm(`Are you sure you want to delete "${repo.name}"?`)) {
 			return;
@@ -273,22 +199,13 @@
 		return 'Never';
 	}
 
-	function openAddModal() {
-		showAddModal = true;
-		// Default to GitHub import if user is connected, otherwise URL
-		importMethod = user?.githubConnected ? 'github' : 'url';
-	}
-
-	function closeAddModal() {
-		showAddModal = false;
-		showGitHubBrowser = false;
-		githubUrl = '';
-		error = '';
-		importMethod = 'github';
-	}
-
 	function openGitHubBrowser() {
 		showGitHubBrowser = true;
+	}
+
+	function closeGitHubBrowser() {
+		showGitHubBrowser = false;
+		error = '';
 	}
 
 	async function handleGitHubRepositoryImport(githubRepo: GitHubRepository) {
@@ -305,8 +222,7 @@
 			});
 
 			repositories = [{ ...newRepo, isPrivate: newRepo.isPrivate ?? false }, ...repositories];
-			// Close whichever modal is open. closeAddModal resets both modal flags.
-			closeAddModal();
+			closeGitHubBrowser();
 			error = '';
 
 			// Start polling if the new repository is importing
@@ -334,18 +250,12 @@
 			<h1 class="text-2xl font-bold text-gray-900">Repositories</h1>
 			<p class="text-gray-600">Manage and analyze your GitHub repositories</p>
 		</div>
-		<div class="flex space-x-3">
-			{#if user?.githubConnected}
-				<Button variant="outline" onclick={openGitHubBrowser}>
-					<Github class="mr-2 h-4 w-4" />
-					Browse GitHub
-				</Button>
-			{/if}
-			<Button onclick={openAddModal}>
-				<Plus class="mr-2 h-4 w-4" />
-				Add Repository
+		{#if user?.githubConnected}
+			<Button onclick={openGitHubBrowser}>
+				<Github class="mr-2 h-4 w-4" />
+				Browse GitHub
 			</Button>
-		</div>
+		{/if}
 	</div>
 
 	<!-- GitHub Connection Status -->
@@ -388,14 +298,16 @@
 				</div>
 				<Card.Title class="text-sm">No repositories</Card.Title>
 				<Card.Description class="mt-1">
-					Get started by importing your first repository.
+					Get started by connecting your GitHub account and importing your first repository.
 				</Card.Description>
-				<div class="mt-6">
-					<Button onclick={openAddModal}>
-						<Plus class="mr-2 h-4 w-4" />
-						Add Repository
-					</Button>
-				</div>
+				{#if user?.githubConnected}
+					<div class="mt-6">
+						<Button onclick={openGitHubBrowser}>
+							<Github class="mr-2 h-4 w-4" />
+							Browse GitHub
+						</Button>
+					</div>
+				{/if}
 			</Card.Content>
 		</Card.Root>
 	{:else}
@@ -490,71 +402,6 @@
 	{/if}
 </div>
 
-<Dialog.Root bind:open={showAddModal}>
-	<Dialog.Content class="max-h-[90vh] max-w-[calc(100%-2rem)] overflow-y-auto sm:max-w-5xl">
-		<Dialog.Header>
-			<Dialog.Title>Add Repository</Dialog.Title>
-		</Dialog.Header>
-
-		<!-- Import Method Selection -->
-		{#if user?.githubConnected}
-			<div class="mb-6">
-				<fieldset>
-					<legend class="text-base font-medium">Import Method</legend>
-					<RadioGroup.Root bind:value={importMethod} class="mt-2">
-						<div class="flex items-center space-x-2">
-							<RadioGroup.Item value="github" id="github-method" />
-							<Label for="github-method" class="text-sm font-medium">
-								Browse your GitHub repositories
-							</Label>
-						</div>
-						<div class="flex items-center space-x-2">
-							<RadioGroup.Item value="url" id="url-method" />
-							<Label for="url-method" class="text-sm font-medium">
-								Enter repository URL manually
-							</Label>
-						</div>
-					</RadioGroup.Root>
-				</fieldset>
-			</div>
-		{/if}
-
-		{#if importMethod === 'github' && user?.githubConnected}
-			<!-- GitHub Repository Browser -->
-			<div class="mb-4">
-				<GitHubRepositoryBrowser {user} onRepositoryImport={handleGitHubRepositoryImport} />
-			</div>
-			<Dialog.Footer>
-				<Button variant="outline" onclick={closeAddModal}>Cancel</Button>
-			</Dialog.Footer>
-		{:else}
-			<!-- Manual URL Entry Form -->
-			<form onsubmit={handleAddRepository}>
-				<div class="mb-4">
-					<Label for="githubUrl">GitHub Repository URL</Label>
-					<Input
-						type="url"
-						id="githubUrl"
-						bind:value={githubUrl}
-						placeholder="https://github.com/owner/repository or owner/repository"
-						required
-						class="mt-1"
-					/>
-					<p class="mt-1 text-xs text-muted-foreground">
-						Enter a GitHub repository URL or owner/repository format
-					</p>
-				</div>
-				<Dialog.Footer class="flex space-x-3">
-					<Button variant="outline" type="button" onclick={closeAddModal} class="flex-1">
-						Cancel
-					</Button>
-					<Button type="submit" class="flex-1">Add Repository</Button>
-				</Dialog.Footer>
-			</form>
-		{/if}
-	</Dialog.Content>
-</Dialog.Root>
-
 <!-- GitHub Repository Browser Modal -->
 <Dialog.Root bind:open={showGitHubBrowser}>
 	<Dialog.Content class="max-h-[90vh] max-w-[calc(100%-2rem)] overflow-y-auto sm:max-w-4xl">
@@ -568,5 +415,8 @@
 				<p class="text-muted-foreground">Loading user information...</p>
 			</div>
 		{/if}
+		<Dialog.Footer>
+			<Button variant="outline" onclick={closeGitHubBrowser}>Close</Button>
+		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>

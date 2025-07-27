@@ -132,6 +132,24 @@ components:
           type: boolean
           description: Whether there are more repositories to load
 
+    GitHubRepositorySearchResponse:
+      type: object
+      required:
+        - repositories
+        - total
+      properties:
+        repositories:
+          type: array
+          items:
+            $ref: "#/components/schemas/GitHubRepository"
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of repositories returned
+        query:
+          type: string
+          description: The search query (only present for search endpoints)
+
     LoginRequest:
       type: object
       required:
@@ -1061,6 +1079,104 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GitHubRepositoriesResponse"
+        "401":
+          description: Unauthorized or GitHub not connected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: GitHub rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/github/repositories/search:
+    get:
+      summary: Search user's GitHub repositories
+      description: Search repositories in the authenticated user's GitHub account
+      operationId: searchGitHubRepositories
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query string
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+        - name: limit
+          in: query
+          description: Maximum number of results (default 6, max 20)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 6
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitHubRepositorySearchResponse"
+        "400":
+          description: Bad request - missing or invalid query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized or GitHub not connected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: GitHub rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/github/repositories/recent:
+    get:
+      summary: Get recent GitHub repositories
+      description: Get the most recently updated repositories from the authenticated user's GitHub account
+      operationId: getRecentGitHubRepositories
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of results (default 6, max 20)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 6
+      responses:
+        "200":
+          description: Recent repositories
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitHubRepositorySearchResponse"
         "401":
           description: Unauthorized or GitHub not connected
           content:

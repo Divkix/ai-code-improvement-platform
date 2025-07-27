@@ -313,6 +313,16 @@ type GitHubRepository struct {
 	UpdatedAt       *time.Time `json:"updatedAt,omitempty"`
 }
 
+// GitHubRepositorySearchResponse defines model for GitHubRepositorySearchResponse.
+type GitHubRepositorySearchResponse struct {
+	// Query The search query (only present for search endpoints)
+	Query        *string            `json:"query,omitempty"`
+	Repositories []GitHubRepository `json:"repositories"`
+
+	// Total Total number of repositories returned
+	Total int `json:"total"`
+}
+
 // HealthCheck defines model for HealthCheck.
 type HealthCheck struct {
 	Services struct {
@@ -634,6 +644,21 @@ type GetDashboardTrendsParams struct {
 type GetGitHubRepositoriesParams struct {
 	// Page Page number for pagination
 	Page *int `form:"page,omitempty" json:"page,omitempty"`
+}
+
+// GetRecentGitHubRepositoriesParams defines parameters for GetRecentGitHubRepositories.
+type GetRecentGitHubRepositoriesParams struct {
+	// Limit Maximum number of results (default 6, max 20)
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// SearchGitHubRepositoriesParams defines parameters for SearchGitHubRepositories.
+type SearchGitHubRepositoriesParams struct {
+	// Q Search query string
+	Q string `form:"q" json:"q"`
+
+	// Limit Maximum number of results (default 6, max 20)
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // GetRepositoriesParams defines parameters for GetRepositories.

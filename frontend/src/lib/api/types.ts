@@ -164,6 +164,46 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/api/github/repositories/search': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Search user's GitHub repositories
+		 * @description Search repositories in the authenticated user's GitHub account
+		 */
+		get: operations['searchGitHubRepositories'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/api/github/repositories/recent': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Get recent GitHub repositories
+		 * @description Get the most recently updated repositories from the authenticated user's GitHub account
+		 */
+		get: operations['getRecentGitHubRepositories'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/api/github/repositories/{owner}/{repo}/validate': {
 		parameters: {
 			query?: never;
@@ -729,6 +769,13 @@ export interface components {
 			repositories: components['schemas']['GitHubRepository'][];
 			/** @description Whether there are more repositories to load */
 			hasMore: boolean;
+		};
+		GitHubRepositorySearchResponse: {
+			repositories: components['schemas']['GitHubRepository'][];
+			/** @description Total number of repositories returned */
+			total: number;
+			/** @description The search query (only present for search endpoints) */
+			query?: string;
 		};
 		LoginRequest: {
 			/** Format: email */
@@ -1379,6 +1426,117 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['GitHubRepositoriesResponse'];
+				};
+			};
+			/** @description Unauthorized or GitHub not connected */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+			/** @description GitHub rate limit exceeded */
+			429: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+			/** @description Internal server error */
+			500: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+		};
+	};
+	searchGitHubRepositories: {
+		parameters: {
+			query: {
+				/** @description Search query string */
+				q: string;
+				/** @description Maximum number of results (default 6, max 20) */
+				limit?: number;
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Search results */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['GitHubRepositorySearchResponse'];
+				};
+			};
+			/** @description Bad request - missing or invalid query */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+			/** @description Unauthorized or GitHub not connected */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+			/** @description GitHub rate limit exceeded */
+			429: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+			/** @description Internal server error */
+			500: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Error'];
+				};
+			};
+		};
+	};
+	getRecentGitHubRepositories: {
+		parameters: {
+			query?: {
+				/** @description Maximum number of results (default 6, max 20) */
+				limit?: number;
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Recent repositories */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['GitHubRepositorySearchResponse'];
 				};
 			};
 			/** @description Unauthorized or GitHub not connected */
