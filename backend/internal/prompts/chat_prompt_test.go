@@ -248,13 +248,11 @@ func TestRenderSystemPrompt(t *testing.T) {
 	}
 }
 
-func TestMaxRecommendedPromptLength(t *testing.T) {
-	// Just a sanity check that the constant is reasonable
-	if MaxRecommendedPromptLength <= 0 {
-		t.Error("Expected MaxRecommendedPromptLength to be positive")
-	}
-	
-	if MaxRecommendedPromptLength < 1000 {
-		t.Error("Expected MaxRecommendedPromptLength to be at least 1000 characters")
+func TestGetMaxRecommendedPromptLength(t *testing.T) {
+	// Test that the function returns the provided value
+	testLength := 15000
+	result := GetMaxRecommendedPromptLength(testLength)
+	if result != testLength {
+		t.Errorf("Expected GetMaxRecommendedPromptLength(%d) to return %d, got %d", testLength, testLength, result)
 	}
 }

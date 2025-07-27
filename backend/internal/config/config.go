@@ -36,8 +36,9 @@ type DatabaseConfig struct {
 }
 
 type CodeProcessingConfig struct {
-	ChunkSize   int // Lines per chunk
-	OverlapSize int // Lines to overlap between chunks
+	ChunkSize         int // Lines per chunk
+	OverlapSize       int // Lines to overlap between chunks
+	EmbeddingBatchSize int // Number of chunks to process per embedding batch
 }
 
 type JWTConfig struct {
@@ -48,6 +49,8 @@ type GitHubConfig struct {
 	ClientID      string
 	ClientSecret  string
 	EncryptionKey string
+	BatchSize     int // Number of files to process per batch
+	MaxFileSize   int // Maximum file size in bytes to process
 }
 
 type AIConfig struct {
@@ -67,6 +70,11 @@ type AIConfig struct {
 
 	// Universal embedding API key (set via EMBEDDING_API_KEY). May be empty for local servers.
 	EmbeddingAPIKey string
+
+	// Chat and retrieval configuration
+	MaxPromptLength   int     // Soft cut-off where a prompt is truncated
+	ChatContextChunks int     // How many code chunks are pulled from vector DB for a single question
+	ChatVectorWeight  float64 // Weight given to ANN similarity vs. BM-25 text search in hybrid retrieval
 }
 
 func Load() (*Config, error) {
@@ -89,8 +97,9 @@ func Load() (*Config, error) {
 			EnableQdrantRepoFilter: getEnv("ENABLE_QDRANT_REPO_FILTER", "true") != "false",
 		},
 		CodeProcessing: CodeProcessingConfig{
-			ChunkSize:   getEnvInt("CHUNK_SIZE", 30),
-			OverlapSize: getEnvInt("CHUNK_OVERLAP_SIZE", 10),
+			ChunkSize:         getEnvInt("CHUNK_SIZE", 30),
+			OverlapSize:       getEnvInt("CHUNK_OVERLAP_SIZE", 10),
+			EmbeddingBatchSize: getEnvInt("EMBEDDING_BATCH_SIZE", 50),
 		},
 		JWT: JWTConfig{
 			Secret: getEnv("JWT_SECRET", ""),
@@ -99,16 +108,21 @@ func Load() (*Config, error) {
 			ClientID:      getEnv("GITHUB_CLIENT_ID", ""),
 			ClientSecret:  getEnv("GITHUB_CLIENT_SECRET", ""),
 			EncryptionKey: getEnv("GITHUB_ENCRYPTION_KEY", ""),
+			BatchSize:     getEnvInt("GITHUB_BATCH_SIZE", 50),
+			MaxFileSize:   getEnvInt("GITHUB_MAX_FILE_SIZE", 1024*1024),
 		},
 		AI: AIConfig{
 			LLMBaseURL:        getEnv("LLM_BASE_URL", "https://api.openai.com/v1"),
 			LLMModel:          getEnv("LLM_MODEL", "gpt-4o-mini"),
 			LLMAPIKey:         getEnv("LLM_API_KEY", ""),
 			LLMRequestTimeout: getEnv("LLM_REQUEST_TIMEOUT", "30s"),
-			LLMContextLength:  getEnvInt("LLM_CONTEXT_LENGTH", 2048),
+			LLMContextLength:  getEnvInt("LLM_CONTEXT_LENGTH", 32000),
 			EmbeddingBaseURL:  getEnv("EMBEDDING_BASE_URL", "https://api.openai.com/v1"),
 			EmbeddingModel:    getEnv("EMBEDDING_MODEL", "text-embedding-nomic-embed-text-v1.5"),
 			EmbeddingAPIKey:   getEnv("EMBEDDING_API_KEY", ""),
+			MaxPromptLength:   getEnvInt("MAX_PROMPT_LENGTH", 12000),
+			ChatContextChunks: getEnvInt("CHAT_CONTEXT_CHUNKS", 8),
+			ChatVectorWeight:  getEnvFloat("CHAT_VECTOR_WEIGHT", 0.7),
 		},
 	}
 
@@ -156,6 +170,15 @@ func getEnvInt(key string, defaultValue int) int {
 	if value := os.Getenv(key); value != "" {
 		if intVal, err := strconv.Atoi(value); err == nil {
 			return intVal
+		}
+	}
+	return defaultValue
+}
+
+func getEnvFloat(key string, defaultValue float64) float64 {
+	if value := os.Getenv(key); value != "" {
+		if floatVal, err := strconv.ParseFloat(value, 64); err == nil {
+			return floatVal
 		}
 	}
 	return defaultValue

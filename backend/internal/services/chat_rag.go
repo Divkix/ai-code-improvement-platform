@@ -51,10 +51,10 @@ func NewChatRAGService(db *mongo.Database, searchService *SearchService, llmServ
 // ProcessMessage processes a user message and returns updated session (non-streaming)
 func (s *ChatRAGService) ProcessMessage(ctx context.Context, userID, sessionID primitive.ObjectID, message string) (*models.ChatSession, error) {
 	startTime := time.Now()
-	
+
 	log.Printf("[CHAT] Processing message for user=%s session=%s message_length=%d",
 		userID.Hex(), sessionID.Hex(), len(message))
-	
+
 	// Retrieve the session
 	session, err := s.getSession(ctx, userID, sessionID)
 	if err != nil {
@@ -73,7 +73,7 @@ func (s *ChatRAGService) ProcessMessage(ctx context.Context, userID, sessionID p
 		retrievalStart := time.Now()
 		chunks, err := s.retrieveContext(ctx, *session.RepositoryID, message)
 		retrievalTime = time.Since(retrievalStart)
-		
+
 		if err != nil {
 			log.Printf("[CHAT] Failed to retrieve context user=%s session=%s repo=%s error=%v retrieval_time=%v",
 				userID.Hex(), sessionID.Hex(), session.RepositoryID.Hex(), err, retrievalTime)
@@ -97,7 +97,7 @@ func (s *ChatRAGService) ProcessMessage(ctx context.Context, userID, sessionID p
 	messages := s.llmService.BuildMessages(systemPrompt, fullPrompt)
 	response, err := s.llmService.ChatCompletion(ctx, messages, DefaultChatOptions(s.config))
 	llmDuration := time.Since(llmStart)
-	
+
 	if err != nil {
 		log.Printf("[CHAT] LLM generation failed user=%s session=%s llm_time=%v error=%v",
 			userID.Hex(), sessionID.Hex(), llmDuration, err)
@@ -142,10 +142,10 @@ func (s *ChatRAGService) ProcessMessage(ctx context.Context, userID, sessionID p
 // ProcessMessageStreaming processes a user message and returns streaming response
 func (s *ChatRAGService) ProcessMessageStreaming(ctx context.Context, userID, sessionID primitive.ObjectID, message string) (<-chan ChatStreamChunk, error) {
 	startTime := time.Now()
-	
+
 	log.Printf("[CHAT] Processing streaming message for user=%s session=%s message_length=%d",
 		userID.Hex(), sessionID.Hex(), len(message))
-	
+
 	// Create response channel
 	responseChan := make(chan ChatStreamChunk, 10)
 
@@ -171,7 +171,7 @@ func (s *ChatRAGService) ProcessMessageStreaming(ctx context.Context, userID, se
 			retrievalStart := time.Now()
 			chunks, err := s.retrieveContext(ctx, *session.RepositoryID, message)
 			retrievalTime = time.Since(retrievalStart)
-			
+
 			if err != nil {
 				log.Printf("[CHAT] Failed to retrieve context for streaming user=%s session=%s repo=%s error=%v retrieval_time=%v",
 					userID.Hex(), sessionID.Hex(), session.RepositoryID.Hex(), err, retrievalTime)
@@ -195,7 +195,7 @@ func (s *ChatRAGService) ProcessMessageStreaming(ctx context.Context, userID, se
 		llmStart := time.Now()
 		messages := s.llmService.BuildMessages(systemPrompt, fullPrompt)
 		stream, err := s.llmService.ChatStream(ctx, messages, DefaultChatOptions(s.config))
-		
+
 		if err != nil {
 			llmDuration := time.Since(llmStart)
 			log.Printf("[CHAT] Streaming LLM generation failed user=%s session=%s llm_time=%v error=%v",
@@ -235,7 +235,7 @@ func (s *ChatRAGService) ProcessMessageStreaming(ctx context.Context, userID, se
 		// Add assistant message to session
 		assistantContent := fullContent.String()
 		llmDuration := time.Since(llmStart)
-		
+
 		if assistantContent != "" {
 			var tokensPtr *int
 			if totalTokens > 0 {
@@ -273,9 +273,9 @@ func (s *ChatRAGService) ProcessMessageStreaming(ctx context.Context, userID, se
 
 // retrieveContext retrieves relevant code chunks for the given query
 func (s *ChatRAGService) retrieveContext(ctx context.Context, repositoryID primitive.ObjectID, query string) ([]models.RetrievedChunk, error) {
-	// Use hybrid search to get the most relevant chunks (8 chunks as specified in slice9.md)
-	const contextChunks = 8
-	const vectorWeight = 0.7 // Favor vector search over text search
+	// Determine runtime-configurable retrieval heuristics.
+	contextChunks := s.config.AI.ChatContextChunks
+	vectorWeight := s.config.AI.ChatVectorWeight
 
 	results, err := s.searchService.HybridSearch(ctx, repositoryID, query, contextChunks, vectorWeight)
 	if err != nil {
@@ -304,13 +304,13 @@ func (s *ChatRAGService) retrieveContext(ctx context.Context, repositoryID primi
 // buildPromptData creates prompt data from retrieved chunks and user query
 func (s *ChatRAGService) buildPromptData(chunks []models.RetrievedChunk, query string) prompts.ChatPromptData {
 	var snippets []prompts.CodeSnippet
-	
+
 	for _, chunk := range chunks {
 		language := ""
 		if chunk.Language != nil {
 			language = *chunk.Language
 		}
-		
+
 		snippet := prompts.FormatCodeSnippet(
 			chunk.FilePath,
 			chunk.Content,
@@ -327,7 +327,7 @@ func (s *ChatRAGService) buildPromptData(chunks []models.RetrievedChunk, query s
 // getSession retrieves a chat session by ID and user ID
 func (s *ChatRAGService) getSession(ctx context.Context, userID, sessionID primitive.ObjectID) (*models.ChatSession, error) {
 	collection := s.db.Collection(models.ChatSessionCollection)
-	
+
 	filter := bson.M{
 		"_id":    sessionID,
 		"userId": userID,
@@ -348,10 +348,10 @@ func (s *ChatRAGService) getSession(ctx context.Context, userID, sessionID primi
 // saveSession saves a chat session to the database
 func (s *ChatRAGService) saveSession(ctx context.Context, session *models.ChatSession) error {
 	collection := s.db.Collection(models.ChatSessionCollection)
-	
+
 	filter := bson.M{"_id": session.ID}
 	update := bson.M{"$set": session}
-	
+
 	_, err := collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return fmt.Errorf("failed to update session: %w", err)

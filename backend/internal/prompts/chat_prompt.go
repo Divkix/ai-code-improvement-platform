@@ -129,5 +129,8 @@ func EstimateTokenCount(prompt string) int {
 	return len(prompt) / 4
 }
 
-// MaxRecommendedPromptLength is the recommended maximum prompt length in characters
-const MaxRecommendedPromptLength = 12000 // ~3000 tokens
+// GetMaxRecommendedPromptLength returns the maximum prompt length from config
+func GetMaxRecommendedPromptLength(maxLength int) int {
+	return maxLength
+}
+

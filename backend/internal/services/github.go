@@ -30,6 +30,8 @@ type GitHubService struct {
 	clientSecret  string
 	encryptionKey []byte
 	oauthConfig   *oauth2.Config
+	batchSize     int
+	maxFileSize   int
 }
 
 // GitHubRepository represents repository data from GitHub API
@@ -60,7 +62,7 @@ type GitHubImportProgress struct {
 }
 
 // NewGitHubService creates a new GitHub service
-func NewGitHubService(db *mongo.Database, clientID, clientSecret, encryptionKey string) *GitHubService {
+func NewGitHubService(db *mongo.Database, clientID, clientSecret, encryptionKey string, batchSize, maxFileSize int) *GitHubService {
 	key := []byte(encryptionKey)
 	if len(key) != 32 {
 		// Pad or truncate to 32 bytes for AES-256
@@ -82,6 +84,8 @@ func NewGitHubService(db *mongo.Database, clientID, clientSecret, encryptionKey 
 		clientSecret:  clientSecret,
 		encryptionKey: key,
 		oauthConfig:   oauthConfig,
+		batchSize:     batchSize,
+		maxFileSize:   maxFileSize,
 	}
 }
 
@@ -331,8 +335,8 @@ func (s *GitHubService) FetchRepositoryFiles(ctx context.Context, accessToken, o
 
 	log.Printf("Found %d files to process in %s/%s", totalFiles, owner, repo)
 
-	// Process files in batches to avoid rate limits
-	const batchSize = 50
+	// Process files in batches to avoid rate limits (configurable via GITHUB_BATCH_SIZE)
+	batchSize := s.batchSize
 
 	for i := 0; i < len(tree.Entries); i += batchSize {
 		end := i + batchSize
@@ -376,8 +380,10 @@ func (s *GitHubService) processBatch(ctx context.Context, client *github.Client,
 		sha := entry.GetSHA()
 		size := entry.GetSize()
 
-		// Skip files that are too large or clearly not code files
-		if size > 1024*1024 { // Skip files larger than 1MB
+		// Skip files that are too large or clearly not code files (size limit configurable via GITHUB_MAX_FILE_SIZE)
+		maxFileSize := s.maxFileSize
+
+		if size > maxFileSize { // Skip files above the configurable limit
 			log.Printf("Skipping large file: %s (%d bytes) - exceeds 1MB limit", path, size)
 			skippedFiles++
 			continue

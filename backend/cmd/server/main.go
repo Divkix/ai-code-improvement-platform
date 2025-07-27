@@ -80,7 +80,7 @@ func main() {
 	userService := services.NewUserService(mongoDB.Database())
 	authService := auth.NewAuthService(cfg.JWT.Secret)
 	dashboardService := services.NewDashboardService(mongoDB.Database())
-	githubService := services.NewGitHubService(mongoDB.Database(), cfg.GitHub.ClientID, cfg.GitHub.ClientSecret, cfg.GitHub.EncryptionKey)
+	githubService := services.NewGitHubService(mongoDB.Database(), cfg.GitHub.ClientID, cfg.GitHub.ClientSecret, cfg.GitHub.EncryptionKey, cfg.GitHub.BatchSize, cfg.GitHub.MaxFileSize)
 
 	// Initialize universal embedding provider
 	embeddingProvider := services.NewOpenAIEmbeddingService(

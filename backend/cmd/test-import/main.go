@@ -61,7 +61,9 @@ func main() {
 	githubService := services.NewGitHubService(db,
 		os.Getenv("GITHUB_CLIENT_ID"),
 		os.Getenv("GITHUB_CLIENT_SECRET"),
-		os.Getenv("JWT_SECRET"))
+		os.Getenv("JWT_SECRET"),
+		50,         // Default batch size
+		1024*1024)  // Default max file size (1MB)
 
 	userService := services.NewUserService(db)
 

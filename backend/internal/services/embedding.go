@@ -109,7 +109,7 @@ func (es *EmbeddingService) ProcessRepository(ctx context.Context, repositoryID 
 		StartedAt:       time.Now(),
 	}
 
-	const batchSize = 50 // Process 50 chunks at a time
+	batchSize := es.config.CodeProcessing.EmbeddingBatchSize // Process chunks in configurable batches
 	for i := 0; i < len(chunks); i += batchSize {
 		end := i + batchSize
 		if end > len(chunks) {
