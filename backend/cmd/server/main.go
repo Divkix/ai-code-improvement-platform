@@ -154,13 +154,6 @@ func main() {
 	router.Use(middleware.StructuredLoggingMiddleware(structuredLogger))
 	router.Use(gin.Recovery())
 	
-	// Add rate limiting middleware
-	rateLimitConfig := middleware.RateLimiterConfig{
-		RequestsPerSecond: cfg.RateLimit.RequestsPerSecond,
-		BurstSize:         cfg.RateLimit.BurstSize,
-		Enabled:           cfg.RateLimit.Enabled,
-	}
-	router.Use(middleware.RateLimitMiddleware(rateLimitConfig, structuredLogger))
 
 	// CORS configuration
 	corsConfig := cors.DefaultConfig()
@@ -169,11 +162,7 @@ func main() {
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Type", "Authorization", "X-Correlation-ID"}
 	router.Use(cors.New(corsConfig))
 
-	structuredLogger.WithCorrelation(startupCorrelationID).WithFields(map[string]interface{}{
-		"rate_limit_enabled": cfg.RateLimit.Enabled,
-		"requests_per_second": cfg.RateLimit.RequestsPerSecond,
-		"burst_size": cfg.RateLimit.BurstSize,
-	}).Info("Middleware configured successfully")
+	structuredLogger.WithCorrelation(startupCorrelationID).Info("Middleware configured successfully")
 
 	// Custom middleware configuration
 	middlewareFunc := func(c *gin.Context) {

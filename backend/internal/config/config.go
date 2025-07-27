@@ -19,7 +19,6 @@ type Config struct {
 	GitHub         GitHubConfig
 	AI             AIConfig
 	Logging        LoggingConfig
-	RateLimit      RateLimitConfig
 }
 
 type ServerConfig struct {
@@ -93,11 +92,6 @@ type LoggingConfig struct {
 	Output string // stdout, stderr, file
 }
 
-type RateLimitConfig struct {
-	Enabled           bool    // Whether rate limiting is enabled
-	RequestsPerSecond float64 // Number of requests allowed per second
-	BurstSize         int     // Burst capacity for short bursts
-}
 
 func Load() (*Config, error) {
 	// Load .env file if it exists
@@ -157,11 +151,6 @@ func Load() (*Config, error) {
 			Level:  getEnv("LOG_LEVEL", "info"),
 			Format: getEnv("LOG_FORMAT", "json"),
 			Output: getEnv("LOG_OUTPUT", "stdout"),
-		},
-		RateLimit: RateLimitConfig{
-			Enabled:           getEnv("RATE_LIMIT_ENABLED", "true") != "false",
-			RequestsPerSecond: getEnvFloat("RATE_LIMIT_REQUESTS_PER_SECOND", 10.0),
-			BurstSize:         getEnvInt("RATE_LIMIT_BURST_SIZE", 20),
 		},
 	}
 
