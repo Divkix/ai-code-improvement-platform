@@ -3,8 +3,8 @@ module github-analyzer
 go 1.24.5
 
 require (
-	github.com/gin-contrib/cors v1.7.0
-	github.com/gin-gonic/gin v1.9.1
+	github.com/gin-contrib/cors v1.7.6
+	github.com/gin-gonic/gin v1.10.1
 	github.com/golang-jwt/jwt/v5 v5.2.3
 	github.com/google/go-github/v73 v73.0.0
 	github.com/google/uuid v1.6.0
@@ -19,7 +19,6 @@ require (
 	go.mongodb.org/mongo-driver v1.17.4
 	golang.org/x/crypto v0.40.0
 	golang.org/x/oauth2 v0.30.0
-	golang.org/x/time v0.12.0
 )
 
 require (
@@ -32,11 +31,11 @@ require (
 	github.com/dprotaso/go-yit v0.0.0-20220510233725-9ba8df137936 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.9 // indirect
 	github.com/getkin/kin-openapi v0.132.0 // indirect
-	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/go-openapi/jsonpointer v0.21.0 // indirect
-	github.com/go-openapi/jsonreference v0.20.4 // indirect
-	github.com/go-openapi/spec v0.20.14 // indirect
-	github.com/go-openapi/swag v0.23.0 // indirect
+	github.com/gin-contrib/sse v1.1.0 // indirect
+	github.com/go-openapi/jsonpointer v0.21.1 // indirect
+	github.com/go-openapi/jsonreference v0.21.0 // indirect
+	github.com/go-openapi/spec v0.21.0 // indirect
+	github.com/go-openapi/swag v0.23.1 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.27.0 // indirect
