@@ -73,9 +73,12 @@ sh:
 
 ## generate: Generate Go code from OpenAPI specification using go generate
 generate:
-	@echo "🔧 Generating Go code from OpenAPI spec..."
+	@echo "🔧 Generating Go code from OpenAPI specification in backend..."
 	@cd backend && go generate ./internal/generated/...
 	@echo "✅ Code generation complete"
+	@echo "🔍 Generating Typescript code from OpenAPI specification in frontend..."
+	@cd frontend && bun generate
+	@echo "✅ Frontend code generation complete"
 
 ## build: Generate code and build the backend binary
 build: generate
