@@ -270,7 +270,7 @@
 <Sidebar.Provider>
 	<div class="fixed inset-0 z-50 bg-white">
 		<!-- Custom header for fullscreen mode -->
-		<div class="relative z-20 flex h-16 items-center border-b border-gray-200 bg-white px-6">
+		<div class="relative z-20 flex h-16 items-center border-b border-gray-200 bg-white px-6 md:ml-64">
 			<div class="flex items-center space-x-3">
 				<a href="/" class="text-xl font-semibold text-gray-900">GitHub Analyzer</a>
 				<span class="text-gray-400">|</span>
