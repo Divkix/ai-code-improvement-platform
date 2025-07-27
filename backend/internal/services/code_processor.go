@@ -11,6 +11,7 @@ import (
 
 	"github-analyzer/internal/config"
 	"github-analyzer/internal/models"
+	"github-analyzer/internal/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -31,12 +32,32 @@ func NewCodeProcessor(cfg *config.Config) *CodeProcessor {
 // ProcessAndChunkFiles processes repository files and creates code chunks
 func (cp *CodeProcessor) ProcessAndChunkFiles(files []*models.RepositoryFile, repositoryID primitive.ObjectID) ([]*models.CodeChunk, error) {
 	var allChunks []*models.CodeChunk
+	var processedFiles int
+	var skippedFiles int
+	var encodingIssues int
 	
 	log.Printf("Processing %d files for chunking", len(files))
 	
 	for _, file := range files {
 		if !file.IsValidForProcessing() {
+			skippedFiles++
 			continue
+		}
+		
+		// Validate and clean file content for UTF-8 storage
+		if valid, reason := utils.ValidateContentForStorage(file.Content); !valid {
+			log.Printf("Skipping file %s due to encoding issue: %s", file.Path, reason)
+			encodingIssues++
+			
+			// Try to clean the content and proceed if possible
+			cleanedContent := utils.CleanContent(file.Content)
+			if valid, _ := utils.ValidateContentForStorage(cleanedContent); !valid {
+				log.Printf("Unable to clean file %s, skipping", file.Path)
+				continue
+			}
+			
+			log.Printf("Successfully cleaned file %s, proceeding with processing", file.Path)
+			file.Content = cleanedContent
 		}
 		
 		chunks, err := cp.ChunkFile(file, repositoryID)
@@ -46,9 +67,11 @@ func (cp *CodeProcessor) ProcessAndChunkFiles(files []*models.RepositoryFile, re
 		}
 		
 		allChunks = append(allChunks, chunks...)
+		processedFiles++
 	}
 	
-	log.Printf("Created %d chunks from %d files", len(allChunks), len(files))
+	log.Printf("Created %d chunks from %d processed files (%d skipped, %d encoding issues)", 
+		len(allChunks), processedFiles, skippedFiles, encodingIssues)
 	return allChunks, nil
 }
 
@@ -80,6 +103,15 @@ func (cp *CodeProcessor) ChunkFile(file *models.RepositoryFile, repositoryID pri
 		
 		chunkLines := lines[start:end]
 		chunkContent := strings.Join(chunkLines, "\n")
+		
+		// Validate chunk content for UTF-8 storage
+		if valid, reason := utils.ValidateContentForStorage(chunkContent); !valid {
+			log.Printf("Skipping chunk %d-%d in file %s: %s", start+1, end, file.Path, reason)
+			continue
+		}
+		
+		// Clean chunk content to ensure safe storage
+		chunkContent = utils.CleanContent(chunkContent)
 		
 		// Extract metadata from chunk
 		metadata := cp.ExtractMetadata(chunkContent, file.Language)

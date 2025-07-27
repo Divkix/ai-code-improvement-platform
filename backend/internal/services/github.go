@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github-analyzer/internal/models"
+	"github-analyzer/internal/utils"
 
 	"github.com/google/go-github/v73/github"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -406,9 +407,19 @@ func (s *GitHubService) processBatch(ctx context.Context, client *github.Client,
 			continue
 		}
 
-		// Update file with content
-		repoFile.Content = content
-		repoFile.Size = len(content)
+		// Validate and clean content before storing
+		if valid, reason := utils.ValidateContentForStorage(content); !valid {
+			log.Printf("Skipping file %s due to encoding issue: %s", path, reason)
+			skippedFiles++
+			continue
+		}
+		
+		// Clean content to ensure safe storage
+		cleanedContent := utils.CleanContent(content)
+		
+		// Update file with cleaned content
+		repoFile.Content = cleanedContent
+		repoFile.Size = len(cleanedContent)
 
 		// Validate file is suitable for processing
 		if !repoFile.IsValidForProcessing() {

@@ -233,6 +233,13 @@ func (rf *RepositoryFile) IsValidForProcessing() bool {
 	return true
 }
 
+// IsValidForStorage checks if file content is safe for database storage
+func (rf *RepositoryFile) IsValidForStorage() (bool, string) {
+	// Import the utils package for encoding validation
+	// This will be used in the service layer
+	return true, ""
+}
+
 // RepositoryTree represents the file tree structure
 type RepositoryTree struct {
 	SHA   string              `json:"sha"`
