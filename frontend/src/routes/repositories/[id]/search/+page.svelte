@@ -3,7 +3,7 @@
 
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import SearchBox from '$lib/components/SearchBox.svelte';
 	import SearchResults from '$lib/components/SearchResults.svelte';
 	import SearchFilters from '$lib/components/SearchFilters.svelte';
@@ -40,7 +40,7 @@
 	let currentOffset = 0;
 	const limit = 10;
 
-	let repositoryId = $derived($page.params.id);
+	let repositoryId = $derived(page.params.id);
 
 	onMount(async () => {
 		await loadRepositoryData();

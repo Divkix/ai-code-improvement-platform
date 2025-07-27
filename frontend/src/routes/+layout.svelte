@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { authStore, type AuthState } from '$lib/stores/auth';
@@ -38,7 +38,7 @@
 		if (!browser || !authState || authState.isLoading) return; // Wait for the auth check to complete
 
 		const { isAuthenticated } = authState;
-		const path = $page.url.pathname;
+		const path = page.url.pathname;
 		const isAuthRoute = path.startsWith('/auth');
 
 		// If not authenticated and not on an auth page, redirect to login
@@ -53,9 +53,9 @@
 	});
 </script>
 
-<div class="min-h-screen bg-background">
+<div class="bg-background min-h-screen">
 	<header
-		class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+		class="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur"
 	>
 		<div class="container mx-auto px-4 sm:px-6 lg:px-8">
 			<div class="flex h-16 items-center justify-between">
@@ -69,7 +69,7 @@
 								<NavigationMenu.Item>
 									<NavigationMenu.Link
 										href="/"
-										class="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
+										class="bg-background hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none disabled:pointer-events-none disabled:opacity-50"
 									>
 										Dashboard
 									</NavigationMenu.Link>
@@ -77,7 +77,7 @@
 								<NavigationMenu.Item>
 									<NavigationMenu.Link
 										href="/repositories"
-										class="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
+										class="bg-background hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none disabled:pointer-events-none disabled:opacity-50"
 									>
 										Repositories
 									</NavigationMenu.Link>
@@ -85,7 +85,7 @@
 								<NavigationMenu.Item>
 									<NavigationMenu.Link
 										href="/search"
-										class="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
+										class="bg-background hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none disabled:pointer-events-none disabled:opacity-50"
 									>
 										Search
 									</NavigationMenu.Link>
@@ -93,7 +93,7 @@
 								<NavigationMenu.Item>
 									<NavigationMenu.Link
 										href="/chat"
-										class="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
+										class="bg-background hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none disabled:pointer-events-none disabled:opacity-50"
 									>
 										Chat
 									</NavigationMenu.Link>
@@ -152,7 +152,7 @@
 							</Sheet.Content>
 						</Sheet.Root>
 
-						<span class="hidden text-sm text-muted-foreground sm:block">
+						<span class="text-muted-foreground hidden text-sm sm:block">
 							Welcome, {authState?.user?.name}
 						</span>
 						<Button
@@ -164,7 +164,7 @@
 						>
 							Logout
 						</Button>
-					{:else if !authState?.isLoading && $page.url.pathname !== '/auth/login'}
+					{:else if !authState?.isLoading && page.url.pathname !== '/auth/login'}
 						<Button href="/auth/login">Login</Button>
 					{/if}
 				</div>
