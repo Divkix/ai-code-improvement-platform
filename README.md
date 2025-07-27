@@ -1,6 +1,28 @@
 # AI Code Improvement Platform
 
-An end-to-end platform that helps developers explore, understand and improve codebases using modern AI techniques. It ingests GitHub repositories, chunks & embeds their code for semantic search with Qdrant, and offers a conversational RAG (Retrieval-Augmented Generation) interface powered by Large Language Models (LLMs).
+<!-- Uncomment once CI is live -->
+<!--[![CI](https://github.com/your-org/ai-code-improvement-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/ai-code-improvement-platform/actions/workflows/ci.yml)-->
+
+A fully-containerised end-to-end system that helps developers explore, understand and improve codebases using modern AI techniques. _(Formerly “GitHub Analyzer”)_
+
+## Table of Contents
+
+- [AI Code Improvement Platform](#ai-code-improvement-platform)
+  - [Table of Contents](#table-of-contents)
+  - [✨ Key Features](#-key-features)
+  - [🏗️ Tech Stack](#️-tech-stack)
+  - [📂 Repository Layout (top-level)](#-repository-layout-top-level)
+  - [🚀 Quick Start (Production-like)](#-quick-start-production-like)
+    - [Local Development Hot-Reload](#local-development-hot-reload)
+  - [🛠️ Backend Development](#️-backend-development)
+    - [Environment Variables (partial list)](#environment-variables-partial-list)
+    - [API Documentation](#api-documentation)
+  - [🌐 Frontend Development](#-frontend-development)
+    - [Regenerate Typed API Client](#regenerate-typed-api-client)
+  - [🧪 Testing All Services](#-testing-all-services)
+  - [🖥️ Makefile Cheat-Sheet](#️-makefile-cheat-sheet)
+  - [🤝 Contributing](#-contributing)
+  - [📄 License](#-license)
 
 ---
 

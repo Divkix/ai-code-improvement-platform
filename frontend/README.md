@@ -1,5 +1,36 @@
 # GitHub Analyzer Frontend
 
+[![vite](https://img.shields.io/badge/SvelteKit-%23ff3e00.svg?logo=svelte&logoColor=white)](https://kit.svelte.dev/)  
+[![bun](https://img.shields.io/badge/Bun-1.0-blue?logo=bun)](https://bun.sh/)
+
+## Table of Contents
+
+- [Features](#features)
+- [Development Setup](#development-setup)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Environment Configuration](#environment-configuration)
+  - [Development Server](#development-server)
+  - [API Type Generation](#api-type-generation)
+- [Building](#building)
+- [Project Structure](#project-structure)
+- [Key Technologies](#key-technologies)
+- [API Integration](#api-integration)
+- [Testing](#testing)
+
+## Testing
+
+```bash
+# Unit tests (Vitest)
+bun run test:unit
+
+# Component tests (Playwright component mode)
+bun run test:ct
+
+# End-to-end tests (Playwright)
+bun run test:e2e
+```
+
 AI-powered code analysis platform frontend built with SvelteKit and TypeScript. Features type-safe API integration with OpenAPI code generation.
 
 ## Features
