@@ -42,7 +42,7 @@ Guidelines:
 - Format code references as: filename:line_number`
 
 // SystemPromptTemplate provides the system-level instructions
-const SystemPromptTemplate = `You are a helpful AI assistant specialized in code analysis and software development. You help developers understand their codebase by analyzing provided code snippets and answering questions about them.
+const SystemPromptTemplate = `You are a helpful AI assistant specialized in code analysis and software development. You help developers understand and improve their codebase by analyzing provided code snippets and answering questions about them.
 
 Key principles:
 - Always base your answers on the provided code snippets
@@ -84,14 +84,14 @@ func FormatCodeSnippet(filePath, content string, startLine, endLine int, languag
 	// Clean up the content - remove excessive whitespace but preserve structure
 	lines := strings.Split(content, "\n")
 	var cleanLines []string
-	
+
 	for _, line := range lines {
 		// Preserve empty lines but trim trailing whitespace
 		cleanLines = append(cleanLines, strings.TrimRight(line, " \t"))
 	}
-	
+
 	cleanContent := strings.Join(cleanLines, "\n")
-	
+
 	return CodeSnippet{
 		FilePath:  filePath,
 		Content:   cleanContent,
@@ -106,20 +106,20 @@ func TruncateIfTooLong(prompt string, maxLength int) string {
 	if len(prompt) <= maxLength {
 		return prompt
 	}
-	
+
 	// Try to truncate at a reasonable point (end of a code block or sentence)
 	truncated := prompt[:maxLength-100] // Leave some buffer
-	
+
 	// Find the last complete code block or sentence
 	if lastBlock := strings.LastIndex(truncated, "\n---"); lastBlock > 0 {
 		return truncated[:lastBlock] + "\n\n[Content truncated due to length...]"
 	}
-	
+
 	// Fallback: truncate at word boundary
 	if lastSpace := strings.LastIndex(truncated, " "); lastSpace > maxLength/2 {
 		return truncated[:lastSpace] + "... [truncated]"
 	}
-	
+
 	return truncated + "... [truncated]"
 }
 
