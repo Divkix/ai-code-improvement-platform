@@ -41,7 +41,7 @@
 </script>
 
 <svelte:head>
-	<title>Login - GitHub Analyzer</title>
+	<title>Login - ACIP</title>
 </svelte:head>
 
 <div class="mx-auto mt-16 max-w-md">

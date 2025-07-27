@@ -61,7 +61,7 @@
 			<div class="flex h-16 items-center justify-between">
 				<div class="flex items-center">
 					<a href="/" class="mr-6 flex items-center space-x-2">
-						<span class="text-xl font-bold">GitHub Analyzer</span>
+						<span class="text-xl font-bold">ACIP</span>
 					</a>
 					{#if authState?.isAuthenticated}
 						<NavigationMenu.Root class="hidden md:flex">

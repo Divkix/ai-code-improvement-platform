@@ -241,7 +241,7 @@
 </script>
 
 <svelte:head>
-	<title>Repositories - GitHub Analyzer</title>
+	<title>Repositories - ACIP</title>
 </svelte:head>
 
 <div class="space-y-6">

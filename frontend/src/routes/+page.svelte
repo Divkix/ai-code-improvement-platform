@@ -169,7 +169,7 @@
 </script>
 
 <svelte:head>
-	<title>Dashboard - GitHub Analyzer</title>
+	<title>Dashboard - ACIP</title>
 </svelte:head>
 
 {#if loading}

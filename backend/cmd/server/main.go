@@ -1,4 +1,4 @@
-// ABOUTME: Main server entry point for the GitHub analyzer backend
+// ABOUTME: Main server entry point for the GitHub ACIP backend
 // ABOUTME: Sets up Gin router, initializes database connections, and configures routes
 package main
 
@@ -43,7 +43,7 @@ func main() {
 	structuredLogger.WithCorrelation(startupCorrelationID).WithFields(map[string]interface{}{
 		"version": "1.0.0",
 		"mode":    cfg.Server.Mode,
-	}).Info("Starting GitHub Analyzer backend server")
+	}).Info("Starting ACIP backend server")
 
 	// Set Gin mode
 	gin.SetMode(cfg.Server.Mode)
@@ -148,12 +148,11 @@ func main() {
 
 	// Create Gin router
 	router := gin.New()
-	
+
 	// Add structured middleware in order
 	router.Use(middleware.CorrelationMiddleware())
 	router.Use(middleware.StructuredLoggingMiddleware(structuredLogger))
 	router.Use(gin.Recovery())
-	
 
 	// CORS configuration
 	corsConfig := cors.DefaultConfig()
@@ -256,7 +255,7 @@ func main() {
 	// Start server
 	address := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
 	structuredLogger.WithCorrelation(startupCorrelationID).WithFields(map[string]interface{}{
-		"address":           address,
+		"address":          address,
 		"docs_url":         fmt.Sprintf("http://%s/docs/", address),
 		"openapi_url":      fmt.Sprintf("http://%s/api/openapi.yaml", address),
 		"health_check_url": fmt.Sprintf("http://%s/health", address),

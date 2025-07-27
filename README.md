@@ -1,13 +1,13 @@
-# AI Code Improvement Platform
+# ACIP - AI Code Improvement Platform
 
 <!-- Uncomment once CI is live -->
 <!--[![CI](https://github.com/your-org/ai-code-improvement-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/ai-code-improvement-platform/actions/workflows/ci.yml)-->
 
-A fully-containerised end-to-end system that helps developers explore, understand and improve codebases using modern AI techniques. _(Formerly “GitHub Analyzer”)_
+A fully-containerised end-to-end system that helps developers explore, understand and improve codebases using modern AI techniques.
 
 ## Table of Contents
 
-- [AI Code Improvement Platform](#ai-code-improvement-platform)
+- [ACIP - AI Code Improvement Platform](#acip---ai-code-improvement-platform)
   - [Table of Contents](#table-of-contents)
   - [✨ Key Features](#-key-features)
   - [🏗️ Tech Stack](#️-tech-stack)

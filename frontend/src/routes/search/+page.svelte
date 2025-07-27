@@ -271,7 +271,7 @@
 </script>
 
 <svelte:head>
-	<title>Search Code - GitHub Analyzer</title>
+	<title>Search Code - ACIP</title>
 	<meta
 		name="description"
 		content="Search through your code repositories to find functions, classes, and implementations quickly."

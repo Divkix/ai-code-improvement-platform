@@ -1,7 +1,7 @@
 // MongoDB initialization script to create demo user
 // This script runs automatically when MongoDB container starts for the first time
 
-print('🚀 Initializing MongoDB for GitHub Analyzer...');
+print('🚀 Initializing MongoDB for ACIP...');
 
 // Switch to the github-analyzer database
 db = db.getSiblingDB('github-analyzer');

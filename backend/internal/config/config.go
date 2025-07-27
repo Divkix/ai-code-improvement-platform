@@ -1,4 +1,4 @@
-// ABOUTME: Configuration management for the GitHub analyzer backend
+// ABOUTME: Configuration management for the ACIP backend
 // ABOUTME: Loads environment variables and provides typed configuration structs
 package config
 
@@ -35,19 +35,19 @@ type DatabaseConfig struct {
 	QdrantCollectionName   string
 	VectorDimension        int
 	EnableQdrantRepoFilter bool // if true, attach repositoryId payload filter in Qdrant queries
-	
+
 	// MongoDB Connection Pooling Configuration
-	MaxPoolSize         uint64        // Maximum number of connections in the pool
-	MinPoolSize         uint64        // Minimum number of connections in the pool
-	MaxIdleTime         time.Duration // Maximum time a connection can be idle
-	ConnectTimeout      time.Duration // Timeout for establishing connections
+	MaxPoolSize            uint64        // Maximum number of connections in the pool
+	MinPoolSize            uint64        // Minimum number of connections in the pool
+	MaxIdleTime            time.Duration // Maximum time a connection can be idle
+	ConnectTimeout         time.Duration // Timeout for establishing connections
 	ServerSelectionTimeout time.Duration // Timeout for server selection
 }
 
 type CodeProcessingConfig struct {
-	ChunkSize         int // Lines per chunk
-	OverlapSize       int // Lines to overlap between chunks
-	EmbeddingBatchSize int // Number of chunks to process per embedding batch
+	ChunkSize           int // Lines per chunk
+	OverlapSize         int // Lines to overlap between chunks
+	EmbeddingBatchSize  int // Number of chunks to process per embedding batch
 	EmbeddingWorkersNum int // Number of concurrent workers for embedding pipeline
 }
 
@@ -93,7 +93,6 @@ type LoggingConfig struct {
 	Output string // stdout, stderr, file
 }
 
-
 func Load() (*Config, error) {
 	// Load .env file if it exists
 	_ = godotenv.Load() // Ignore error as .env file is optional
@@ -112,7 +111,7 @@ func Load() (*Config, error) {
 			QdrantCollectionName:   getEnv("QDRANT_COLLECTION_NAME", "codechunks"),
 			VectorDimension:        getEnvInt("VECTOR_DIMENSION", 1024),
 			EnableQdrantRepoFilter: getEnv("ENABLE_QDRANT_REPO_FILTER", "true") != "false",
-			
+
 			// MongoDB Connection Pooling
 			MaxPoolSize:            uint64(getEnvInt("MONGODB_MAX_POOL_SIZE", 100)),
 			MinPoolSize:            uint64(getEnvInt("MONGODB_MIN_POOL_SIZE", 5)),
@@ -121,9 +120,9 @@ func Load() (*Config, error) {
 			ServerSelectionTimeout: getEnvDuration("MONGODB_SERVER_SELECTION_TIMEOUT", 5*time.Second),
 		},
 		CodeProcessing: CodeProcessingConfig{
-			ChunkSize:         getEnvInt("CHUNK_SIZE", 30),
-			OverlapSize:       getEnvInt("CHUNK_OVERLAP_SIZE", 10),
-			EmbeddingBatchSize: getEnvInt("EMBEDDING_BATCH_SIZE", 50),
+			ChunkSize:           getEnvInt("CHUNK_SIZE", 30),
+			OverlapSize:         getEnvInt("CHUNK_OVERLAP_SIZE", 10),
+			EmbeddingBatchSize:  getEnvInt("EMBEDDING_BATCH_SIZE", 50),
 			EmbeddingWorkersNum: getEnvInt("EMBEDDING_WORKERS_NUM", 3),
 		},
 		JWT: JWTConfig{

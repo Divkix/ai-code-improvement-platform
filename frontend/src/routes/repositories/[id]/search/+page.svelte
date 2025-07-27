@@ -172,9 +172,7 @@
 </script>
 
 <svelte:head>
-	<title
-		>{repository ? `Search in ${repository.name}` : 'Repository Search'} - GitHub Analyzer</title
-	>
+	<title>{repository ? `Search in ${repository.name}` : 'Repository Search'} - ACIP</title>
 	<meta
 		name="description"
 		content={repository ? `Search code in ${repository.fullName}` : 'Search repository code'}
