@@ -144,17 +144,71 @@ func (s *GitHubService) GetUserRepositories(ctx context.Context, accessToken str
 	return ghRepos, nil
 }
 
-// SearchUserRepositories searches repositories for the authenticated user
+// SearchUserRepositories searches repositories for the authenticated user including organization repositories
 func (s *GitHubService) SearchUserRepositories(ctx context.Context, accessToken, query string, limit int) ([]*GitHubRepository, error) {
 	client := s.CreateClient(accessToken)
 
-	// Get the authenticated user to include them in the search
+	// Get all repositories accessible to the user (including organization repos)
+	// First get user's own repositories with the search term
+	userRepos, err := s.searchUserOwnedRepositories(ctx, client, query, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	// Then get organization repositories with the search term
+	orgRepos, err := s.searchOrganizationRepositories(ctx, client, query, limit-len(userRepos))
+	if err != nil {
+		// Don't fail completely if org search fails, just log and continue with user repos
+		log.Printf("Warning: Failed to search organization repositories: %v", err)
+	}
+
+	// Combine and deduplicate results
+	repoMap := make(map[int64]*GitHubRepository)
+	
+	// Add user repositories
+	for _, repo := range userRepos {
+		repoMap[repo.ID] = repo
+	}
+	
+	// Add organization repositories (avoiding duplicates)
+	for _, repo := range orgRepos {
+		if _, exists := repoMap[repo.ID]; !exists {
+			repoMap[repo.ID] = repo
+		}
+	}
+
+	// Convert map to slice and sort by updated time
+	var allRepos []*GitHubRepository
+	for _, repo := range repoMap {
+		allRepos = append(allRepos, repo)
+	}
+
+	// Sort by updated time (most recent first)
+	for i := 0; i < len(allRepos)-1; i++ {
+		for j := i + 1; j < len(allRepos); j++ {
+			if allRepos[i].UpdatedAt.Before(allRepos[j].UpdatedAt) {
+				allRepos[i], allRepos[j] = allRepos[j], allRepos[i]
+			}
+		}
+	}
+
+	// Limit results
+	if len(allRepos) > limit {
+		allRepos = allRepos[:limit]
+	}
+
+	return allRepos, nil
+}
+
+// searchUserOwnedRepositories searches repositories owned by the authenticated user
+func (s *GitHubService) searchUserOwnedRepositories(ctx context.Context, client *github.Client, query string, limit int) ([]*GitHubRepository, error) {
+	// Get the authenticated user
 	user, _, err := client.Users.Get(ctx, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get authenticated user: %w", err)
 	}
 
-	// Build search query to include user's repositories
+	// Build search query for user's own repositories
 	searchQuery := fmt.Sprintf("%s user:%s", query, user.GetLogin())
 
 	// Search repositories
@@ -171,7 +225,7 @@ func (s *GitHubService) SearchUserRepositories(ctx context.Context, accessToken,
 		if s.IsRateLimited(err) {
 			return nil, fmt.Errorf("github rate limit exceeded: %w", err)
 		}
-		return nil, fmt.Errorf("failed to search repositories: %w", err)
+		return nil, fmt.Errorf("failed to search user repositories: %w", err)
 	}
 
 	var ghRepos []*GitHubRepository
@@ -180,6 +234,55 @@ func (s *GitHubService) SearchUserRepositories(ctx context.Context, accessToken,
 	}
 
 	return ghRepos, nil
+}
+
+// searchOrganizationRepositories searches repositories from organizations the user has access to
+func (s *GitHubService) searchOrganizationRepositories(ctx context.Context, client *github.Client, query string, limit int) ([]*GitHubRepository, error) {
+	if limit <= 0 {
+		return []*GitHubRepository{}, nil
+	}
+
+	// Get user's organizations
+	orgs, _, err := client.Organizations.List(ctx, "", nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user organizations: %w", err)
+	}
+
+	var allOrgRepos []*GitHubRepository
+	
+	// Search each organization's repositories
+	for _, org := range orgs {
+		if len(allOrgRepos) >= limit {
+			break
+		}
+
+		orgLogin := org.GetLogin()
+		searchQuery := fmt.Sprintf("%s org:%s", query, orgLogin)
+
+		opt := &github.SearchOptions{
+			Sort:  "updated",
+			Order: "desc",
+			ListOptions: github.ListOptions{
+				PerPage: limit - len(allOrgRepos),
+			},
+		}
+
+		result, _, err := client.Search.Repositories(ctx, searchQuery, opt)
+		if err != nil {
+			// Log error but continue with other orgs
+			log.Printf("Warning: Failed to search repositories for organization %s: %v", orgLogin, err)
+			continue
+		}
+
+		for _, repo := range result.Repositories {
+			if len(allOrgRepos) >= limit {
+				break
+			}
+			allOrgRepos = append(allOrgRepos, s.convertToGitHubRepository(repo))
+		}
+	}
+
+	return allOrgRepos, nil
 }
 
 // GetRecentUserRepositories fetches the most recently updated repositories for the authenticated user

@@ -57,7 +57,7 @@
 			error = '';
 
 			const response = await getRecentGitHubRepositories(6);
-			repositories = response.repositories.map((repo: GitHubRepository) => ({
+			repositories = (response.repositories || []).map((repo: GitHubRepository) => ({
 				...repo,
 				stargazersCount: repo.stargazersCount ?? 0,
 				forksCount: repo.forksCount ?? 0,
@@ -82,7 +82,7 @@
 			const response = await getGitHubRepositories(page);
 
 			if (page === 1) {
-				repositories = response.repositories.map((repo) => ({
+				repositories = (response.repositories || []).map((repo) => ({
 					...repo,
 					stargazersCount: repo.stargazersCount ?? 0,
 					forksCount: repo.forksCount ?? 0,
@@ -91,7 +91,7 @@
 			} else {
 				repositories = [
 					...repositories,
-					...response.repositories.map((repo) => ({
+					...(response.repositories || []).map((repo) => ({
 						...repo,
 						stargazersCount: repo.stargazersCount ?? 0,
 						forksCount: repo.forksCount ?? 0,
@@ -121,7 +121,7 @@
 			error = '';
 
 			const response = await searchGitHubRepositories(query.trim(), 6);
-			repositories = response.repositories.map((repo: GitHubRepository) => ({
+			repositories = (response.repositories || []).map((repo: GitHubRepository) => ({
 				...repo,
 				stargazersCount: repo.stargazersCount ?? 0,
 				forksCount: repo.forksCount ?? 0,
