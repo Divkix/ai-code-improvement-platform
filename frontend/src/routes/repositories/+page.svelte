@@ -378,12 +378,12 @@
 	{#if loading}
 		<div class="py-12 text-center">
 			<Loader2 class="mx-auto h-8 w-8 animate-spin" />
-			<p class="mt-2 text-muted-foreground">Loading repositories...</p>
+			<p class="text-muted-foreground mt-2">Loading repositories...</p>
 		</div>
 	{:else if !repositories || repositories.length === 0}
 		<Card.Root class="py-12">
 			<Card.Content class="text-center">
-				<div class="mx-auto mb-4 h-12 w-12 text-muted-foreground">
+				<div class="text-muted-foreground mx-auto mb-4 h-12 w-12">
 					<FolderGit2 class="h-12 w-12" />
 				</div>
 				<Card.Title class="text-sm">No repositories</Card.Title>
@@ -406,8 +406,8 @@
 						<div class="flex items-center justify-between">
 							<div class="flex items-center">
 								<div class="flex-shrink-0">
-									<div class="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-										<FolderGit2 class="h-4 w-4 text-muted-foreground" />
+									<div class="bg-muted flex h-8 w-8 items-center justify-center rounded-full">
+										<FolderGit2 class="text-muted-foreground h-4 w-4" />
 									</div>
 								</div>
 								<div class="ml-3">
@@ -416,7 +416,7 @@
 											href="https://github.com/{repo.fullName}"
 											target="_blank"
 											rel="noopener noreferrer"
-											class="transition-colors hover:text-primary"
+											class="hover:text-primary transition-colors"
 										>
 											{repo.name}
 										</a>
@@ -431,7 +431,7 @@
 					</Card.Header>
 
 					<Card.Content>
-						<p class="mb-4 text-sm text-muted-foreground">{repo.description || 'No description'}</p>
+						<p class="text-muted-foreground mb-4 text-sm">{repo.description || 'No description'}</p>
 
 						<!-- Import Progress Bar for importing repositories -->
 						{#if repo.status === 'importing' || repo.status === 'pending'}
@@ -440,11 +440,11 @@
 									<span class="text-xs font-medium">
 										{repo.status === 'pending' ? 'Preparing import...' : 'Importing repository...'}
 									</span>
-									<span class="text-xs text-muted-foreground">{repo.importProgress}%</span>
+									<span class="text-muted-foreground text-xs">{repo.importProgress}%</span>
 								</div>
 								<Progress value={repo.importProgress} class="w-full" />
 								{#if repo.status === 'importing'}
-									<div class="mt-2 flex items-center text-xs text-primary">
+									<div class="text-primary mt-2 flex items-center text-xs">
 										<Loader2 class="mr-2 h-3 w-3 animate-spin" />
 										Processing repository files...
 									</div>
@@ -454,25 +454,25 @@
 
 						<div class="mb-4 grid grid-cols-2 gap-4">
 							<div>
-								<dt class="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+								<dt class="text-muted-foreground text-xs font-medium uppercase tracking-wide">
 									Language
 								</dt>
 								<dd class="text-sm">{repo.primaryLanguage || 'Unknown'}</dd>
 							</div>
 							<div>
-								<dt class="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+								<dt class="text-muted-foreground text-xs font-medium uppercase tracking-wide">
 									Lines of Code
 								</dt>
 								<dd class="text-sm">{getLinesOfCode(repo).toLocaleString()}</dd>
 							</div>
 							<div>
-								<dt class="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+								<dt class="text-muted-foreground text-xs font-medium uppercase tracking-wide">
 									Progress
 								</dt>
 								<dd class="text-sm">{repo.importProgress}%</dd>
 							</div>
 							<div>
-								<dt class="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+								<dt class="text-muted-foreground text-xs font-medium uppercase tracking-wide">
 									Last Updated
 								</dt>
 								<dd class="text-sm">{getLastAnalyzed(repo)}</dd>
@@ -491,7 +491,7 @@
 </div>
 
 <Dialog.Root bind:open={showAddModal}>
-	<Dialog.Content class="max-w-[calc(100%-2rem)] sm:max-w-5xl">
+	<Dialog.Content class="max-h-[90vh] max-w-[calc(100%-2rem)] overflow-y-auto sm:max-w-5xl">
 		<Dialog.Header>
 			<Dialog.Title>Add Repository</Dialog.Title>
 		</Dialog.Header>
@@ -540,7 +540,7 @@
 						required
 						class="mt-1"
 					/>
-					<p class="mt-1 text-xs text-muted-foreground">
+					<p class="text-muted-foreground mt-1 text-xs">
 						Enter a GitHub repository URL or owner/repository format
 					</p>
 				</div>
