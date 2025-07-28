@@ -1,20 +1,28 @@
-# Backend – AI Code Improvement Platform
+# Backend – AI Code Fixing Platform
 
-A production-ready Go (1.24+) service that powers the AI Code Improvement Platform.  
-It exposes a **type-safe REST API** (OpenAPI 3.1) for semantic code search, chat-based RAG, GitHub repository ingestion and dashboard analytics.  The backend is stateless and can run anywhere Docker is supported.
+A production-ready Go (1.24+) service that powers the AI Code Fixing Platform.  
+It exposes a **type-safe REST API** (OpenAPI 3.1) for automated code fixing, AST-based analysis, knowledge graph queries, and repository-wide understanding. Transforms from "smart text search" into an automated code fixing engine that generates complete, validated solutions for technical debt and code issues.
 
 ---
 
 ## ✨ Features
 
-- **Gin-powered REST API** – minimal, ultra-fast router with middleware support.
-- **OpenAPI-first** – single source of truth (`api/openapi.yaml`) with generated server stubs and client SDKs.
-- **Authentication & Authorization** – JWT sessions, GitHub OAuth, route-based RBAC.
-- **Vector Search** – Qdrant integration for code embeddings & hybrid BM25 queries.
-- **MongoDB Storage** – metadata & user/session persistence with index-aware queries.
-- **Background Workers** – repository embedding pipeline and scheduled maintenance jobs.
-- **Modular Layers** – `handlers`, `services`, `models`, `middleware`, `database` for clean separation of concerns.
-- **Container-first** – multi-stage `Dockerfile` + `docker-compose` for local and prod.
+- **Automated Code Fixing** – AST-based problem detection with generated solutions and validation
+- **Knowledge Graph Analysis** – Neo4j integration for code relationships and dependency traversal
+- **Multi-Modal Understanding** – combines code, comments, tests, and documentation for context
+- **Hierarchical Code Summarization** – semantic clustering from functions to system architecture
+- **Program Dependence Graphs** – control and data flow analysis for change impact prediction
+- **Incremental Analysis** – real-time updates with smart caching and change propagation
+- **Fix Validation System** – syntax, compilation, behavioral, and security validation
+- **Repository-Level Reasoning** – CodePlan-inspired planning for complex architectural queries
+- **OpenAPI-first Architecture** – single source of truth (`api/openapi.yaml`) with generated types
+- **Gin-powered REST API** – minimal, ultra-fast router with comprehensive middleware support
+- **Authentication & Authorization** – JWT sessions, GitHub OAuth, route-based RBAC
+- **Vector & Graph Search** – Qdrant + Neo4j for semantic similarity and relationship queries
+- **MongoDB Storage** – metadata persistence with advanced indexing for complex queries
+- **Background Processing** – embedding pipeline, AST analysis, and fix generation workers
+- **Modular Architecture** – clean separation with `handlers`, `services`, `models`, `middleware`
+- **Container-first Deployment** – multi-stage `Dockerfile` + `docker-compose` for all environments
 
 ---
 
@@ -29,11 +37,11 @@ backend/
 ├── internal/
 │   ├── auth/            # JWT utilities, OAuth helpers
 │   ├── config/          # env var parsing & validation
-│   ├── database/        # Mongo & Qdrant clients
-│   ├── handlers/        # HTTP route handlers
-│   ├── middleware/      # Gin middleware (auth, logging)
-│   ├── models/          # Domain entities & persistence helpers
-│   ├── services/        # Business logic (chat, embeddings, GH sync)
+│   ├── database/        # Mongo, Qdrant & Neo4j clients
+│   ├── handlers/        # HTTP route handlers (fix generation, analysis)
+│   ├── middleware/      # Gin middleware (auth, logging, validation)
+│   ├── models/          # Domain entities & persistence (fixes, analysis)
+│   ├── services/        # Business logic (AST analysis, fix generation, validation)
 │   └── server/          # HTTP server wiring
 ├── scripts/             # Helper bash scripts
 ├── Dockerfile           # Production image
@@ -47,22 +55,23 @@ backend/
 ### Prerequisites
 
 - Go 1.24+
-- Docker / Docker Compose (for Mongo + Qdrant)
+- Docker / Docker Compose (for Mongo + Qdrant + Neo4j)
 - Make (optional but recommended)
+- Tree-sitter parsers (for AST analysis)
 
 ### Getting Started
 
 ```bash
 cd backend
 
-# Spin up Mongo & Qdrant plus a hot-reload server
+# Spin up Mongo, Qdrant, Neo4j plus a hot-reload server
 go run ./cmd/server        # or: make backend-dev
 
 # or via Docker Compose (recommended)
-make up env=dev            # mounts source & reflex-rebuild
+make up env=dev            # mounts source & reflex-rebuild with all databases
 ```
 
-The dev compose file (`../docker-compose.dev.yml`) exposes the API on <http://localhost:8080>.
+The dev compose file (`../docker-compose.dev.yml`) exposes the API on <http://localhost:8080> with full infrastructure stack.
 
 ---
 
@@ -74,11 +83,17 @@ All configuration is supplied via **environment variables** and parsed in `inter
 |----------|---------|-------------|
 | `PORT` | 8080 | HTTP listen port |
 | `MONGODB_URI` | mongodb://mongo:27017/acip | Mongo connection string |
-| `QDRANT_URL` | http://qdrant:6334 | Qdrant API base |
+| `QDRANT_URL` | http://qdrant:6334 | Qdrant vector database API |
+| `NEO4J_URI` | bolt://neo4j:7687 | Neo4j knowledge graph database |
+| `NEO4J_USER` / `NEO4J_PASSWORD` | neo4j/password | Neo4j authentication |
 | `JWT_SECRET` | – | HMAC secret for JWT tokens |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | – | GitHub OAuth credentials |
 | `LLM_API_KEY` | – | API key for OpenAI-compatible LLM |
 | `EMBEDDING_API_KEY` | – | API key for embedding model |
+| `ENABLE_AST_ANALYSIS` | true | Enable AST-based code analysis |
+| `ENABLE_KNOWLEDGE_GRAPH` | true | Enable knowledge graph features |
+| `ANALYSIS_DEPTH` | semantic | Analysis depth: basic, ast, semantic, full |
+| `TREE_SITTER_PATH` | /usr/local/lib/tree-sitter | Path to tree-sitter parsers |
 
 ### Loading `.env` Locally
 

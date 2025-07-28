@@ -1,4 +1,4 @@
-# Frontend – AI Code Improvement Platform
+# Frontend – AI Code Fixing Platform
 
 [![vite](https://img.shields.io/badge/SvelteKit-%23ff3e00.svg?logo=svelte&logoColor=white)](https://kit.svelte.dev/)  
 [![bun](https://img.shields.io/badge/Bun-1.0-blue?logo=bun)](https://bun.sh/)
@@ -20,17 +20,19 @@
 
 ## Overview
 
-AI-powered code analysis platform frontend built with SvelteKit and TypeScript. Features type-safe API integration with OpenAPI code generation.
+AI-powered automated code fixing platform frontend built with SvelteKit and TypeScript. Transforms from "smart text search" into an automated code fixing engine that generates complete, validated solutions for technical debt and code issues.
 
 ## Features
 
 - 🔐 **JWT Authentication** with automatic token management
-- 📊 **Dashboard** with repository analytics and metrics
-- 🔗 **GitHub Integration** with OAuth authentication
-- 💬 **AI Chat Interface** for code analysis with RAG-powered responses
+- 📊 **Analytics Dashboard** with fix generation metrics and cost savings
+- 🔗 **GitHub Integration** with OAuth authentication and repository import
+- 🤖 **AI Fix Generation Interface** for automated code fixing with AST-powered analysis
+- 🛠️ **Code Issue Detection** with structural and semantic analysis
+- 💻 **Fix Validation Display** showing syntax, compilation, and test results
 - 📱 **Responsive Design** with TailwindCSS
 - ⚡ **Type Safety** with OpenAPI-generated types
-- 🔧 **Real-time Data** from backend API
+- 🔧 **Real-time Progress** tracking for repository analysis and fix generation
 
 ## Development Setup
 
@@ -114,12 +116,15 @@ src/
 
 ## API Integration
 
-This frontend is designed to work with the backend API and features:
+This frontend interfaces with the AI Code Fixing Platform backend API:
 
-- Complete OpenAPI integration with generated types
-- Automatic JWT token handling
-- Error handling with proper HTTP status codes
-- Real-time data synchronization
+- **Complete OpenAPI integration** with generated types for type-safe API communication
+- **Automatic JWT token handling** for secure authentication
+- **Error handling** with proper HTTP status codes and user feedback
+- **Real-time progress tracking** for repository analysis and fix generation
+- **Fix validation results** displaying syntax, compilation, and test validation
+- **AST-based analysis** results with code structure visualization
+- **Multi-modal context** showing code, comments, tests, and documentation
 
 ## Testing
 
