@@ -266,31 +266,31 @@ The AI code analysis market is experiencing rapid growth with diverse players ac
 ## Competitive Messaging Framework
 
 ### Against GitHub Copilot
-**Our Message**: "While Copilot helps you write code, we help you understand the code that already exists. Perfect for onboarding new developers to your specific codebase."
+**Our Message**: "While Copilot helps you write new code, we fix the code that already exists. Eliminate technical debt automatically instead of generating more code to maintain."
 
 **Key Differentiators**:
-- Codebase-specific vs. general code patterns
-- Understanding vs. generation focus
-- Enterprise deployment options
-- Team productivity vs. individual productivity
+- Automated complete fixes vs. code suggestions only
+- Repository-wide understanding vs. local context
+- Technical debt elimination vs. code generation
+- Per-fix pricing vs. expensive per-seat subscriptions
 
 ### Against Traditional Static Analysis
-**Our Message**: "Ask questions in plain English instead of writing complex rules. Understand your code like talking to a senior developer who knows everything about your codebase."
+**Our Message**: "Don't just find problems - fix them automatically. While tools like SonarQube tell you what's wrong, we generate the complete solution."
 
 **Key Differentiators**:
-- Natural language vs. rule configuration
-- Semantic understanding vs. pattern matching
-- Interactive queries vs. static reports
-- Developer onboarding vs. bug detection
+- Automated fix generation vs. problem detection only
+- Complete code solutions vs. rule violations
+- Repository-wide context vs. isolated issue reports
+- Developer productivity vs. code quality metrics
 
 ### Against Enterprise Platforms
-**Our Message**: "Get enterprise-grade code intelligence without the enterprise complexity. Setup in minutes, not months."
+**Our Message**: "Get automated fixing without the enterprise complexity. Start eliminating technical debt in minutes, not months."
 
 **Key Differentiators**:
-- Fast time-to-value vs. complex implementation
-- Developer-friendly vs. architect-focused
-- Competitive pricing vs. enterprise-only
-- Modern interface vs. legacy reporting
+- Immediate automated fixes vs. lengthy analysis reports
+- Developer-friendly interface vs. architect-focused dashboards
+- Per-fix pricing vs. six-figure enterprise deals
+- Rapid deployment vs. complex integration projects
 
 ## Win/Loss Analysis Framework
 
