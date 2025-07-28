@@ -4,17 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an AI-powered code analysis platform that helps development teams onboard faster, maintain code quality, and modernize legacy codebases through intelligent conversation with their repositories.
+This is an AI-powered automated code fixing platform that transforms from "smart text search" into an automated code fixing engine. It generates complete, validated solutions for technical debt and code issues through AST-based analysis, knowledge graphs, and multi-modal understanding.
 
 **Technology Stack:**
-- Frontend: SvelteKit (Bun runtime)
+- Frontend: SvelteKit (Bun runtime) with fix validation UI
 - Backend: Go 1.24+ with Gin framework + oapi-codegen
 - API Documentation: OpenAPI 3.0 specification (auto-generated)
-- Database: MongoDB 8.0
-- Vector Database: Qdrant 1.7+
+- Database: MongoDB 8.0 (metadata, fixes, analysis results)
+- Vector Database: Qdrant 1.7+ (semantic embeddings)
+- Knowledge Graph: Neo4j (code relationships, dependencies)
+- AST Analysis: Tree-sitter parsers (40+ languages)
 - Embedding Model: Voyage AI (voyage-code-3)
 - LLM: OpenAI-compatible (GPT-4o-mini default) or Claude 4 sonnet
-- Containerization: Docker Compose
+- Containerization: Docker Compose with full infrastructure stack
 
 ## Important Code Conventions
 
@@ -139,55 +141,82 @@ The system follows a microservices architecture with the following core componen
 ### Backend Architecture
 - **API Layer**: Gin framework with oapi-codegen for type-safe OpenAPI implementation
 - **Authentication**: JWT-based authentication with bcrypt password hashing
-- **Database Layer**: MongoDB for document storage, Qdrant for vector embeddings
-- **External APIs**: GitHub API for repository access, Voyage AI for embeddings, OpenAI-compatible LLM or Claude for chat responses
-- **Processing Pipeline**: Async repository import with code chunking and embedding generation
+- **Database Layer**: MongoDB for document storage, Qdrant for vector embeddings, Neo4j for knowledge graphs
+- **AST Analysis Engine**: Tree-sitter parsers for structural code understanding across 40+ languages
+- **Fix Generation Engine**: Problem detection, solution planning, code generation, and validation
+- **Knowledge Graph Service**: Code relationships, dependencies, and architectural pattern analysis
+- **Multi-Modal Analysis**: Combines code, comments, tests, documentation, and commit history
+- **External APIs**: GitHub API for repository access, Voyage AI for embeddings, OpenAI-compatible LLM
+- **Processing Pipeline**: AST analysis, knowledge graph population, incremental change tracking
 
 ### Key Data Models
 - **Users**: Authentication and GitHub token storage (encrypted)
-- **Repositories**: GitHub repository metadata and import status tracking
-- **CodeChunks**: Processed code segments with metadata and vector references
-- **ChatSessions**: Conversation history with retrieved context chunks
-- **AnalyticsEvents**: Usage tracking and optimization metrics
+- **Repositories**: GitHub repository metadata, analysis status, and knowledge graph references
+- **CodeChunks**: AST-processed code segments with structural metadata and vector references
+- **GeneratedFixes**: Complete fix solutions with validation results and confidence scores
+- **KnowledgeGraphNodes**: AST nodes, relationships, and dependency information
+- **ProgramDependenceGraphs**: Control and data flow analysis for change impact prediction
+- **ChatSessions**: Conversation history with enhanced context retrieval
+- **AnalyticsEvents**: Usage tracking, fix success rates, and cost savings metrics
 
-### RAG Pipeline
-The core intelligence comes from a Retrieval-Augmented Generation (RAG) pipeline:
+### Enhanced Analysis Pipeline
+The core intelligence combines multiple analysis approaches for automated code fixing:
 
-1. **Code Chunking**: Files are split into 150-line overlapping chunks
-2. **Embedding Generation**: Chunks are converted to vectors using Voyage AI's voyage-code-3 model
-3. **Vector Storage**: Embeddings stored in Qdrant with metadata
-4. **Query Processing**: User questions are embedded and matched against code chunks
-5. **Context Construction**: Relevant chunks are assembled into prompts for the LLM
-6. **Response Generation**: LLM provides context-aware answers referencing specific code
+1. **AST-Based Code Analysis**: Tree-sitter parsers extract structural information (functions, classes, dependencies)
+2. **Knowledge Graph Population**: Code relationships stored in Neo4j for traversal and impact analysis
+3. **Program Dependence Analysis**: Control and data flow graphs for change impact prediction
+4. **Multi-Modal Context Extraction**: Combines code, comments, tests, docs, and commit history
+5. **Hierarchical Summarization**: Semantic clustering from functions to system architecture
+6. **Fix Generation Pipeline**: Problem detection → solution planning → code generation → validation
+7. **Incremental Updates**: Real-time change tracking with smart caching and propagation
+8. **Repository-Level Reasoning**: CodePlan-inspired planning for complex architectural queries
 
-### Search Capabilities
-The platform provides sophisticated multi-modal search functionality:
-- **Text Search**: MongoDB full-text search with relevance scoring
-- **Vector Search**: Semantic similarity using Qdrant embeddings
-- **Hybrid Search**: Configurable text + vector weight combination
-- **Similar Code**: Code recommendation based on semantic similarity
-- **Advanced Filtering**: Language, file type, and repository scoping
+### Analysis and Fix Capabilities
+The platform provides comprehensive code analysis and automated fixing:
+- **Structural Analysis**: AST-based understanding of code organization and relationships
+- **Knowledge Graph Queries**: Traverse code dependencies and architectural patterns
+- **Semantic Search**: Vector similarity using Qdrant embeddings with context enrichment
+- **Multi-Modal Context**: Combine code structure, comments, tests, and documentation
+- **Fix Generation**: Automated problem detection with validated solution generation
+- **Impact Analysis**: Predict change effects through program dependence graphs
+- **Incremental Processing**: Smart caching with real-time updates and change propagation
 
 ### Frontend Architecture
-- **SvelteKit**: TypeScript-based reactive framework
-- **State Management**: Svelte stores for authentication and chat state
+- **SvelteKit**: TypeScript-based reactive framework with fix validation UI
+- **State Management**: Svelte stores for authentication, fix tracking, and analysis state
 - **API Client**: Type-safe client generated from OpenAPI specification
-- **UI Components**: Responsive design with TailwindCSS
-- **Chat Interface**: Real-time conversation with syntax highlighting
+- **UI Components**: Responsive design with TailwindCSS and fix visualization
+- **Fix Generation Interface**: Real-time progress tracking and validation result display
+- **Analysis Dashboard**: Code structure visualization and fix success metrics
 
 ## Implementation Strategy
 
-The project uses vertical slicing - each slice delivers a complete, testable feature:
+The project implements a 15-month roadmap transforming from text-based analysis to automated code fixing:
 
-1. **Foundation**: Docker environment, basic authentication, health checks
-2. **Dashboard**: Visual metrics showing code analysis value and cost savings
-3. **Repository Management**: CRUD operations for repository tracking
-4. **GitHub Integration**: OAuth authentication and repository import with progress tracking
-5. **Code Processing**: File fetching, chunking, and metadata extraction
-6. **Search Foundation**: Basic text search through code chunks
-7. **Vector RAG**: Semantic search with embeddings and vector storage
-8. **AI Chat**: Complete conversational interface with LLM integration
-9. **Polish**: Error handling, performance optimization, demo preparation
+**Phase 1 (Months 1-3): Foundation Enhancement**
+- AST-based code analysis engine with Tree-sitter parsers
+- Knowledge graph infrastructure using Neo4j
+- Enhanced metadata extraction beyond simple text patterns
+
+**Phase 2 (Months 4-6): Semantic Understanding**
+- Program dependence graph implementation for control/data flow
+- Hierarchical code summarization with semantic clustering
+- Multi-modal context integration (code + comments + tests + docs)
+
+**Phase 3 (Months 7-9): Repository-Level Reasoning**
+- CodePlan-inspired planning system for complex queries
+- Advanced context window management with compression
+- Repository-wide architectural understanding
+
+**Phase 4 (Months 10-12): Real-Time Updates**
+- Incremental analysis engine with smart caching
+- Change propagation system for impact tracking
+- 90% reduction in processing time for updates
+
+**Phase 5 (Months 13-15): Automated Fix Generation**
+- Complete fix generation engine with validation
+- Multi-level validation (syntax, compilation, behavior, security)
+- 90%+ automation of common code fixes and technical debt elimination
 
 ## Key Implementation Notes
 
@@ -236,9 +265,12 @@ Files are processed into optimal chunks for retrieval:
 ### Configuration Management
 Environment-based configuration in `internal/config/config.go`:
 - All configuration uses environment variables loaded from `.env` file
-- Key configs: `EMBEDDING_BASE_URL`, `LLM_BASE_URL`, `MONGODB_URI`, `QDRANT_URL`
+- **Database configs**: `MONGODB_URI`, `QDRANT_URL`, `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`
+- **AI service configs**: `EMBEDDING_BASE_URL`, `LLM_BASE_URL`, `EMBEDDING_API_KEY`, `LLM_API_KEY`
+- **Analysis configs**: `ENABLE_AST_ANALYSIS`, `ENABLE_KNOWLEDGE_GRAPH`, `ANALYSIS_DEPTH`, `TREE_SITTER_PATH`
+- **Performance configs**: `MAX_CONCURRENT_WORKERS`, `ANALYSIS_CACHE_SIZE`, `MAX_CONTEXT_TOKENS`
+- **Chunking strategy**: `CHUNK_SIZE` and `CHUNK_OVERLAP_SIZE` (default: 30/10 lines for local models, 150/50 for Voyage AI)
 - Vector dimensions configurable via `VECTOR_DIMENSION` (256, 512, 768, 1024, 2048)
-- Chunking strategy: `CHUNK_SIZE` and `CHUNK_OVERLAP_SIZE` (default: 30/10 lines)
 - See `.env.example` for complete configuration reference
 
 ## Environment Setup
@@ -253,6 +285,9 @@ JWT_SECRET=your-secret-key
 # Database connections
 MONGODB_URI=mongodb://mongodb:27017/acip  # Use 'mongodb' for Docker
 QDRANT_URL=http://localhost:6334
+NEO4J_URI=bolt://neo4j:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=password
 
 # AI Services
 EMBEDDING_BASE_URL=https://api.openai.com/v1
@@ -270,11 +305,18 @@ GITHUB_ENCRYPTION_KEY=your-16-24-32-byte-aes-key
 
 # Frontend
 VITE_API_URL=http://localhost:8080
+
+# Analysis Configuration
+ENABLE_AST_ANALYSIS=true
+ENABLE_KNOWLEDGE_GRAPH=true
+ANALYSIS_DEPTH=semantic
+TREE_SITTER_PATH=/usr/local/lib/tree-sitter
 ```
 
 **Important Notes:**
-- For Docker: Use `mongodb` as hostname, `localhost` for direct runs
+- For Docker: Use service names (`mongodb`, `neo4j`) as hostnames, `localhost` for direct runs
 - Local embedding models: Set `EMBEDDING_BASE_URL=http://host.docker.internal:1234/v1`
+- AST analysis requires Tree-sitter parsers for supported languages
 - See `.env.example` for complete configuration with defaults and comments
 
 ## Demo User Access
@@ -323,9 +365,9 @@ cd frontend && bun run lint
 
 ## Project Status
 
-This is a fully implemented AI-powered code analysis platform with the following completed features:
+This is an AI-powered automated code fixing platform implementing a 15-month roadmap to transform from text analysis to automated code fixing:
 
-**✅ Completed:**
+**✅ Current Foundation (Phase 0):**
 - Docker containerization with development and production modes
 - Go backend with OpenAPI-first development using oapi-codegen
 - SvelteKit frontend with TypeScript and TailwindCSS
@@ -338,7 +380,16 @@ This is a fully implemented AI-powered code analysis platform with the following
 - Dashboard with analytics and cost savings calculations
 - Full test coverage for critical components
 
-The platform demonstrates enterprise-ready AI-powered code analysis with sophisticated RAG (Retrieval-Augmented Generation) capabilities for conversational code exploration.
+**🚧 In Development (Phases 1-5):**
+- AST-based code analysis engine with Tree-sitter parsers (Phase 1)
+- Neo4j knowledge graph infrastructure (Phase 1)  
+- Program dependence graphs for control/data flow analysis (Phase 2)
+- Hierarchical code summarization with semantic clustering (Phase 2)
+- Multi-modal context integration (Phase 3)
+- Incremental analysis with smart caching (Phase 4)
+- Complete automated fix generation engine (Phase 5)
+
+The platform is evolving from conversational code exploration to automated code fixing with validated solution generation.
 
 ## Key File Locations
 
@@ -368,6 +419,9 @@ The platform demonstrates enterprise-ready AI-powered code analysis with sophist
 **Common Issues:**
 1. **Tests failing after OpenAPI changes**: Run `make generate` to regenerate types
 2. **Frontend API errors**: Regenerate types with `bun run generate-api`
-3. **Docker networking**: Use `mongodb` hostname in Docker, `localhost` for direct runs
+3. **Docker networking**: Use service names (`mongodb`, `neo4j`) in Docker, `localhost` for direct runs
 4. **Embedding pipeline stuck**: Check Qdrant connection and vector dimensions match
-5. **Build failures**: Ensure `golangci-lint` is installed and run `make validate`
+5. **Neo4j connection errors**: Verify `NEO4J_URI`, `NEO4J_USER`, and `NEO4J_PASSWORD` are set correctly
+6. **AST analysis failures**: Ensure Tree-sitter parsers are installed at `TREE_SITTER_PATH`
+7. **Build failures**: Ensure `golangci-lint` is installed and run `make validate`
+8. **Knowledge graph queries failing**: Check Neo4j service is running and accessible

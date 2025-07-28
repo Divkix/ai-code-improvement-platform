@@ -1,13 +1,13 @@
-# ACIP - AI Code Improvement Platform
+# AI Code Fixing Platform
 
 <!-- Uncomment once CI is live -->
 <!--[![CI](https://github.com/your-org/ai-code-improvement-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/ai-code-improvement-platform/actions/workflows/ci.yml)-->
 
-A fully-containerised end-to-end system that helps developers explore, understand and improve codebases using modern AI techniques.
+An automated code fixing engine that transforms from "smart text search" into AI-powered code fixing with AST-based analysis, knowledge graphs, and validated solution generation. Delivers complete, tested fixes for technical debt and code quality issues.
 
 ## Table of Contents
 
-- [ACIP - AI Code Improvement Platform](#acip---ai-code-improvement-platform)
+- [AI Code Fixing Platform](#ai-code-fixing-platform)
   - [Table of Contents](#table-of-contents)
   - [✨ Key Features](#-key-features)
   - [🏗️ Tech Stack](#️-tech-stack)
@@ -28,12 +28,16 @@ A fully-containerised end-to-end system that helps developers explore, understan
 
 ## ✨ Key Features
 
-- **Semantic Code Search** – vector & hybrid search across all indexed repositories.
-- **AI Chat (RAG)** – ask questions about your code in natural language; answers are grounded in retrieved code snippets.
-- **Repository Dashboard** – language statistics, recent activity and trend insights.
-- **GitHub OAuth** – securely connect your GitHub account for repository import.
-- **Automated Embedding Pipeline** – background worker keeps vectors in-sync as code changes.
-- **Type-Safe API** – single OpenAPI spec shared by Go backend & SvelteKit frontend.
+- **Automated Code Fixing** – AST-based problem detection with AI-generated solutions and comprehensive validation
+- **Knowledge Graph Analysis** – understand code relationships, dependencies, and architectural patterns through Neo4j integration  
+- **Multi-Modal Understanding** – combines code structure, comments, tests, and documentation for complete context
+- **Fix Validation System** – syntax, compilation, behavioral, and security validation ensuring safe code changes
+- **Hierarchical Code Summarization** – semantic clustering from individual functions to system-wide architecture
+- **Program Dependence Graphs** – control and data flow analysis for precise change impact prediction
+- **Incremental Analysis** – real-time repository updates with smart caching and change propagation
+- **Repository-Level Reasoning** – CodePlan-inspired planning for complex architectural queries and multi-step fixes
+- **GitHub OAuth Integration** – secure repository access with automated import and progress tracking
+- **Type-Safe API** – OpenAPI-first development with generated types for backend and frontend
 
 ---
 
@@ -42,9 +46,11 @@ A fully-containerised end-to-end system that helps developers explore, understan
 | Layer       | Technology |
 |-------------|------------|
 | **Frontend**| SvelteKit + TypeScript, TailwindCSS, openapi-fetch |
-| **Backend** | Go 1.22 (Gin), MongoDB, Qdrant, OpenAI-compatible LLM/Embedding APIs |
-| **Auth**    | JWT for session, GitHub OAuth for repository access |
-| **Infra**   | Docker Compose, Makefile utilities |
+| **Backend** | Go 1.24+ (Gin), MongoDB, Qdrant, Neo4j, Tree-sitter AST parsers |
+| **AI/ML**   | OpenAI-compatible LLM, Voyage AI embeddings, AST-based analysis |
+| **Analysis**| Program dependence graphs, control/data flow analysis, semantic clustering |
+| **Auth**    | JWT sessions, GitHub OAuth for repository access |
+| **Infra**   | Docker Compose, multi-service orchestration, hot-reload development |
 
 ---
 
@@ -109,11 +115,15 @@ make backend-dev
 |----------|---------|-------------|
 | `PORT` | 8080 | HTTP listen port |
 | `MONGODB_URI` | mongodb://localhost:27017/acip | Mongo connection string |
-| `QDRANT_URL` | http://localhost:6334 | Qdrant gRPC/HTTP base |
+| `QDRANT_URL` | http://localhost:6334 | Qdrant vector database |
+| `NEO4J_URI` / `NEO4J_USER` / `NEO4J_PASSWORD` | bolt://localhost:7687 / neo4j / password | Neo4j knowledge graph database |
 | `JWT_SECRET` | *required* | HMAC secret for JWT tokens |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | – | GitHub OAuth credentials |
-| `LLM_API_KEY` | *required* | API key for your OpenAI-compatible LLM |
-| `EMBEDDING_API_KEY` | – | API key for embedding provider (may reuse LLM key) |
+| `LLM_API_KEY` | *required* | API key for OpenAI-compatible LLM |
+| `EMBEDDING_API_KEY` | – | API key for embedding provider |
+| `ENABLE_AST_ANALYSIS` | true | Enable AST-based code analysis |
+| `ANALYSIS_DEPTH` | semantic | Analysis depth: basic, ast, semantic, full |
+| `TREE_SITTER_PATH` | /usr/local/lib/tree-sitter | Path to tree-sitter parsers |
 
 See `backend/internal/config/config.go` for the full configuration matrix.
 
@@ -158,9 +168,10 @@ E2E tests (Playwright): `bun run test:e2e`
 
 ## 🧪 Testing All Services
 
-1. Ensure **MongoDB** & **Qdrant** services are running (`make up env=dev`).
+1. Ensure **MongoDB**, **Qdrant** & **Neo4j** services are running (`make up env=dev`).
 2. Run backend tests: `make test`.
 3. Run frontend unit & e2e tests: `cd frontend && bun run test`.
+4. Validate fix generation and AST analysis: `make validate`.
 
 ---
 
