@@ -1,33 +1,36 @@
-# GitHub Repository Analyzer - Technical Specification
+# AI Code Fixing Platform - Technical Specification
 
 ## Project Overview
 
 ### Vision
-A cost-effective, AI-powered code analysis platform that helps development teams onboard faster, maintain code quality, and modernize legacy codebases through intelligent conversation with their repositories.
+An AI-powered automated code fixing platform that transforms how development teams maintain code quality, eliminate technical debt, and accelerate development through intelligent code generation and repair.
 
 ### Target Audience
-Enterprise development teams looking to reduce costs while integrating AI capabilities into their development workflow.
+Enterprise development teams looking to automate code maintenance while reducing technical debt and improving developer productivity.
 
 ### Core Value Propositions
-1. **Cost Efficiency**: Self-hosted solution with API-based pricing vs GitHub Copilot's per-seat model
-2. **Onboarding Acceleration**: New developers can understand codebases through natural conversation
-3. **Code Quality Insights**: Proactive identification of optimization opportunities and code issues
-4. **Easy Integration**: Simple GitHub App installation with minimal configuration
+1. **Automated Fix Generation**: Complete code fixes vs. suggestions only
+2. **Technical Debt Elimination**: Proactive identification and resolution of code issues
+3. **Repository-Wide Understanding**: Fixes that understand your entire codebase architecture
+4. **Cost-Effective Scaling**: Per-fix pricing vs. expensive per-seat subscriptions
 
-### MVP Scope (3 Core Features)
-1. **Strategic Dashboard**: Immediate visual impact showing analyzed code metrics and cost savings
-2. **Repository Import**: Seamless GitHub integration for repository analysis
-3. **AI Chat Interface**: Natural language queries about code with context-aware responses
+### MVP Scope (4 Core Features)
+1. **Automated Fix Engine**: Generate complete code fixes with validation
+2. **Technical Debt Dashboard**: Visual metrics showing issues found and fixes applied
+3. **Repository Import**: Seamless GitHub integration for codebase analysis
+4. **AI Fix Interface**: Natural language problem description to automated solutions
 
 ## Technical Architecture
 
 ### Technology Stack
 - **Frontend**: SvelteKit (using Bun as runtime)
-- **Backend**: Go 1.21+
-- **Database**: MongoDB 7.0
-- **Vector Database**: Qdrant 1.7+
+- **Backend**: Go 1.24+ with Gin framework + oapi-codegen
+- **Database**: MongoDB 8.0
+- **Knowledge Graph**: Neo4j 5.0+ for code relationships
+- **Vector Database**: Qdrant 1.7+ for semantic search
+- **AST Analysis**: Tree-sitter parsers for 40+ languages
 - **Embedding Model**: Voyage AI (voyage-code-3)
-- **LLM**: Claude 4 sonnet via Anthropic API
+- **LLM**: Claude 4 sonnet via Anthropic API or OpenAI-compatible
 - **Containerization**: Docker Compose
 - **Version Control Integration**: GitHub API v3/GraphQL
 
@@ -45,10 +48,36 @@ Enterprise development teams looking to reduce costs while integrating AI capabi
                     │            │            │
                     ▼            ▼            ▼
             ┌──────────┐ ┌──────────┐ ┌──────────┐
-            │ GitHub   │ │ Qdrant   │ │ Voyage/  │
-            │   API    │ │(Port     │ │ Claude   │
-            │          │ │ 6333)    │ │   APIs   │
+            │ GitHub   │ │ Neo4j    │ │ Qdrant   │
+            │   API    │ │(Port     │ │(Port     │
+            │          │ │ 7687)    │ │ 6333)    │
             └──────────┘ └──────────┘ └──────────┘
+                                 │
+                    ┌────────────┼────────────┐
+                    │            │            │
+                    ▼            ▼            ▼
+            ┌──────────┐ ┌──────────┐ ┌──────────┐
+            │Tree-     │ │ Voyage/  │ │Fix Gen   │
+            │sitter    │ │ Claude   │ │Engine    │
+            │Parsers   │ │   APIs   │ │          │
+            └──────────┘ └──────────┘ └──────────┘
+```
+
+### Fix Generation Pipeline
+
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Problem   │───▶│   AST +     │───▶│  Solution   │
+│ Detection   │    │ Knowledge   │    │  Planning   │
+│             │    │   Graph     │    │             │
+└─────────────┘    └─────────────┘    └─────────────┘
+       │                   │                   │
+       ▼                   ▼                   ▼
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│  Impact     │    │   Code      │    │   Fix       │
+│ Analysis    │    │Generation   │    │Validation   │
+│             │    │             │    │             │
+└─────────────┘    └─────────────┘    └─────────────┘
 ```
 
 ### Docker Compose Structure
@@ -161,10 +190,63 @@ volumes:
   metadata: {
     functions: [string], // function names in chunk
     classes: [string], // class names in chunk
-    complexity: number // cyclomatic complexity estimate
+    complexity: number, // cyclomatic complexity estimate
+    issues: [{ // detected problems
+      type: string, // "performance", "security", "maintainability"
+      severity: string, // "low", "medium", "high", "critical"
+      description: string,
+      line: number
+    }]
   },
   vectorId: string, // reference to Qdrant point ID
+  astNodeId: string, // reference to Neo4j AST node
   createdAt: Date
+}
+```
+
+#### code_fixes
+```javascript
+{
+  _id: ObjectId,
+  repositoryId: ObjectId,
+  chunkId: ObjectId, // chunk that has the problem
+  problemType: string, // "performance", "security", "bug", "style"
+  problemDescription: string,
+  severity: string, // "low", "medium", "high", "critical"
+  detectedAt: Date,
+  fixStatus: string, // "pending", "generated", "applied", "rejected"
+  generatedFix: {
+    explanation: string, // why this fix is needed
+    solution: string, // what the fix does
+    codeChanges: [{
+      filePath: string,
+      startLine: number,
+      endLine: number,
+      oldContent: string,
+      newContent: string,
+      changeType: string // "replace", "insert", "delete"
+    }],
+    testChanges: [{
+      filePath: string,
+      content: string,
+      changeType: string
+    }],
+    confidence: number, // 0-1 confidence score
+    estimatedImpact: [string], // files that might be affected
+    alternatives: [{ // alternative solutions
+      description: string,
+      codeChanges: [object]
+    }]
+  },
+  appliedAt: Date,
+  appliedBy: ObjectId, // user who applied the fix
+  feedback: {
+    rating: number, // 1-5 stars
+    comment: string,
+    wasHelpful: boolean
+  },
+  createdAt: Date,
+  updatedAt: Date
 }
 ```
 
@@ -238,40 +320,56 @@ POST   /api/repositories/import       # Import a new repository
 GET    /api/repositories/:id          # Get repository details
 DELETE /api/repositories/:id          # Remove repository
 GET    /api/repositories/:id/stats    # Get repository statistics
+POST   /api/repositories/:id/analyze  # Trigger issue detection
 ```
 
-### Chat
+### Fix Generation
+```
+GET    /api/fixes                     # List all fixes for user
+GET    /api/fixes/:id                 # Get specific fix details
+POST   /api/fixes/generate            # Generate fix for specific problem
+POST   /api/fixes/:id/apply           # Apply a generated fix
+POST   /api/fixes/:id/reject          # Reject a generated fix
+POST   /api/fixes/:id/feedback        # Provide feedback on fix quality
+GET    /api/repositories/:id/issues   # Get detected issues for repository
+POST   /api/repositories/:id/fix-all  # Generate fixes for all issues
+```
+
+### Chat (Enhanced for Fix Discussion)
 ```
 GET    /api/chat/sessions             # List chat sessions
 POST   /api/chat/sessions             # Create new session
 GET    /api/chat/sessions/:id         # Get session with messages
-POST   /api/chat/sessions/:id/message # Send message to assistant
+POST   /api/chat/sessions/:id/message # Send message or request fix
 DELETE /api/chat/sessions/:id         # Delete session
+POST   /api/chat/sessions/:id/fix     # Generate fix from conversation
 ```
 
-### Dashboard
+### Dashboard (Technical Debt Focus)
 ```
-GET    /api/dashboard/stats           # Get aggregated statistics
-GET    /api/dashboard/activity        # Get recent activity
-GET    /api/dashboard/trends          # Get trend data (hardcoded for MVP)
+GET    /api/dashboard/stats           # Issues found, fixes applied, savings
+GET    /api/dashboard/issues          # Recent issues detected
+GET    /api/dashboard/fixes           # Recent fixes applied
+GET    /api/dashboard/trends          # Technical debt trends over time
+GET    /api/dashboard/impact          # Developer productivity impact
 ```
 
 ## Feature Specifications
 
-### 1. Dashboard with Strategic Metrics
+### 1. Technical Debt Dashboard with Fix Metrics
 
 #### Visual Layout
-The dashboard presents four key components arranged in a grid layout:
+The dashboard presents fix-focused metrics arranged in a grid layout:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    Hero Metrics Bar                      │
-│  Total Lines: 1.2M  |  Active Repos: 5  |  Savings: $8k │
+│  Issues Found: 247  |  Fixes Applied: 89  |  Saved: $12k │
 └─────────────────────────────────────────────────────────┘
 ┌─────────────────────────────┬───────────────────────────┐
 │                             │                           │
-│    Code Quality Trend       │     Recent Activity       │
-│    (Line Chart)             │     (List View)           │
+│   Technical Debt Trend      │     Recent Fixes          │
+│    (Debt Reduction Chart)   │     (Fix List View)       │
 │                             │                           │
 └─────────────────────────────┴───────────────────────────┘
 ```
@@ -280,19 +378,20 @@ The dashboard presents four key components arranged in a grid layout:
 
 **Hero Metrics Calculation**:
 ```go
-type DashboardStats struct {
-    TotalLinesAnalyzed int64  `json:"totalLinesAnalyzed"`
-    ActiveRepositories int    `json:"activeRepositories"`
-    MonthlySavings     string `json:"monthlySavings"`
-    IssuesFoundWeek    int    `json:"issuesFoundWeek"`
+type FixDashboardStats struct {
+    IssuesDetected     int64   `json:"issuesDetected"`
+    FixesApplied       int64   `json:"fixesApplied"`
+    ActiveRepositories int     `json:"activeRepositories"`
+    DeveloperHoursSaved int64  `json:"developerHoursSaved"`
+    MonthlySavings     string  `json:"monthlySavings"`
+    FixAccuracyRate    float64 `json:"fixAccuracyRate"`
 }
 
 // Calculate savings based on:
-// - Number of repositories analyzed
-// - Estimated developer count (5 per repository)
-// - GitHub Copilot pricing ($19/user/month)
-// - Our estimated cost (API usage ~$50/month total)
-monthlySavings = (repoCount * 5 * 19) - 50
+// - Average 2 hours per manual fix @ $80/hour developer rate
+// - Fixes applied automatically vs manual effort
+// - Technical debt reduction impact
+monthlySavings = fixesApplied * 2 * 80 // $160 per fix
 ```
 
 **Trend Data Structure** (Hardcoded for MVP):
