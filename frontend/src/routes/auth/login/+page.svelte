@@ -56,7 +56,7 @@
 				<Alert.Title>Demo Access Available</Alert.Title>
 				<Alert.Description>
 					<p class="mb-2">Use these credentials to explore the AI-powered code analyzer:</p>
-					<div class="bg-background mt-2 rounded border p-3 font-mono text-xs">
+					<div class="mt-2 rounded border bg-background p-3 font-mono text-xs">
 						<div><strong>Email:</strong> demo@acip.com</div>
 						<div><strong>Password:</strong> demo123456</div>
 					</div>
@@ -107,7 +107,7 @@
 				</Button>
 
 				<div class="text-center">
-					<p class="text-muted-foreground text-sm">
+					<p class="text-sm text-muted-foreground">
 						Experience the power of AI-powered code analysis with the demo account above.
 					</p>
 				</div>
