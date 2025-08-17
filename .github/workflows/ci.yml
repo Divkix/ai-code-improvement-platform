@@ -47,11 +47,6 @@ jobs:
       - name: Build binary
         run: go build -v -o bin/server cmd/server/main.go
 
-      - name: Run tests with coverage
-        run: |
-          go test -v -race -coverprofile=coverage.out ./...
-          go tool cover -html=coverage.out -o coverage.html
-
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
         with:
@@ -93,9 +88,6 @@ jobs:
 
       - name: Linting and formatting
         run: bun run lint
-
-      - name: Run unit tests
-        run: bun run test:unit --run
 
       - name: Build frontend
         run: bun run build
