@@ -47,12 +47,6 @@ jobs:
       - name: Build binary
         run: go build -v -o bin/server cmd/server/main.go
 
-      - name: Upload coverage reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-coverage
-          path: backend/coverage.html
-
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
