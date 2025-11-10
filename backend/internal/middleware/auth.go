@@ -4,6 +4,7 @@
 package middleware
 
 import (
+	"log"
 	"net/http"
 	"strings"
 
@@ -53,13 +54,35 @@ func AuthMiddleware(authService *auth.AuthService) gin.HandlerFunc {
 	}
 }
 
-// GetUserIDFromContext extracts user ID from gin context
+// GetUserIDFromContext extracts user ID from gin context with type safety
 func GetUserIDFromContext(c *gin.Context) (string, bool) {
 	userID, exists := c.Get("user_id")
 	if !exists {
 		return "", false
 	}
-	return userID.(string), true
+
+	// Safe type assertion with validation
+	userIDStr, ok := userID.(string)
+	if !ok {
+		log.Printf("SECURITY WARNING: user_id type mismatch - expected string, got %T for IP %s", userID, c.ClientIP())
+		return "", false
+	}
+
+	// Validate ObjectID format (24 hex characters)
+	if len(userIDStr) != 24 {
+		log.Printf("SECURITY WARNING: invalid user_id length - expected 24 chars, got %d from IP %s", len(userIDStr), c.ClientIP())
+		return "", false
+	}
+
+	// Validate hex characters
+	for _, char := range userIDStr {
+		if !((char >= '0' && char <= '9') || (char >= 'a' && char <= 'f') || (char >= 'A' && char <= 'F')) {
+			log.Printf("SECURITY WARNING: invalid user_id format - contains non-hex character from IP %s", c.ClientIP())
+			return "", false
+		}
+	}
+
+	return userIDStr, true
 }
 
 // GetUserEmailFromContext extracts user email from gin context
