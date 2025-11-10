@@ -277,47 +277,123 @@ Environment-based configuration in `internal/config/config.go`:
 
 Copy `.env.example` to `.env` and configure the required variables:
 
+**CRITICAL SECURITY REQUIREMENTS:**
+
+Before deploying to production, you MUST generate strong, cryptographically random secrets for all authentication and database credentials. The example values in `.env.example` are INSECURE and must NEVER be used in production.
+
+**Generate Strong Secrets:**
+```bash
+# Generate JWT secret (32+ characters)
+openssl rand -base64 32
+
+# Generate MongoDB root password (32+ characters)
+openssl rand -base64 32
+
+# Generate Neo4j password (16+ characters)
+openssl rand -base64 24
+
+# Generate Qdrant API key (32+ characters)
+openssl rand -base64 32
+
+# Generate GitHub encryption key (exactly 16, 24, or 32 bytes)
+openssl rand -hex 16  # for 16-byte AES key
+openssl rand -hex 24  # for 24-byte AES key
+openssl rand -hex 32  # for 32-byte AES key
+```
+
 **Essential Variables (Must be set):**
 ```bash
-# Authentication
-JWT_SECRET=your-secret-key
+# ---------------------------
+# Security & Authentication
+# ---------------------------
+# PRODUCTION: Generate with 'openssl rand -base64 32' - minimum 32 characters!
+JWT_SECRET=your-cryptographically-random-secret-min-32-chars
 
-# Database connections
-MONGODB_URI=mongodb://mongodb:27017/acip  # Use 'mongodb' for Docker
-QDRANT_URL=http://localhost:6334
+# ---------------------------
+# Database Authentication
+# ---------------------------
+# MongoDB (REQUIRED for production)
+MONGODB_URI=mongodb://admin:YOUR_STRONG_PASSWORD@mongodb:27017/acip?authSource=admin
+MONGO_ROOT_USER=admin
+MONGO_ROOT_PASSWORD=your-secure-mongodb-password-min-32-chars
+
+# Qdrant Vector Database (REQUIRED for production)
+QDRANT_URL=http://qdrant:6334
+QDRANT_API_KEY=your-secure-qdrant-api-key-min-32-chars
+
+# Neo4j Graph Database
 NEO4J_URI=bolt://neo4j:7687
 NEO4J_USER=neo4j
-NEO4J_PASSWORD=password
+NEO4J_PASSWORD=your-secure-neo4j-password-min-16-chars
 
+# ---------------------------
 # AI Services
+# ---------------------------
 EMBEDDING_BASE_URL=https://api.openai.com/v1
 EMBEDDING_MODEL=voyage-code-3
-EMBEDDING_API_KEY=your-api-key
+EMBEDDING_API_KEY=your-embedding-service-api-key
 
 LLM_BASE_URL=https://api.openai.com/v1
 LLM_MODEL=gpt-4o-mini
-LLM_API_KEY=your-api-key
+LLM_API_KEY=your-llm-service-api-key
 
-# GitHub OAuth (for repository import)
-GITHUB_CLIENT_ID=your-github-client-id
-GITHUB_CLIENT_SECRET=your-github-client-secret
-GITHUB_ENCRYPTION_KEY=your-16-24-32-byte-aes-key
+# ---------------------------
+# GitHub OAuth & Token Encryption
+# ---------------------------
+GITHUB_CLIENT_ID=your-github-oauth-client-id
+GITHUB_CLIENT_SECRET=your-github-oauth-client-secret
+# CRITICAL: Must be exactly 16, 24, or 32 bytes (hex-encoded)
+GITHUB_ENCRYPTION_KEY=your-16-24-or-32-byte-hex-key
 
+# ---------------------------
 # Frontend
+# ---------------------------
 VITE_API_URL=http://localhost:8080
 
+# ---------------------------
 # Analysis Configuration
+# ---------------------------
 ENABLE_AST_ANALYSIS=true
 ENABLE_KNOWLEDGE_GRAPH=true
 ANALYSIS_DEPTH=semantic
 TREE_SITTER_PATH=/usr/local/lib/tree-sitter
 ```
 
+**Production Security Best Practices:**
+
+1. **Database Authentication:**
+   - MongoDB authentication is MANDATORY in production (enabled via `MONGO_INITDB_ROOT_USERNAME` and `MONGO_INITDB_ROOT_PASSWORD`)
+   - Update `MONGODB_URI` to include credentials: `mongodb://admin:PASSWORD@mongodb:27017/acip?authSource=admin`
+   - Qdrant API key authentication is MANDATORY in production (configured via `QDRANT_API_KEY`)
+   - Backend must pass API key in headers: `api-key: YOUR_QDRANT_API_KEY`
+   - Neo4j authentication is enabled by default via `NEO4J_AUTH` environment variable
+
+2. **Network Security:**
+   - All ports are bound to `127.0.0.1` (localhost only) in Docker Compose
+   - Services are isolated on a dedicated `backend` network
+   - No external access without explicit port forwarding or reverse proxy
+
+3. **Secret Management:**
+   - NEVER commit `.env` files to version control (already in `.gitignore`)
+   - Use environment-specific `.env` files for different deployments
+   - Minimum key lengths enforced: JWT (32 chars), MongoDB (32 chars), Neo4j (16 chars), Qdrant (32 chars)
+   - GitHub encryption key must be exactly 16, 24, or 32 bytes for AES encryption
+
+4. **Resource Limits:**
+   - Memory and CPU limits configured for all services to prevent resource exhaustion
+   - Health checks enabled for automatic failure detection and recovery
+   - Automatic restart policies (`unless-stopped`) for high availability
+
+5. **Service Health:**
+   - All services have health checks with configurable intervals and retries
+   - Dependencies use `condition: service_healthy` to ensure proper startup order
+   - Health check endpoints: Backend (`/health`), Qdrant (`/healthz`), Neo4j (`:7474`), MongoDB (`mongosh ping`)
+
 **Important Notes:**
-- For Docker: Use service names (`mongodb`, `neo4j`) as hostnames, `localhost` for direct runs
+- For Docker: Use service names (`mongodb`, `qdrant`, `neo4j`) as hostnames, `localhost` for direct runs
 - Local embedding models: Set `EMBEDDING_BASE_URL=http://host.docker.internal:1234/v1`
 - AST analysis requires Tree-sitter parsers for supported languages
-- See `.env.example` for complete configuration with defaults and comments
+- See `.env.example` for complete configuration with security warnings and defaults
 
 ## Demo User Access
 
