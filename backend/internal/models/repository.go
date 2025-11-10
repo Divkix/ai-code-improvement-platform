@@ -12,26 +12,27 @@ import (
 
 // Repository represents a GitHub repository in our database
 type Repository struct {
-	ID                 primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	UserID             primitive.ObjectID `bson:"userId" json:"userId"`
-	GitHubRepoID       *int64             `bson:"githubRepoId,omitempty" json:"githubRepoId,omitempty"`
-	Owner              string             `bson:"owner" json:"owner"`
-	Name               string             `bson:"name" json:"name"`
-	FullName           string             `bson:"fullName" json:"fullName"`
-	Description        *string            `bson:"description,omitempty" json:"description,omitempty"`
-	PrimaryLanguage    *string            `bson:"primaryLanguage,omitempty" json:"primaryLanguage,omitempty"`
-	IsPrivate          bool               `bson:"isPrivate" json:"isPrivate"`
-	IndexedAt          *time.Time         `bson:"indexedAt,omitempty" json:"indexedAt,omitempty"`
-	LastSyncedAt       *time.Time         `bson:"lastSyncedAt,omitempty" json:"lastSyncedAt,omitempty"`
-	Status             string             `bson:"status" json:"status"`
-	ImportProgress     int                `bson:"importProgress" json:"importProgress"`
-	EmbeddingStatus    string             `bson:"embeddingStatus,omitempty" json:"embeddingStatus,omitempty"`
-	EmbeddingProgress  int                `bson:"embeddingProgress,omitempty" json:"embeddingProgress,omitempty"`
-	EmbeddedChunksCount int               `bson:"embeddedChunksCount,omitempty" json:"embeddedChunksCount,omitempty"`
-	LastEmbeddedAt     *time.Time         `bson:"lastEmbeddedAt,omitempty" json:"lastEmbeddedAt,omitempty"`
-	Stats              *RepositoryStats   `bson:"stats,omitempty" json:"stats,omitempty"`
-	CreatedAt          time.Time          `bson:"createdAt" json:"createdAt"`
-	UpdatedAt          time.Time          `bson:"updatedAt" json:"updatedAt"`
+	ID                  primitive.ObjectID   `bson:"_id,omitempty" json:"id"`
+	UserID              primitive.ObjectID   `bson:"userId" json:"userId"`
+	GitHubRepoID        *int64               `bson:"githubRepoId,omitempty" json:"githubRepoId,omitempty"`
+	Owner               string               `bson:"owner" json:"owner"`
+	Name                string               `bson:"name" json:"name"`
+	FullName            string               `bson:"fullName" json:"fullName"`
+	Description         *string              `bson:"description,omitempty" json:"description,omitempty"`
+	PrimaryLanguage     *string              `bson:"primaryLanguage,omitempty" json:"primaryLanguage,omitempty"`
+	IsPrivate           bool                 `bson:"isPrivate" json:"isPrivate"`
+	IndexedAt           *time.Time           `bson:"indexedAt,omitempty" json:"indexedAt,omitempty"`
+	LastSyncedAt        *time.Time           `bson:"lastSyncedAt,omitempty" json:"lastSyncedAt,omitempty"`
+	Status              string               `bson:"status" json:"status"`
+	ImportProgress      int                  `bson:"importProgress" json:"importProgress"`
+	EmbeddingStatus     string               `bson:"embeddingStatus,omitempty" json:"embeddingStatus,omitempty"`
+	EmbeddingProgress   int                  `bson:"embeddingProgress,omitempty" json:"embeddingProgress,omitempty"`
+	EmbeddedChunksCount int                  `bson:"embeddedChunksCount,omitempty" json:"embeddedChunksCount,omitempty"`
+	LastEmbeddedAt      *time.Time           `bson:"lastEmbeddedAt,omitempty" json:"lastEmbeddedAt,omitempty"`
+	Stats               *RepositoryStats     `bson:"stats,omitempty" json:"stats,omitempty"`
+	ImportFailures      *RepositoryFailures  `bson:"importFailures,omitempty" json:"importFailures,omitempty"`
+	CreatedAt           time.Time            `bson:"createdAt" json:"createdAt"`
+	UpdatedAt           time.Time            `bson:"updatedAt" json:"updatedAt"`
 }
 
 // RepositoryStats contains detailed statistics about a repository
@@ -40,6 +41,16 @@ type RepositoryStats struct {
 	TotalLines     int            `bson:"totalLines" json:"totalLines"`
 	Languages      map[string]int `bson:"languages,omitempty" json:"languages,omitempty"`
 	LastCommitDate *time.Time     `bson:"lastCommitDate,omitempty" json:"lastCommitDate,omitempty"`
+}
+
+// RepositoryFailures tracks import/processing failures for repositories
+type RepositoryFailures struct {
+	TotalChunks   int      `bson:"totalChunks" json:"totalChunks"`
+	FailedChunks  int      `bson:"failedChunks" json:"failedChunks"`
+	SuccessRate   float64  `bson:"successRate" json:"successRate"`
+	FailedBatches []string `bson:"failedBatches,omitempty" json:"failedBatches,omitempty"`
+	Message       string   `bson:"message,omitempty" json:"message,omitempty"`
+	Timestamp     time.Time `bson:"timestamp" json:"timestamp"`
 }
 
 // CreateRepositoryRequest represents the request payload for creating a repository
@@ -68,18 +79,19 @@ type RepositoryListResponse struct {
 
 // Repository status constants
 const (
-	StatusPending           = "pending"
-	StatusImporting         = "importing"
-	StatusQueuedEmbedding   = "queued-embedding"
-	StatusEmbedding         = "embedding"
-	StatusReady             = "ready"
-	StatusError             = "error"
+	StatusPending         = "pending"
+	StatusImporting       = "importing"
+	StatusPartial         = "partial"
+	StatusQueuedEmbedding = "queued-embedding"
+	StatusEmbedding       = "embedding"
+	StatusReady           = "ready"
+	StatusError           = "error"
 )
 
 // ValidStatus checks if the provided status is valid
 func ValidStatus(status string) bool {
 	switch status {
-	case StatusPending, StatusImporting, StatusQueuedEmbedding, StatusEmbedding, StatusReady, StatusError:
+	case StatusPending, StatusImporting, StatusPartial, StatusQueuedEmbedding, StatusEmbedding, StatusReady, StatusError:
 		return true
 	default:
 		return false
@@ -153,6 +165,12 @@ func (r *Repository) SetStats(stats *RepositoryStats) {
 	r.UpdatedAt = time.Now()
 }
 
+// SetImportFailures updates repository import failure information
+func (r *Repository) SetImportFailures(failures *RepositoryFailures) {
+	r.ImportFailures = failures
+	r.UpdatedAt = time.Now()
+}
+
 // MarkIndexed marks the repository as indexed with current timestamp
 func (r *Repository) MarkIndexed() {
 	now := time.Now()
@@ -169,6 +187,11 @@ func (r *Repository) GetCompositeStatus() string {
 	}
 	if r.EmbeddingStatus == "failed" {
 		return StatusError
+	}
+
+	// Handle partial import state
+	if r.Status == StatusPartial {
+		return StatusPartial
 	}
 
 	// Handle pending/importing states
