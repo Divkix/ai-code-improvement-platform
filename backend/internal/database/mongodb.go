@@ -121,8 +121,7 @@ func (m *MongoDB) EnsureIndexes() error {
 			}).
 			SetDefaultLanguage("none").
 			SetLanguageOverride("language_override").
-			SetName("CodeSearchIndex").
-			SetBackground(true),
+			SetName("CodeSearchIndex"),
 	}
 
 	// Additional indexes for codechunks
@@ -130,27 +129,27 @@ func (m *MongoDB) EnsureIndexes() error {
 		textIndexModel,
 		{
 			Keys:    bson.D{{Key: "repositoryId", Value: 1}},
-			Options: options.Index().SetName("repositoryId_1").SetBackground(true),
+			Options: options.Index().SetName("repositoryId_1"),
 		},
 		{
 			Keys:    bson.D{{Key: "language", Value: 1}},
-			Options: options.Index().SetName("language_1").SetBackground(true),
+			Options: options.Index().SetName("language_1"),
 		},
 		{
 			Keys:    bson.D{{Key: "fileName", Value: 1}},
-			Options: options.Index().SetName("fileName_1").SetBackground(true),
+			Options: options.Index().SetName("fileName_1"),
 		},
 		{
 			Keys:    bson.D{{Key: "contentHash", Value: 1}},
-			Options: options.Index().SetName("contentHash_1").SetUnique(true).SetBackground(true),
+			Options: options.Index().SetName("contentHash_1").SetUnique(true),
 		},
 		{
 			Keys:    bson.D{{Key: "filePath", Value: 1}},
-			Options: options.Index().SetName("filePath_1").SetBackground(true),
+			Options: options.Index().SetName("filePath_1"),
 		},
 		{
 			Keys:    bson.D{{Key: "createdAt", Value: 1}},
-			Options: options.Index().SetName("createdAt_1").SetBackground(true),
+			Options: options.Index().SetName("createdAt_1"),
 		},
 	}
 
@@ -167,11 +166,11 @@ func (m *MongoDB) EnsureIndexes() error {
 	userIndexes := []mongo.IndexModel{
 		{
 			Keys:    bson.D{{Key: "email", Value: 1}},
-			Options: options.Index().SetName("email_1").SetUnique(true).SetBackground(true),
+			Options: options.Index().SetName("email_1").SetUnique(true),
 		},
 		{
 			Keys:    bson.D{{Key: "githubId", Value: 1}},
-			Options: options.Index().SetName("githubId_1").SetSparse(true).SetBackground(true),
+			Options: options.Index().SetName("githubId_1").SetSparse(true),
 		},
 	}
 
@@ -187,32 +186,32 @@ func (m *MongoDB) EnsureIndexes() error {
 	repoIndexes := []mongo.IndexModel{
 		{
 			Keys:    bson.D{{Key: "userId", Value: 1}},
-			Options: options.Index().SetName("userId_1").SetBackground(true),
+			Options: options.Index().SetName("userId_1"),
 		},
 		{
 			Keys:    bson.D{{Key: "fullName", Value: 1}},
-			Options: options.Index().SetName("fullName_1").SetBackground(true),
+			Options: options.Index().SetName("fullName_1"),
 		},
 		{
 			Keys:    bson.D{{Key: "status", Value: 1}},
-			Options: options.Index().SetName("status_1").SetBackground(true),
+			Options: options.Index().SetName("status_1"),
 		},
 		{
 			Keys:    bson.D{{Key: "githubRepoId", Value: 1}},
-			Options: options.Index().SetName("githubRepoId_1").SetUnique(true).SetSparse(true).SetBackground(true),
+			Options: options.Index().SetName("githubRepoId_1").SetUnique(true).SetSparse(true),
 		},
 		{
 			Keys:    bson.D{{Key: "embeddingStatus", Value: 1}},
-			Options: options.Index().SetName("embeddingStatus_1").SetBackground(true),
+			Options: options.Index().SetName("embeddingStatus_1"),
 		},
 		{
 			Keys:    bson.D{{Key: "createdAt", Value: 1}},
-			Options: options.Index().SetName("createdAt_1").SetBackground(true),
+			Options: options.Index().SetName("createdAt_1"),
 		},
 		// Compound index for user repository queries
 		{
 			Keys:    bson.D{{Key: "userId", Value: 1}, {Key: "createdAt", Value: -1}},
-			Options: options.Index().SetName("userId_createdAt_1").SetBackground(true),
+			Options: options.Index().SetName("userId_createdAt_1"),
 		},
 	}
 
@@ -228,20 +227,20 @@ func (m *MongoDB) EnsureIndexes() error {
 	chatIndexes := []mongo.IndexModel{
 		{
 			Keys:    bson.D{{Key: "repositoryId", Value: 1}},
-			Options: options.Index().SetName("repositoryId_1").SetBackground(true),
+			Options: options.Index().SetName("repositoryId_1"),
 		},
 		{
 			Keys:    bson.D{{Key: "userId", Value: 1}},
-			Options: options.Index().SetName("userId_1").SetBackground(true),
+			Options: options.Index().SetName("userId_1"),
 		},
 		{
 			Keys:    bson.D{{Key: "createdAt", Value: -1}},
-			Options: options.Index().SetName("createdAt_-1").SetBackground(true),
+			Options: options.Index().SetName("createdAt_-1"),
 		},
 		// Compound index for user + repository queries
 		{
 			Keys:    bson.D{{Key: "userId", Value: 1}, {Key: "repositoryId", Value: 1}, {Key: "createdAt", Value: -1}},
-			Options: options.Index().SetName("userId_repositoryId_createdAt_1").SetBackground(true),
+			Options: options.Index().SetName("userId_repositoryId_createdAt_1"),
 		},
 	}
 

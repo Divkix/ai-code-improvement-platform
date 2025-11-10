@@ -76,7 +76,7 @@ func GetUserIDFromContext(c *gin.Context) (string, bool) {
 
 	// Validate hex characters
 	for _, char := range userIDStr {
-		if !((char >= '0' && char <= '9') || (char >= 'a' && char <= 'f') || (char >= 'A' && char <= 'F')) {
+		if (char < '0' || char > '9') && (char < 'a' || char > 'f') && (char < 'A' || char > 'F') {
 			log.Printf("SECURITY WARNING: invalid user_id format - contains non-hex character from IP %s", c.ClientIP())
 			return "", false
 		}
