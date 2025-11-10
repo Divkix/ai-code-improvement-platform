@@ -58,12 +58,15 @@ func main() {
 	}
 
 	// Create services
-	githubService := services.NewGitHubService(db,
+	githubService, err := services.NewGitHubService(db,
 		os.Getenv("GITHUB_CLIENT_ID"),
 		os.Getenv("GITHUB_CLIENT_SECRET"),
 		os.Getenv("JWT_SECRET"),
-		50,         // Default batch size
-		1024*1024)  // Default max file size (1MB)
+		50,        // Default batch size
+		1024*1024) // Default max file size (1MB)
+	if err != nil {
+		log.Fatalf("Failed to create GitHub service: %v", err)
+	}
 
 	userService := services.NewUserService(db)
 

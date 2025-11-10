@@ -99,7 +99,10 @@ func main() {
 	userService := services.NewUserService(mongoDB.Database())
 	authService := auth.NewAuthService(cfg.JWT.Secret)
 	dashboardService := services.NewDashboardService(mongoDB.Database())
-	githubService := services.NewGitHubService(mongoDB.Database(), cfg.GitHub.ClientID, cfg.GitHub.ClientSecret, cfg.GitHub.EncryptionKey, cfg.GitHub.BatchSize, cfg.GitHub.MaxFileSize)
+	githubService, err := services.NewGitHubService(mongoDB.Database(), cfg.GitHub.ClientID, cfg.GitHub.ClientSecret, cfg.GitHub.EncryptionKey, cfg.GitHub.BatchSize, cfg.GitHub.MaxFileSize)
+	if err != nil {
+		log.Fatalf("Failed to initialize GitHub service: %v", err)
+	}
 
 	// Initialize universal embedding provider
 	embeddingProvider := services.NewOpenAIEmbeddingService(
