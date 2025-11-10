@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"time"
 
 	"acip.divkix.me/internal/models"
@@ -164,12 +165,12 @@ func (s *GitHubService) SearchUserRepositories(ctx context.Context, accessToken,
 
 	// Combine and deduplicate results
 	repoMap := make(map[int64]*GitHubRepository)
-	
+
 	// Add user repositories
 	for _, repo := range userRepos {
 		repoMap[repo.ID] = repo
 	}
-	
+
 	// Add organization repositories (avoiding duplicates)
 	for _, repo := range orgRepos {
 		if _, exists := repoMap[repo.ID]; !exists {
@@ -249,7 +250,7 @@ func (s *GitHubService) searchOrganizationRepositories(ctx context.Context, clie
 	}
 
 	var allOrgRepos []*GitHubRepository
-	
+
 	// Search each organization's repositories
 	for _, org := range orgs {
 		if len(allOrgRepos) >= limit {
@@ -582,10 +583,10 @@ func (s *GitHubService) processBatch(ctx context.Context, client *github.Client,
 			skippedFiles++
 			continue
 		}
-		
+
 		// Clean content to ensure safe storage
 		cleanedContent := utils.CleanContent(content)
-		
+
 		// Update file with cleaned content
 		repoFile.Content = cleanedContent
 		repoFile.Size = len(cleanedContent)
@@ -612,17 +613,47 @@ func (s *GitHubService) processBatch(ctx context.Context, client *github.Client,
 	return files, nil
 }
 
-// getFileContentWithRetry fetches file content with retry logic for rate limiting
+// sleepWithContext sleeps for the specified duration or until context is canceled
+func sleepWithContext(ctx context.Context, duration time.Duration) error {
+	timer := time.NewTimer(duration)
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
+}
+
+// getFileContentWithRetry fetches file content with context-aware retry logic and exponential backoff with jitter
 func (s *GitHubService) getFileContentWithRetry(ctx context.Context, client *github.Client, owner, repo, path string, maxRetries int) (string, error) {
+	// Create total retry timeout context (30 seconds)
+	retryCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
 	var lastErr error
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		content, err := s.GetFileContent(ctx, client, owner, repo, path)
+		// Check if context is already canceled before attempting
+		select {
+		case <-retryCtx.Done():
+			return "", fmt.Errorf("retry timeout exceeded for %s: %w", path, retryCtx.Err())
+		default:
+		}
+
+		content, err := s.GetFileContent(retryCtx, client, owner, repo, path)
 		if err == nil {
 			return content, nil
 		}
 
 		lastErr = err
+
+		// Don't retry if context is canceled
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return "", fmt.Errorf("context canceled while fetching %s: %w", path, err)
+		}
 
 		// If it's a rate limit error, wait and retry
 		if s.IsRateLimited(err) {
@@ -630,22 +661,34 @@ func (s *GitHubService) getFileContentWithRetry(ctx context.Context, client *git
 				waitDuration := time.Until(*resetTime)
 				if waitDuration > 0 && waitDuration < 5*time.Minute {
 					log.Printf("Rate limited, waiting %v before retry %d/%d for %s", waitDuration, attempt, maxRetries, path)
-					time.Sleep(waitDuration)
+					if sleepErr := sleepWithContext(retryCtx, waitDuration); sleepErr != nil {
+						return "", fmt.Errorf("context canceled during rate limit wait for %s: %w", path, sleepErr)
+					}
 					continue
 				}
 			}
-			// Exponential backoff for rate limits without reset time
-			backoff := time.Duration(attempt*attempt) * time.Second
-			log.Printf("Rate limited, backing off %v before retry %d/%d for %s", backoff, attempt, maxRetries, path)
-			time.Sleep(backoff)
+			// Exponential backoff with jitter for rate limits without reset time
+			baseBackoff := time.Duration(attempt*attempt) * time.Second
+			jitter := time.Duration(rng.Intn(1000)) * time.Millisecond
+			backoff := baseBackoff + jitter
+			log.Printf("Rate limited, backing off %v (base: %v + jitter: %v) before retry %d/%d for %s",
+				backoff, baseBackoff, jitter, attempt, maxRetries, path)
+			if sleepErr := sleepWithContext(retryCtx, backoff); sleepErr != nil {
+				return "", fmt.Errorf("context canceled during backoff for %s: %w", path, sleepErr)
+			}
 			continue
 		}
 
-		// For other errors, don't retry immediately
+		// For other errors, use exponential backoff with jitter
 		if attempt < maxRetries {
-			backoff := time.Duration(attempt) * time.Second
-			log.Printf("Error fetching %s, retrying in %v (attempt %d/%d): %v", path, backoff, attempt, maxRetries, err)
-			time.Sleep(backoff)
+			baseBackoff := time.Duration(attempt) * time.Second
+			jitter := time.Duration(rng.Intn(500)) * time.Millisecond
+			backoff := baseBackoff + jitter
+			log.Printf("Error fetching %s, retrying in %v (base: %v + jitter: %v) (attempt %d/%d): %v",
+				path, backoff, baseBackoff, jitter, attempt, maxRetries, err)
+			if sleepErr := sleepWithContext(retryCtx, backoff); sleepErr != nil {
+				return "", fmt.Errorf("context canceled during error retry for %s: %w", path, sleepErr)
+			}
 		}
 	}
 
