@@ -33,7 +33,7 @@ function isValidJWT(token: string): boolean {
 		}
 
 		return true;
-	} catch (error) {
+	} catch {
 		return false;
 	}
 }
