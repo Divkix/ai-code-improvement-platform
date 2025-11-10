@@ -5,7 +5,9 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -16,9 +18,9 @@ import (
 
 // LLMService provides chat completion functionality using OpenAI-compatible APIs
 type LLMService struct {
-	client     *openai.Client
-	model      string
-	timeout    time.Duration
+	client  *openai.Client
+	model   string
+	timeout time.Duration
 }
 
 // ChatOptions configures chat completion requests
@@ -54,7 +56,7 @@ func NewLLMService(cfg *config.Config) (*LLMService, error) {
 	// Create OpenAI client configuration
 	clientConfig := openai.DefaultConfig(apiKey)
 	clientConfig.BaseURL = cfg.AI.LLMBaseURL
-	
+
 	// Set custom HTTP client with timeout
 	clientConfig.HTTPClient = &http.Client{
 		Timeout: timeout,
@@ -89,6 +91,9 @@ func (s *LLMService) ChatCompletion(ctx context.Context, messages []openai.ChatC
 
 // ChatStream performs a streaming chat completion
 func (s *LLMService) ChatStream(ctx context.Context, messages []openai.ChatCompletionMessage, opts ChatOptions) (<-chan openai.ChatCompletionStreamResponse, error) {
+	// Add timeout to stream context (5 minutes max for streaming)
+	streamCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+
 	req := openai.ChatCompletionRequest{
 		Model:       s.model,
 		Messages:    messages,
@@ -97,8 +102,9 @@ func (s *LLMService) ChatStream(ctx context.Context, messages []openai.ChatCompl
 		Stream:      true,
 	}
 
-	stream, err := s.client.CreateChatCompletionStream(ctx, req)
+	stream, err := s.client.CreateChatCompletionStream(streamCtx, req)
 	if err != nil {
+		cancel() // Clean up context if stream creation fails
 		return nil, fmt.Errorf("chat stream failed: %w", err)
 	}
 
@@ -108,15 +114,21 @@ func (s *LLMService) ChatStream(ctx context.Context, messages []openai.ChatCompl
 	// Start goroutine to read from stream and forward to channel
 	go func() {
 		defer close(responseChan)
+		defer cancel() // Ensure context is cancelled when goroutine exits
 		defer func() {
+			// Recover from potential panics in stream processing
+			if r := recover(); r != nil {
+				// Log panic but don't crash
+				fmt.Printf("Recovered from panic in stream processing: %v\n", r)
+			}
 			_ = stream.Close() // Ignore error on stream close
 		}()
 
 		for {
 			response, err := stream.Recv()
 			if err != nil {
-				// Check if it's EOF (normal termination)
-				if err.Error() == "EOF" {
+				// Check if it's EOF (normal termination) using errors.Is
+				if errors.Is(err, io.EOF) {
 					return
 				}
 				// For other errors, we could send an error response,
@@ -126,7 +138,8 @@ func (s *LLMService) ChatStream(ctx context.Context, messages []openai.ChatCompl
 
 			select {
 			case responseChan <- response:
-			case <-ctx.Done():
+			case <-streamCtx.Done():
+				// Check if context was cancelled or timed out
 				return
 			}
 		}
