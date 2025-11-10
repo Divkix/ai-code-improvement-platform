@@ -6,6 +6,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"acip.divkix.me/internal/config"
@@ -18,10 +20,10 @@ import (
 )
 
 type EmbeddingService struct {
-	provider EmbeddingProvider
-	qdrantClient  *database.Qdrant
-	mongoDB       *database.MongoDB
-	config        *config.Config
+	provider     EmbeddingProvider
+	qdrantClient *database.Qdrant
+	mongoDB      *database.MongoDB
+	config       *config.Config
 }
 
 type EmbeddingStatus string
@@ -34,21 +36,21 @@ const (
 )
 
 type ProcessingStats struct {
-	TotalChunks      int
-	ProcessedChunks  int
-	FailedChunks     int
-	SkippedChunks    int
-	StartedAt        time.Time
-	CompletedAt      *time.Time
+	TotalChunks            int
+	ProcessedChunks        int
+	FailedChunks           int
+	SkippedChunks          int
+	StartedAt              time.Time
+	CompletedAt            *time.Time
 	EstimatedTimeRemaining *time.Duration
 }
 
 func NewEmbeddingService(provider EmbeddingProvider, qdrant *database.Qdrant, mongoDB *database.MongoDB, config *config.Config) *EmbeddingService {
 	return &EmbeddingService{
-		provider: provider,
-		qdrantClient:  qdrant,
-		mongoDB:       mongoDB,
-		config:        config,
+		provider:     provider,
+		qdrantClient: qdrant,
+		mongoDB:      mongoDB,
+		config:       config,
 	}
 }
 
@@ -109,26 +111,11 @@ func (es *EmbeddingService) ProcessRepository(ctx context.Context, repositoryID 
 		StartedAt:       time.Now(),
 	}
 
-	batchSize := es.config.CodeProcessing.EmbeddingBatchSize // Process chunks in configurable batches
-	for i := 0; i < len(chunks); i += batchSize {
-		end := i + batchSize
-		if end > len(chunks) {
-			end = len(chunks)
-		}
-
-		batch := chunks[i:end]
-		if err := es.processBatch(ctx, batch, &stats); err != nil {
-			log.Printf("Failed to process batch %d-%d for repository %s: %v", i, end-1, repositoryID.Hex(), err)
-			// Continue with next batch instead of failing entirely
-		}
-
-		// Update progress
-		progress := (stats.ProcessedChunks + stats.FailedChunks) * 100 / stats.TotalChunks
-		if err := es.updateRepositoryProgress(ctx, repositoryID, progress); err != nil {
-			log.Printf("Failed to update repository progress: %v", err)
-		}
-
-		log.Printf("Processed %d/%d chunks for repository %s", stats.ProcessedChunks+stats.FailedChunks, stats.TotalChunks, repositoryID.Hex())
+	// Process batches concurrently with worker pool
+	batchSize := es.config.CodeProcessing.EmbeddingBatchSize
+	err = es.processBatchesConcurrent(ctx, chunks, batchSize, repositoryID, &stats)
+	if err != nil {
+		log.Printf("Error during concurrent batch processing: %v", err)
 	}
 
 	completedAt := time.Now()
@@ -144,7 +131,7 @@ func (es *EmbeddingService) ProcessRepository(ctx context.Context, repositoryID 
 		log.Printf("Failed to update final repository status: %v", err)
 	}
 
-	log.Printf("Completed embedding processing for repository %s. Processed: %d, Failed: %d, Total time: %v", 
+	log.Printf("Completed embedding processing for repository %s. Processed: %d, Failed: %d, Total time: %v",
 		repositoryID.Hex(), stats.ProcessedChunks, stats.FailedChunks, completedAt.Sub(stats.StartedAt))
 
 	return nil
@@ -258,6 +245,103 @@ func (es *EmbeddingService) processBatch(ctx context.Context, chunks []*models.C
 		} else {
 			stats.ProcessedChunks++
 		}
+	}
+
+	return nil
+}
+
+// processBatchesConcurrent processes batches concurrently using a worker pool
+func (es *EmbeddingService) processBatchesConcurrent(ctx context.Context, chunks []*models.CodeChunk, batchSize int, repositoryID primitive.ObjectID, stats *ProcessingStats) error {
+	// Create batches
+	var batches [][]*models.CodeChunk
+	for i := 0; i < len(chunks); i += batchSize {
+		end := i + batchSize
+		if end > len(chunks) {
+			end = len(chunks)
+		}
+		batches = append(batches, chunks[i:end])
+	}
+
+	if len(batches) == 0 {
+		return nil
+	}
+
+	// Worker pool configuration (5 concurrent workers)
+	numWorkers := 5
+	if numWorkers > len(batches) {
+		numWorkers = len(batches)
+	}
+
+	// Channels for work distribution
+	batchChan := make(chan []*models.CodeChunk, len(batches))
+	errorChan := make(chan error, len(batches))
+	var wg sync.WaitGroup
+
+	// Atomic counters for thread-safe progress tracking
+	var processedCount int64
+	var failedCount int64
+
+	// Start workers
+	for w := 0; w < numWorkers; w++ {
+		wg.Add(1)
+		go func(workerID int) {
+			defer wg.Done()
+			for batch := range batchChan {
+				// Create a local stats object for this batch
+				batchStats := &ProcessingStats{
+					TotalChunks:     len(batch),
+					ProcessedChunks: 0,
+					FailedChunks:    0,
+				}
+
+				// Process the batch
+				if err := es.processBatch(ctx, batch, batchStats); err != nil {
+					log.Printf("Worker %d: Failed to process batch: %v", workerID, err)
+					errorChan <- err
+					atomic.AddInt64(&failedCount, int64(len(batch)))
+				} else {
+					// Update atomic counters
+					atomic.AddInt64(&processedCount, int64(batchStats.ProcessedChunks))
+					atomic.AddInt64(&failedCount, int64(batchStats.FailedChunks))
+
+					log.Printf("Worker %d: Processed batch successfully (%d chunks)", workerID, len(batch))
+				}
+
+				// Update progress periodically
+				currentProgress := atomic.LoadInt64(&processedCount) + atomic.LoadInt64(&failedCount)
+				progress := int(currentProgress) * 100 / stats.TotalChunks
+				if err := es.updateRepositoryProgress(ctx, repositoryID, progress); err != nil {
+					log.Printf("Failed to update repository progress: %v", err)
+				}
+			}
+		}(w)
+	}
+
+	// Send batches to workers
+	for _, batch := range batches {
+		batchChan <- batch
+	}
+	close(batchChan)
+
+	// Wait for all workers to complete
+	wg.Wait()
+	close(errorChan)
+
+	// Collect errors
+	var errors []error
+	for err := range errorChan {
+		errors = append(errors, err)
+	}
+
+	// Update final stats from atomic counters
+	stats.ProcessedChunks = int(atomic.LoadInt64(&processedCount))
+	stats.FailedChunks = int(atomic.LoadInt64(&failedCount))
+
+	log.Printf("Concurrent processing complete: %d processed, %d failed out of %d total",
+		stats.ProcessedChunks, stats.FailedChunks, stats.TotalChunks)
+
+	if len(errors) > 0 {
+		return fmt.Errorf("encountered %d errors during concurrent processing", len(errors))
 	}
 
 	return nil
