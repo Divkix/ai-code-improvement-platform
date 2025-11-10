@@ -53,7 +53,7 @@ func NewMongoDBWithConfig(uri, dbName string, cfg config.DatabaseConfig) (*Mongo
 		return nil, fmt.Errorf("failed to ping MongoDB: %w", err)
 	}
 
-	log.Printf("MongoDB connected with pool configuration: max=%d, min=%d, idle_timeout=%s", 
+	log.Printf("MongoDB connected with pool configuration: max=%d, min=%d, idle_timeout=%s",
 		cfg.MaxPoolSize, cfg.MinPoolSize, cfg.MaxIdleTime)
 
 	return &MongoDB{
@@ -92,9 +92,9 @@ func (m *MongoDB) GetPoolStats() map[string]interface{} {
 	}
 }
 
-// EnsureIndexes creates all required indexes for the application
+// EnsureIndexes creates all required indexes for the application with background creation
 func (m *MongoDB) EnsureIndexes() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	db := m.Database()
@@ -121,7 +121,8 @@ func (m *MongoDB) EnsureIndexes() error {
 			}).
 			SetDefaultLanguage("none").
 			SetLanguageOverride("language_override").
-			SetName("CodeSearchIndex"),
+			SetName("CodeSearchIndex").
+			SetBackground(true),
 	}
 
 	// Additional indexes for codechunks
@@ -129,23 +130,27 @@ func (m *MongoDB) EnsureIndexes() error {
 		textIndexModel,
 		{
 			Keys:    bson.D{{Key: "repositoryId", Value: 1}},
-			Options: options.Index().SetName("repositoryId_1"),
+			Options: options.Index().SetName("repositoryId_1").SetBackground(true),
 		},
 		{
 			Keys:    bson.D{{Key: "language", Value: 1}},
-			Options: options.Index().SetName("language_1"),
+			Options: options.Index().SetName("language_1").SetBackground(true),
 		},
 		{
 			Keys:    bson.D{{Key: "fileName", Value: 1}},
-			Options: options.Index().SetName("fileName_1"),
+			Options: options.Index().SetName("fileName_1").SetBackground(true),
 		},
 		{
 			Keys:    bson.D{{Key: "contentHash", Value: 1}},
-			Options: options.Index().SetName("contentHash_1"),
+			Options: options.Index().SetName("contentHash_1").SetUnique(true).SetBackground(true),
+		},
+		{
+			Keys:    bson.D{{Key: "filePath", Value: 1}},
+			Options: options.Index().SetName("filePath_1").SetBackground(true),
 		},
 		{
 			Keys:    bson.D{{Key: "createdAt", Value: 1}},
-			Options: options.Index().SetName("createdAt_1"),
+			Options: options.Index().SetName("createdAt_1").SetBackground(true),
 		},
 	}
 
@@ -162,11 +167,11 @@ func (m *MongoDB) EnsureIndexes() error {
 	userIndexes := []mongo.IndexModel{
 		{
 			Keys:    bson.D{{Key: "email", Value: 1}},
-			Options: options.Index().SetName("email_1").SetUnique(true),
+			Options: options.Index().SetName("email_1").SetUnique(true).SetBackground(true),
 		},
 		{
 			Keys:    bson.D{{Key: "githubId", Value: 1}},
-			Options: options.Index().SetName("githubId_1").SetSparse(true),
+			Options: options.Index().SetName("githubId_1").SetSparse(true).SetBackground(true),
 		},
 	}
 
@@ -177,24 +182,37 @@ func (m *MongoDB) EnsureIndexes() error {
 		log.Println("Successfully created users indexes")
 	}
 
-	// Repositories collection indexes
+	// Repositories collection indexes - ENHANCED
 	repositoriesCollection := db.Collection("repositories")
 	repoIndexes := []mongo.IndexModel{
 		{
 			Keys:    bson.D{{Key: "userId", Value: 1}},
-			Options: options.Index().SetName("userId_1"),
+			Options: options.Index().SetName("userId_1").SetBackground(true),
 		},
 		{
 			Keys:    bson.D{{Key: "fullName", Value: 1}},
-			Options: options.Index().SetName("fullName_1"),
+			Options: options.Index().SetName("fullName_1").SetBackground(true),
 		},
 		{
 			Keys:    bson.D{{Key: "status", Value: 1}},
-			Options: options.Index().SetName("status_1"),
+			Options: options.Index().SetName("status_1").SetBackground(true),
 		},
 		{
 			Keys:    bson.D{{Key: "githubRepoId", Value: 1}},
-			Options: options.Index().SetName("githubRepoId_1").SetSparse(true),
+			Options: options.Index().SetName("githubRepoId_1").SetUnique(true).SetSparse(true).SetBackground(true),
+		},
+		{
+			Keys:    bson.D{{Key: "embeddingStatus", Value: 1}},
+			Options: options.Index().SetName("embeddingStatus_1").SetBackground(true),
+		},
+		{
+			Keys:    bson.D{{Key: "createdAt", Value: 1}},
+			Options: options.Index().SetName("createdAt_1").SetBackground(true),
+		},
+		// Compound index for user repository queries
+		{
+			Keys:    bson.D{{Key: "userId", Value: 1}, {Key: "createdAt", Value: -1}},
+			Options: options.Index().SetName("userId_createdAt_1").SetBackground(true),
 		},
 	}
 
@@ -205,6 +223,36 @@ func (m *MongoDB) EnsureIndexes() error {
 		log.Println("Successfully created repositories indexes")
 	}
 
+	// Chat sessions collection indexes - NEW
+	chatSessionsCollection := db.Collection("chat_sessions")
+	chatIndexes := []mongo.IndexModel{
+		{
+			Keys:    bson.D{{Key: "repositoryId", Value: 1}},
+			Options: options.Index().SetName("repositoryId_1").SetBackground(true),
+		},
+		{
+			Keys:    bson.D{{Key: "userId", Value: 1}},
+			Options: options.Index().SetName("userId_1").SetBackground(true),
+		},
+		{
+			Keys:    bson.D{{Key: "createdAt", Value: -1}},
+			Options: options.Index().SetName("createdAt_-1").SetBackground(true),
+		},
+		// Compound index for user + repository queries
+		{
+			Keys:    bson.D{{Key: "userId", Value: 1}, {Key: "repositoryId", Value: 1}, {Key: "createdAt", Value: -1}},
+			Options: options.Index().SetName("userId_repositoryId_createdAt_1").SetBackground(true),
+		},
+	}
+
+	_, err = chatSessionsCollection.Indexes().CreateMany(ctx, chatIndexes)
+	if err != nil {
+		log.Printf("Warning: Failed to create chat_sessions indexes: %v", err)
+	} else {
+		log.Println("Successfully created chat_sessions indexes")
+	}
+
+	log.Println("All database indexes created successfully with background mode")
 	return nil
 }
 
@@ -216,7 +264,7 @@ func (m *MongoDB) InitializeCollections() error {
 	db := m.Database()
 
 	// List of required collections
-	collections := []string{"users", "repositories", "codechunks"}
+	collections := []string{"users", "repositories", "codechunks", "chat_sessions"}
 
 	// Get existing collections
 	existingCollections, err := db.ListCollectionNames(ctx, bson.M{})
