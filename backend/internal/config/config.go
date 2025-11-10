@@ -22,6 +22,7 @@ type Config struct {
 	GitHub         GitHubConfig
 	AI             AIConfig
 	Logging        LoggingConfig
+	Timeouts       TimeoutConfig
 }
 
 type ServerConfig struct {
@@ -96,6 +97,16 @@ type LoggingConfig struct {
 	Output string // stdout, stderr, file
 }
 
+type TimeoutConfig struct {
+	HTTPClient      time.Duration // HTTP client timeout for general requests
+	GitHubAPI       time.Duration // GitHub API request timeout
+	MongoOperation  time.Duration // MongoDB operation timeout
+	QdrantSearch    time.Duration // Qdrant vector search timeout
+	QdrantUpsert    time.Duration // Qdrant vector upsert timeout
+	EmbeddingAPI    time.Duration // Embedding API request timeout
+	LLMStreaming    time.Duration // LLM streaming response timeout
+}
+
 func Load() (*Config, error) {
 	// Load .env file if it exists
 	_ = godotenv.Load() // Ignore error as .env file is optional
@@ -155,6 +166,15 @@ func Load() (*Config, error) {
 			Level:  getEnv("LOG_LEVEL", "info"),
 			Format: getEnv("LOG_FORMAT", "json"),
 			Output: getEnv("LOG_OUTPUT", "stdout"),
+		},
+		Timeouts: TimeoutConfig{
+			HTTPClient:      getEnvDuration("TIMEOUT_HTTP_CLIENT", 10*time.Second),
+			GitHubAPI:       getEnvDuration("TIMEOUT_GITHUB_API", 10*time.Second),
+			MongoOperation:  getEnvDuration("TIMEOUT_MONGO_OPERATION", 30*time.Second),
+			QdrantSearch:    getEnvDuration("TIMEOUT_QDRANT_SEARCH", 5*time.Second),
+			QdrantUpsert:    getEnvDuration("TIMEOUT_QDRANT_UPSERT", 30*time.Second),
+			EmbeddingAPI:    getEnvDuration("TIMEOUT_EMBEDDING_API", 60*time.Second),
+			LLMStreaming:    getEnvDuration("TIMEOUT_LLM_STREAMING", 5*time.Minute),
 		},
 	}
 
@@ -241,6 +261,29 @@ func (c *Config) validate() error {
 	}
 	if !isValidDim {
 		return fmt.Errorf("VECTOR_DIMENSION must be one of %v, got %d", validDimensions, c.Database.VectorDimension)
+	}
+
+	// Timeout validation - ensure all timeouts are positive
+	if c.Timeouts.HTTPClient <= 0 {
+		return fmt.Errorf("TIMEOUT_HTTP_CLIENT must be positive, got %v", c.Timeouts.HTTPClient)
+	}
+	if c.Timeouts.GitHubAPI <= 0 {
+		return fmt.Errorf("TIMEOUT_GITHUB_API must be positive, got %v", c.Timeouts.GitHubAPI)
+	}
+	if c.Timeouts.MongoOperation <= 0 {
+		return fmt.Errorf("TIMEOUT_MONGO_OPERATION must be positive, got %v", c.Timeouts.MongoOperation)
+	}
+	if c.Timeouts.QdrantSearch <= 0 {
+		return fmt.Errorf("TIMEOUT_QDRANT_SEARCH must be positive, got %v", c.Timeouts.QdrantSearch)
+	}
+	if c.Timeouts.QdrantUpsert <= 0 {
+		return fmt.Errorf("TIMEOUT_QDRANT_UPSERT must be positive, got %v", c.Timeouts.QdrantUpsert)
+	}
+	if c.Timeouts.EmbeddingAPI <= 0 {
+		return fmt.Errorf("TIMEOUT_EMBEDDING_API must be positive, got %v", c.Timeouts.EmbeddingAPI)
+	}
+	if c.Timeouts.LLMStreaming <= 0 {
+		return fmt.Errorf("TIMEOUT_LLM_STREAMING must be positive, got %v", c.Timeouts.LLMStreaming)
 	}
 
 	return nil
