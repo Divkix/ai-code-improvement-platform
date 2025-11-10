@@ -131,6 +131,51 @@ func (q *Qdrant) CollectionExists(ctx context.Context, collectionName string) (b
 	return false, nil
 }
 
+// mongoIDToUint64 converts a 24-character hex MongoDB ObjectID to uint64
+// Uses the first 16 hex characters (8 bytes) for the uint64 conversion
+func mongoIDToUint64(mongoID string) (uint64, error) {
+	// Validate MongoDB ObjectID format (24 hex characters)
+	if len(mongoID) != 24 {
+		return 0, fmt.Errorf("invalid MongoDB ObjectID: must be 24 hex characters, got %d", len(mongoID))
+	}
+
+	// Take first 16 hex characters (8 bytes)
+	hexPrefix := mongoID[:16]
+
+	// Decode hex string to uint64
+	value, err := strconv.ParseUint(hexPrefix, 16, 64)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse MongoDB ObjectID to uint64: %w", err)
+	}
+
+	return value, nil
+}
+
+// uint64ToMongoID converts a uint64 back to a MongoDB ObjectID string
+// Note: This only reconstructs the first 16 hex characters; the remaining 8 characters are padded with zeros
+func uint64ToMongoID(value uint64) string {
+	// Convert uint64 to 16 hex characters
+	hexPrefix := fmt.Sprintf("%016x", value)
+	// Pad with zeros to make 24 characters (full MongoDB ObjectID length)
+	return hexPrefix + "00000000"
+}
+
+// isMongoID checks if a string is a valid MongoDB ObjectID (24 hex characters)
+func isMongoID(s string) bool {
+	if len(s) != 24 {
+		return false
+	}
+
+	// Check if all characters are hex digits
+	for _, char := range s {
+		if (char < '0' || char > '9') && (char < 'a' || char > 'f') && (char < 'A' || char > 'F') {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (q *Qdrant) UpsertPoints(ctx context.Context, collectionName string, points []VectorPoint) error {
 	if len(points) == 0 {
 		return nil
@@ -139,27 +184,32 @@ func (q *Qdrant) UpsertPoints(ctx context.Context, collectionName string, points
 	// Convert our VectorPoint structs to Qdrant PointStruct
 	qdrantPoints := make([]*qdrant.PointStruct, len(points))
 	for i, point := range points {
-		// Determine a valid point ID for Qdrant. Qdrant supports either
-		// UUIDs or numeric IDs. Many of our ObjectIDs coming from MongoDB
-		// are 24-hex strings (not UUID format) which cause the "Unable to
-		// parse UUID" error that you are seeing in the logs. We therefore:
-		//   1. Use the provided ID directly **only** if it already looks like
-		//      a UUID (checked by isUUID).
-		//   2. Otherwise generate a fresh random UUID so that each point gets
-		//      a valid identifier recognised by Qdrant.
-		//      This keeps the API simple – we don’t actually rely on the
-		//      original ID value inside Qdrant, it just has to be unique.
+		// Determine point ID based on format:
+		// 1. If ID is a valid UUID, use it directly
+		// 2. If ID is a 24-character hex MongoDB ObjectID, convert to uint64
+		// 3. Otherwise, generate a random UUID
 
 		var pointID *qdrant.PointId
 		if point.ID != "" {
 			if isUUID(point.ID) {
+				// Valid UUID - use directly
 				pointID = qdrant.NewIDUUID(point.ID)
+			} else if isMongoID(point.ID) {
+				// MongoDB ObjectID - convert to uint64
+				numID, err := mongoIDToUint64(point.ID)
+				if err != nil {
+					log.Printf("Warning: Failed to convert MongoDB ID %s to uint64: %v, using random UUID", point.ID, err)
+					pointID = qdrant.NewIDUUID(uuid.New().String())
+				} else {
+					pointID = qdrant.NewIDNum(numID)
+				}
 			} else {
+				// Invalid format - generate random UUID
+				log.Printf("Warning: Invalid ID format %s, using random UUID", point.ID)
 				pointID = qdrant.NewIDUUID(uuid.New().String())
 			}
 		} else {
-			// Fallback to numeric ID based on slice position – this is only
-			// used when the caller didn’t specify any ID at all.
+			// No ID provided - use numeric ID based on position
 			pointID = qdrant.NewIDNum(uint64(i + 1))
 		}
 
@@ -231,7 +281,8 @@ func (q *Qdrant) SearchSimilar(ctx context.Context, collectionName string, query
 			case *qdrant.PointId_Uuid:
 				pointID = id.Uuid
 			case *qdrant.PointId_Num:
-				pointID = strconv.FormatUint(id.Num, 10)
+				// Convert uint64 back to MongoDB ObjectID format if possible
+				pointID = uint64ToMongoID(id.Num)
 			default:
 				pointID = fmt.Sprintf("unknown_%d", i)
 			}
@@ -261,9 +312,18 @@ func (q *Qdrant) DeletePoints(ctx context.Context, collectionName string, pointI
 	// Convert string IDs to Qdrant PointId format
 	qdrantIDs := make([]*qdrant.PointId, len(pointIDs))
 	for i, id := range pointIDs {
-		// Try to parse as UUID first, fallback to treating as string
+		// Check ID format and convert accordingly
 		if isUUID(id) {
 			qdrantIDs[i] = qdrant.NewIDUUID(id)
+		} else if isMongoID(id) {
+			// Convert MongoDB ObjectID to uint64
+			numID, err := mongoIDToUint64(id)
+			if err == nil {
+				qdrantIDs[i] = qdrant.NewIDNum(numID)
+			} else {
+				// Fallback to UUID
+				qdrantIDs[i] = qdrant.NewIDUUID(id)
+			}
 		} else {
 			// Try to parse as number
 			if num, err := strconv.ParseUint(id, 10, 64); err == nil {
