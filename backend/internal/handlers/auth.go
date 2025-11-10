@@ -11,12 +11,14 @@ import (
 	"acip.divkix.me/internal/middleware"
 	"acip.divkix.me/internal/services"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
 // AuthHandler handles authentication operations
 type AuthHandler struct {
 	userService *services.UserService
 	authService *auth.AuthService
+	validate    *validator.Validate
 }
 
 // NewAuthHandler creates a new auth handler
@@ -24,25 +26,51 @@ func NewAuthHandler(userService *services.UserService, authService *auth.AuthSer
 	return &AuthHandler{
 		userService: userService,
 		authService: authService,
+		validate:    validator.New(),
 	}
 }
 
+// LoginRequest represents validated login credentials
+type LoginRequest struct {
+	Email    string `validate:"required,email,max=255"`
+	Password string `validate:"required,min=8,max=72"`
+}
 
 // LoginUser handles user login
 func (h *AuthHandler) LoginUser(c *gin.Context) {
+	// TODO: Implement rate limiting to prevent brute force attacks
+	// Consider using middleware or a dedicated rate limiting service
+	// Example: 5 failed attempts per IP per 15 minutes
+
 	var req generated.LoginUserJSONRequestBody
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, generated.Error{
 			Error:   "invalid_request",
-			Message: "Invalid request body: " + err.Error(),
+			Message: "Invalid request format",
+		})
+		return
+	}
+
+	// Validate input with structured validation
+	loginReq := LoginRequest{
+		Email:    string(req.Email),
+		Password: req.Password,
+	}
+
+	if err := h.validate.Struct(loginReq); err != nil {
+		// Use generic error message to prevent information leakage
+		c.JSON(http.StatusBadRequest, generated.Error{
+			Error:   "invalid_request",
+			Message: "Invalid email or password format",
 		})
 		return
 	}
 
 	// Get user by email
-	user, err := h.userService.GetUserByEmail(c.Request.Context(), string(req.Email))
+	user, err := h.userService.GetUserByEmail(c.Request.Context(), loginReq.Email)
 	if err != nil {
 		if err == services.ErrUserNotFound {
+			// Use same error as password check to prevent user enumeration
 			c.JSON(http.StatusUnauthorized, generated.Error{
 				Error:   "invalid_credentials",
 				Message: "Invalid email or password",
