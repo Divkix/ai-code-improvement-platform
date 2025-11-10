@@ -364,11 +364,22 @@ func (q *Qdrant) BaseURL() string {
 }
 
 func (q *Qdrant) Close() error {
-	// The qdrant.Client uses gRPC connections that should be closed
-	// However, the current client doesn't expose a Close method
-	// This is here for future compatibility
+	// TODO: The qdrant-go client library (github.com/qdrant/go-client) does not expose
+	// a Close() method on qdrant.Client to properly close the underlying gRPC connection.
+	// The client uses grpc.ClientConn internally, but it's not accessible from external code.
+	//
+	// Potential solutions:
+	// 1. Submit PR to qdrant-go to add Close() method that closes the gRPC connection
+	// 2. Use reflection to access and close the internal grpc.ClientConn (not recommended)
+	// 3. Accept that connections will be cleaned up by the gRPC library on process exit
+	//
+	// For now, we log the intent to close but cannot actually close the gRPC connection.
+	// The gRPC library will eventually clean up idle connections, but this is not immediate.
+	// This may result in connection pool exhaustion under high restart scenarios.
+	//
+	// See: https://github.com/qdrant/go-client/issues (if issue exists)
 	if q.client != nil {
-		log.Printf("Closing Qdrant client connection")
+		log.Printf("Qdrant client cleanup requested (note: underlying gRPC connection not closeable)")
 	}
 	return nil
 }
