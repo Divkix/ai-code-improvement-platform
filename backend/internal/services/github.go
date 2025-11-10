@@ -7,13 +7,13 @@ import (
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/rand"
+	cryptorand "crypto/rand"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
 	"log"
-	"math/rand"
+	mathrand "math/rand"
 	"time"
 
 	"acip.divkix.me/internal/models"
@@ -64,13 +64,13 @@ type GitHubImportProgress struct {
 }
 
 // NewGitHubService creates a new GitHub service
-func NewGitHubService(db *mongo.Database, clientID, clientSecret, encryptionKey string, batchSize, maxFileSize int) *GitHubService {
+func NewGitHubService(db *mongo.Database, clientID, clientSecret, encryptionKey string, batchSize, maxFileSize int) (*GitHubService, error) {
 	key := []byte(encryptionKey)
-	if len(key) != 32 {
-		// Pad or truncate to 32 bytes for AES-256
-		padded := make([]byte, 32)
-		copy(padded, key)
-		key = padded
+	keyLen := len(key)
+
+	// Validate key length is exactly 16, 24, or 32 bytes for AES
+	if keyLen != 16 && keyLen != 24 && keyLen != 32 {
+		return nil, fmt.Errorf("invalid encryption key length: got %d bytes, must be exactly 16, 24, or 32 bytes for AES-128/192/256", keyLen)
 	}
 
 	oauthConfig := &oauth2.Config{
@@ -88,7 +88,7 @@ func NewGitHubService(db *mongo.Database, clientID, clientSecret, encryptionKey 
 		oauthConfig:   oauthConfig,
 		batchSize:     batchSize,
 		maxFileSize:   maxFileSize,
-	}
+	}, nil
 }
 
 // GetOAuthConfig returns the OAuth configuration for GitHub
@@ -383,7 +383,7 @@ func (s *GitHubService) EncryptToken(token string) (string, error) {
 	}
 
 	nonce := make([]byte, aesGCM.NonceSize())
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+	if _, err = io.ReadFull(cryptorand.Reader, nonce); err != nil {
 		return "", err
 	}
 
@@ -633,7 +633,7 @@ func (s *GitHubService) getFileContentWithRetry(ctx context.Context, client *git
 	defer cancel()
 
 	var lastErr error
-	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	rng := mathrand.New(mathrand.NewSource(time.Now().UnixNano()))
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		// Check if context is already canceled before attempting
