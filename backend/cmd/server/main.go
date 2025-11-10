@@ -6,6 +6,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -224,13 +228,6 @@ func main() {
 		}
 	}
 
-	// Graceful shutdown handling
-	defer func() {
-		if err := embeddingPipeline.Stop(); err != nil {
-			log.Printf("Error stopping embedding pipeline: %v", err)
-		}
-	}()
-
 	// Swagger UI will fetch the latest OpenAPI spec directly from /api/openapi.yaml every time the page loads.
 	router.GET("/docs/*any", ginSwagger.WrapHandler(
 		swaggerFiles.Handler,
@@ -252,16 +249,54 @@ func main() {
 		c.File("api/openapi.json")
 	})
 
-	// Start server
+	// Create HTTP server with graceful shutdown support
 	address := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
-	structuredLogger.WithCorrelation(startupCorrelationID).WithFields(map[string]interface{}{
-		"address":          address,
-		"docs_url":         fmt.Sprintf("http://%s/docs/", address),
-		"openapi_url":      fmt.Sprintf("http://%s/api/openapi.yaml", address),
-		"health_check_url": fmt.Sprintf("http://%s/health", address),
-	}).Info("Server starting")
-
-	if err := router.Run(address); err != nil {
-		structuredLogger.WithError(startupCorrelationID, err).Fatal("Failed to start server")
+	srv := &http.Server{
+		Addr:    address,
+		Handler: router,
 	}
+
+	// Start server in a goroutine
+	go func() {
+		structuredLogger.WithCorrelation(startupCorrelationID).WithFields(map[string]interface{}{
+			"address":          address,
+			"docs_url":         fmt.Sprintf("http://%s/docs/", address),
+			"openapi_url":      fmt.Sprintf("http://%s/api/openapi.yaml", address),
+			"health_check_url": fmt.Sprintf("http://%s/health", address),
+		}).Info("Server starting")
+
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			structuredLogger.WithError(startupCorrelationID, err).Fatal("Failed to start server")
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shutdown the server
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	structuredLogger.WithCorrelation(startupCorrelationID).Info("Shutting down server...")
+
+	// Create shutdown context with 30 second timeout
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Step 1: Stop embedding pipeline first
+	structuredLogger.WithCorrelation(startupCorrelationID).Info("Stopping embedding pipeline...")
+	if err := embeddingPipeline.Stop(); err != nil {
+		structuredLogger.WithError(startupCorrelationID, err).Error("Error stopping embedding pipeline")
+	} else {
+		structuredLogger.WithCorrelation(startupCorrelationID).Info("Embedding pipeline stopped successfully")
+	}
+
+	// Step 2: Shutdown HTTP server
+	structuredLogger.WithCorrelation(startupCorrelationID).Info("Shutting down HTTP server...")
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		structuredLogger.WithError(startupCorrelationID, err).Error("Server forced to shutdown")
+	} else {
+		structuredLogger.WithCorrelation(startupCorrelationID).Info("HTTP server shutdown successfully")
+	}
+
+	// Step 3: Close database connections (deferred close will handle this)
+	structuredLogger.WithCorrelation(startupCorrelationID).Info("Server exited gracefully")
 }
