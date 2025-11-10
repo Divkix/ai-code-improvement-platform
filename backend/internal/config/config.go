@@ -4,8 +4,11 @@ package config
 
 import (
 	"fmt"
+	"log"
+	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -163,29 +166,139 @@ func Load() (*Config, error) {
 }
 
 func (c *Config) validate() error {
+	// JWT Secret validation
 	if c.JWT.Secret == "" {
 		return fmt.Errorf("JWT_SECRET is required")
 	}
+	if len(c.JWT.Secret) < 32 {
+		return fmt.Errorf("JWT_SECRET must be at least 32 characters for security (got %d)", len(c.JWT.Secret))
+	}
 
-	// Basic validation – ensure base URL and model are set
+	// Warn about development secrets
+	if isDevelopmentSecret(c.JWT.Secret) {
+		log.Printf("WARNING: JWT_SECRET appears to be a development/example value - use a strong random secret in production")
+	}
+
+	// GitHub encryption key validation
+	if c.GitHub.EncryptionKey != "" {
+		keyLen := len(c.GitHub.EncryptionKey)
+		if keyLen != 16 && keyLen != 24 && keyLen != 32 {
+			return fmt.Errorf("GITHUB_ENCRYPTION_KEY must be exactly 16, 24, or 32 bytes for AES-128/192/256 (got %d)", keyLen)
+		}
+		if isDevelopmentSecret(c.GitHub.EncryptionKey) {
+			log.Printf("WARNING: GITHUB_ENCRYPTION_KEY appears to be a development/example value - use a strong random key in production")
+		}
+	}
+
+	// MongoDB URI validation
+	if c.Database.MongoURI == "" {
+		return fmt.Errorf("MONGODB_URI is required")
+	}
+	if !isValidMongoURI(c.Database.MongoURI) {
+		return fmt.Errorf("MONGODB_URI format is invalid - must start with mongodb:// or mongodb+srv://")
+	}
+
+	// API endpoint URL validation
 	if c.AI.EmbeddingBaseURL == "" {
 		return fmt.Errorf("EMBEDDING_BASE_URL is required")
 	}
+	if !isValidURL(c.AI.EmbeddingBaseURL) {
+		return fmt.Errorf("EMBEDDING_BASE_URL is not a valid URL: %s", c.AI.EmbeddingBaseURL)
+	}
+
+	if c.AI.LLMBaseURL == "" {
+		return fmt.Errorf("LLM_BASE_URL is required")
+	}
+	if !isValidURL(c.AI.LLMBaseURL) {
+		return fmt.Errorf("LLM_BASE_URL is not a valid URL: %s", c.AI.LLMBaseURL)
+	}
+
+	if c.Database.QdrantURL == "" {
+		return fmt.Errorf("QDRANT_URL is required")
+	}
+	if !isValidURL(c.Database.QdrantURL) {
+		return fmt.Errorf("QDRANT_URL is not a valid URL: %s", c.Database.QdrantURL)
+	}
+
+	// Embedding model validation
 	if c.AI.EmbeddingModel == "" {
 		return fmt.Errorf("EMBEDDING_MODEL is required")
 	}
 
-	// Validate LLM configuration
+	// LLM configuration validation
 	if c.AI.LLMAPIKey == "" {
 		return fmt.Errorf("LLM_API_KEY is required for AI chat functionality")
 	}
 
-	// Optional sanity check: common Voyage models expect 256/512/768/1024/2048 dims.
-	if c.Database.VectorDimension != 256 && c.Database.VectorDimension != 512 && c.Database.VectorDimension != 768 && c.Database.VectorDimension != 1024 && c.Database.VectorDimension != 2048 {
-		return fmt.Errorf("VECTOR_DIMENSION must be one of 256, 512, 768, 1024, or 2048, got %d", c.Database.VectorDimension)
+	// Vector dimension validation
+	validDimensions := []int{256, 512, 768, 1024, 2048}
+	isValidDim := false
+	for _, dim := range validDimensions {
+		if c.Database.VectorDimension == dim {
+			isValidDim = true
+			break
+		}
+	}
+	if !isValidDim {
+		return fmt.Errorf("VECTOR_DIMENSION must be one of %v, got %d", validDimensions, c.Database.VectorDimension)
 	}
 
 	return nil
+}
+
+// isValidMongoURI checks if a MongoDB URI has valid format
+func isValidMongoURI(uri string) bool {
+	return strings.HasPrefix(uri, "mongodb://") || strings.HasPrefix(uri, "mongodb+srv://")
+}
+
+// isValidURL validates that a string is a valid HTTP/HTTPS URL
+func isValidURL(rawURL string) bool {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return false
+	}
+	return u.Scheme == "http" || u.Scheme == "https"
+}
+
+// isDevelopmentSecret detects common development/example secret patterns
+func isDevelopmentSecret(secret string) bool {
+	lowerSecret := strings.ToLower(secret)
+	developmentPatterns := []string{
+		"secret",
+		"password",
+		"changeme",
+		"example",
+		"test",
+		"dev",
+		"demo",
+		"default",
+		"12345",
+		"asdf",
+		"qwerty",
+	}
+
+	for _, pattern := range developmentPatterns {
+		if strings.Contains(lowerSecret, pattern) {
+			return true
+		}
+	}
+
+	// Check for repeated characters (e.g., "aaaaaaaaaa")
+	if len(secret) > 0 {
+		firstChar := secret[0]
+		allSame := true
+		for _, char := range secret {
+			if char != rune(firstChar) {
+				allSame = false
+				break
+			}
+		}
+		if allSame {
+			return true
+		}
+	}
+
+	return false
 }
 
 func getEnv(key, defaultValue string) string {
